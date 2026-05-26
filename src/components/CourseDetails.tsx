@@ -35,6 +35,16 @@ export default function CourseDetails({
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizTimerRef = useRef<any>(null);
+  const normalizedGoals = Array.isArray(course?.goals)
+    ? course.goals
+        .map((goal: unknown) => (typeof goal === "string" ? goal : String(goal ?? "")))
+        .filter((goal: string) => goal.trim())
+    : typeof course?.goals === "string"
+      ? course.goals.split("\n").filter((goal: string) => goal.trim())
+      : [];
+  const preferredStreamSource = lesson?.stream_sources?.find((source: any) => source?.quality === "sd")
+    || lesson?.stream_sources?.[0]
+    || null;
 
   useEffect(() => {
     console.log("CourseDetails montado com courseId:", course?.id);
@@ -336,8 +346,8 @@ export default function CourseDetails({
             <div className="space-y-4">
               <h2 className="text-xl font-bold">O que você vai aprender</h2>
               <ul className="space-y-3">
-                {course?.goals ? (
-                  course.goals.split('\n').filter((g:string) => g.trim()).map((goal: string, i: number) => (
+                {normalizedGoals.length > 0 ? (
+                  normalizedGoals.map((goal: string, i: number) => (
                     <li key={i} className="flex gap-2 text-sm text-secondary">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#b3e51d] mt-1.5 shrink-0" />
                       {goal?.replace(/^\d+\.\s*/, '').replace(/^[•-]\s*/, '')}
@@ -362,16 +372,15 @@ export default function CourseDetails({
                 <Loader2 className="w-10 h-10 text-[#b3e51d] animate-spin" />
                 <p className="text-white/60 text-sm font-medium">Preparando seu ambiente de aprendizado...</p>
               </div>
-            ) : (lesson?.stream_sources && lesson.stream_sources.length > 0) ? (
+            ) : preferredStreamSource ? (
               <video 
                 ref={videoRef}
                 controls 
                 className="w-full h-full"
                 poster={course?.banner}
               >
-                {/* Procura pela fonte 'sd' como solicitado, senão pega a primeira */}
                 <source 
-                  src={lesson.stream_sources.find((s: any) => s.quality === "sd")?.link_secure || lesson.stream_sources[0]?.link_secure} 
+                  src={preferredStreamSource?.link_secure} 
                   type="video/mp4" 
                 />
                 Seu navegador não suporta vídeos.
