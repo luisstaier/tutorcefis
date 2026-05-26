@@ -25,16 +25,33 @@ export default function TutorApp() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<any[]>([]);
+  const [diagnosis, setDiagnosis] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => s - 1);
 
-  const handleOnboardingSubmit = (e: React.FormEvent) => {
+  const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem("tutor_cefs_profile", JSON.stringify(formData));
-    nextStep();
+    setStep(1); // Mudar para tela de diagnóstico
+    
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('tutor-diagnostico', {
+        body: formData
+      });
+
+      if (functionError) throw functionError;
+      setDiagnosis(data.lacunas || []);
+    } catch (err: any) {
+      console.error('Diagnosis error:', err);
+      setError(err.message || 'Erro ao gerar diagnóstico.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSearchCourses = async (e: React.FormEvent) => {
@@ -126,16 +143,61 @@ export default function TutorApp() {
         return (
           <Card className="max-w-md mx-auto border-border shadow-sm text-center py-12">
             <CardContent className="space-y-6">
-              <div className="animate-pulse flex flex-col items-center">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                  <User className="text-accent w-8 h-8" />
+              {isLoading ? (
+                <div className="flex flex-col items-center">
+                  <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
+                  <h2 className="text-2xl font-bold">Analisando seu perfil...</h2>
+                  <p className="text-secondary mt-2">
+                    Identificando lacunas de aprendizado com base no catálogo da CEFIS.
+                  </p>
                 </div>
-                <h2 className="text-2xl font-bold">Analisando seu perfil...</h2>
-                <p className="text-secondary mt-2">Nossa IA está construindo um diagnóstico personalizado baseado em seus dados.</p>
-              </div>
-              <Button onClick={nextStep} variant="outline" className="mt-8 border-accent text-accent hover:bg-accent/5">
-                Ver diagnóstico completo
-              </Button>
+              ) : error ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                    {error}
+                  </div>
+                  <Button onClick={() => setStep(0)} variant="outline">Tentar novamente</Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="text-success w-8 h-8" />
+                  </div>
+                  <h2 className="text-2xl font-bold">Diagnóstico Concluído!</h2>
+                  <p className="text-secondary">Encontramos algumas áreas-chave para focar sua evolução.</p>
+                  
+                  <div className="space-y-4 text-left">
+                    {diagnosis.map((gap, i) => (
+                      <Card key={i} className="border-border">
+                        <CardContent className="pt-6 space-y-3">
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-bold text-lg leading-tight">{gap.topico}</h4>
+                            <Badge 
+                              className={`${
+                                gap.prioridade === 'alta' ? 'bg-accent hover:bg-accent' : 
+                                gap.prioridade === 'media' ? 'bg-secondary hover:bg-secondary' : 
+                                'bg-success hover:bg-success'
+                              } text-white border-none`}
+                            >
+                              {gap.prioridade.toUpperCase()}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-secondary">{gap.por_que_importa}</p>
+                          {gap.curso_cefis_relacionado && (
+                            <div className="text-xs bg-muted/30 p-2 rounded border border-border">
+                              <span className="font-bold text-accent">Curso CEFIS:</span> {gap.curso_cefis_relacionado}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Button onClick={nextStep} className="w-full bg-accent hover:bg-accent/90 text-white">
+                    Ver Plano de Estudos
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         );
