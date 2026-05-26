@@ -76,7 +76,8 @@ serve(async (req) => {
     const result = await response.json();
     
     // Transform data according to requirements
-    const transformedData = (result.data || []).map((course: any) => ({
+    const courses = id ? [result.data || result] : (result.data || []);
+    const transformedData = courses.map((course: any) => ({
       id: course.id,
       title: course.title,
       subtitle: course.subtitle,
