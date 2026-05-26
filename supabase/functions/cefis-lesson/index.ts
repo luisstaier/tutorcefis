@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { courseId } = await req.json();
+    const { courseId, lessonId } = await req.json();
     const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
 
     if (!cefisApiKey) throw new Error("API Key ausente");
