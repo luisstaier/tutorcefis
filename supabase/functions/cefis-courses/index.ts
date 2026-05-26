@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    const type = url.searchParams.get("type");
     let search = url.searchParams.get("search") || "";
     let id = url.searchParams.get("id") || "";
     let count = url.searchParams.get("count") || "10";
@@ -45,6 +46,51 @@ serve(async (req) => {
       );
     }
 
+    if (type === "user") {
+      const apiUrl = "https://cefis.com.br/api/v1/user/me";
+      console.log(`Fetching user data from CEFIS API: ${apiUrl}`);
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Authorization": cefisApiKey,
+          "Accept": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`CEFIS User API Error: ${response.status} - ${errorText}`);
+        return new Response(
+          JSON.stringify({ error: "Erro ao buscar dados do usuário na CEFIS.", details: errorText }),
+          {
+            status: response.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const result = await response.json();
+      const nivelMap: Record<number, string> = {
+        1: "iniciante",
+        2: "intermediário",
+        3: "avançado"
+      };
+
+      return new Response(
+        JSON.stringify({
+          name: result.name || "",
+          occupation: result.occupation || "",
+          nivel: nivelMap[result.nivel] || "",
+          activities: result.activities || []
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     let apiUrl;
     if (id) {
       apiUrl = new URL(`https://api-v3.cefis.com.br/courses/${id}`);
@@ -57,7 +103,7 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Fetching from CEFIS API: ${apiUrl.toString()}`);
+    console.log(`Fetching courses from CEFIS API: ${apiUrl.toString()}`);
 
     const response = await fetch(apiUrl.toString(), {
       method: "GET",
