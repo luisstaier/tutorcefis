@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const type = url.searchParams.get("type");
+    let type = url.searchParams.get("type");
     let search = url.searchParams.get("search") || "";
     let id = url.searchParams.get("id") || "";
     let count = url.searchParams.get("count") || "10";
@@ -23,6 +23,7 @@ serve(async (req) => {
     if (req.method === "POST") {
       try {
         const body = await req.json();
+        type = body.type || type;
         search = body.search || search;
         id = body.id || id;
         count = body.count || count;
