@@ -684,8 +684,9 @@ export default function TutorApp() {
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
                                 onClick={() => {
-                                  console.log("Abrindo curso do plano:", stepItem.curso_id, stepItem.fonte || stepItem.titulo);
-                                  handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id, true);
+                                  const searchTitle = stepItem.fonte || stepItem.titulo;
+                                  console.log("navegando para curso (plano):", stepItem.curso_id, "Título:", searchTitle);
+                                  handleSearchCourses(searchTitle, stepItem.curso_id, true);
                                 }}
                               >
                                 <Search className="w-3 h-3" /> Explorar este curso
@@ -1047,7 +1048,7 @@ export default function TutorApp() {
                         size="sm" 
                         className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm"
                         onClick={() => {
-                          console.log("Abrindo curso:", course.id, course.title);
+                          console.log("navegando para curso (catálogo):", course.id, "Título:", course.title);
                           setSelectedCourse(course);
                           setPreviousStep(step);
                           setStep(6);
