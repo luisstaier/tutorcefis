@@ -75,8 +75,15 @@ const LevelBadge = ({ xp, currentLevel, nextLevel, progress }: any) => {
   );
 };
 
-const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
+const StartSessionModal = ({ open, onOpenChange, onStart, studyPlan }: any) => {
   const [minutes, setMinutes] = useState("10");
+  const [selectedTopico, setSelectedTopico] = useState("");
+
+  useEffect(() => {
+    if (studyPlan && studyPlan.length > 0 && !selectedTopico) {
+      setSelectedTopico(studyPlan[0].titulo);
+    }
+  }, [studyPlan]);
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,26 +93,45 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
             <Zap className="text-accent" /> Pronto para começar agora?
           </DialogTitle>
           <DialogDescription className="text-secondary text-base pt-2">
-            Quanto tempo você tem disponível para estudar este tópico hoje?
+            Escolha um tópico do seu plano e quanto tempo você tem disponível.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {["5", "10", "30"].map((m) => (
-                <Button 
-                  key={m} 
-                  variant={minutes === m ? "default" : "outline"}
-                  onClick={() => setMinutes(m)}
-                  className={cn(
-                    "h-10 px-4 font-bold transition-all",
-                    minutes === m ? "bg-accent text-primary-foreground" : "border-border text-secondary hover:border-accent/50"
-                  )}
-                >
-                  {m} min
-                </Button>
-              ))}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-secondary">Tópico do seu plano</Label>
+              <Select value={selectedTopico} onValueChange={setSelectedTopico}>
+                <SelectTrigger className="focus:ring-accent bg-muted/30 border-border">
+                  <SelectValue placeholder="Selecione um tópico" />
+                </SelectTrigger>
+                <SelectContent>
+                  {studyPlan.map((item: any, i: number) => (
+                    <SelectItem key={i} value={item.titulo}>
+                      {item.titulo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
+              <div className="flex flex-wrap gap-2">
+                {["5", "10", "30"].map((m) => (
+                  <Button 
+                    key={m} 
+                    variant={minutes === m ? "default" : "outline"}
+                    onClick={() => setMinutes(m)}
+                    className={cn(
+                      "h-10 px-4 font-bold transition-all",
+                      minutes === m ? "bg-accent text-primary-foreground" : "border-border text-secondary hover:border-accent/50"
+                    )}
+                  >
+                    {m} min
+                  </Button>
+                ))}
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -114,16 +140,7 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
                 type="number" 
                 value={minutes} 
                 onChange={(e) => setMinutes(e.target.value)}
-                className="focus-visible:ring-accent bg-muted/30"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-secondary">Tópico</Label>
-              <Input 
-                value={topico} 
-                readOnly
-                className="bg-muted/50 border-border text-secondary cursor-not-allowed"
+                className="focus-visible:ring-accent bg-muted/30 border-border"
               />
             </div>
           </div>
@@ -138,7 +155,8 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
             Agora não
           </Button>
           <Button 
-            onClick={() => onStart(minutes, topico)}
+            onClick={() => onStart(minutes, selectedTopico)}
+            disabled={!selectedTopico || !minutes}
             className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20"
           >
             Iniciar Sessão Rápida
@@ -148,6 +166,7 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
     </Dialog>
   );
 };
+
 
 
 
