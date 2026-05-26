@@ -21,25 +21,42 @@ serve(async (req) => {
     }
 
     // 1. Busca cursos/aulas reais da CEFIS sobre o tópico
-    const cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
-    cefisUrl.searchParams.set("count", "10");
+    let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    cefisUrl.searchParams.set("count", "15");
     cefisUrl.searchParams.set("search", topico);
 
-    const cefisResponse = await fetch(cefisUrl.toString(), {
+    let cefisResponse = await fetch(cefisUrl.toString(), {
       headers: {
         "Authorization": `Bearer ${cefisApiKey}`,
         "Accept": "application/json",
       },
     });
 
-    const cefisResult = await cefisResponse.json();
-    const coursesList = (cefisResult.data || []).map((c: any) => ({
+    let cefisResult = await cefisResponse.json();
+    let rawCourses = cefisResult.data || [];
+
+    // Fallback: Se não encontrar nada pelo tópico, busca cursos gerais para ter contexto
+    if (rawCourses.length === 0) {
+      console.log(`Nenhum curso encontrado para "${topico}". Buscando cursos gerais...`);
+      const fallbackUrl = new URL("https://api-v3.cefis.com.br/courses");
+      fallbackUrl.searchParams.set("count", "10");
+      const fallbackResponse = await fetch(fallbackUrl.toString(), {
+        headers: {
+          "Authorization": `Bearer ${cefisApiKey}`,
+          "Accept": "application/json",
+        },
+      });
+      const fallbackResult = await fallbackResponse.json();
+      rawCourses = fallbackResult.data || [];
+    }
+
+    const coursesList = rawCourses.map((c: any) => ({
       title: c.title,
       summary: c.summary,
       duration: c.duration // em segundos
     }));
 
-    console.log(`Cursos encontrados para o tópico "${topico}": ${coursesList.length}`);
+    console.log(`Total de cursos reais da CEFIS obtidos: ${coursesList.length}`);
 
     // 2. Chama a Claude para montar a micro-trilha
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
@@ -52,7 +69,30 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 2000,
-        system: `Você é o Tutor CEFIS. O aluno tem ${minutos} minutos para aprender sobre ${topico}. Monte uma micro-trilha que CABE no tempo informado (some os tempos; não ultrapasse). Priorize conteúdos reais da CEFIS da lista (com fonte = título exato). Para o que não houver no catálogo, gere um resumo enxuto calibrado pelo tempo (~140 palavras de leitura por minuto), marcado como gerado_pelo_tutor. Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato: { "total_min": number, "itens": [ { "titulo": string, "resumo": string, "origem": "catalogo_cefis"|"gerado_pelo_tutor", "fonte": string, "tempo_min": number } ] }.`,
+        system: `Você é o Tutor CEFIS. O aluno tem ${minutos} minutos para aprender sobre ${topico}. 
+        SUA MISSÃO: Monte uma micro-trilha que CABE exatamente no tempo informado (some os tempos; não ultrapasse).
+        
+        REGRA DE OURO: PRIORIZE incluir conteúdos REAIS da CEFIS listados no contexto.
+        - Se um curso do catálogo CEFIS for minimamente relevante ao tópico, use-o!
+        - Origem: "catalogo_cefis", Fonte: [Título Exato do Curso].
+        - Use a duração real (duration) convertida para minutos se possível, ou estime uma parte do curso que caiba.
+        
+        - Só use "gerado_pelo_tutor" se o catálogo REAL não cobrir NADA do tópico ou se sobrar tempo após incluir os cursos principais.
+        - Quando gerar conteúdo próprio, crie um resumo enxuto calibrado pelo tempo (~140 palavras por minuto).
+        
+        Responda ESTRITAMENTE em JSON válido, neste formato: 
+        { 
+          "total_min": number, 
+          "itens": [ 
+            { 
+              "titulo": string, 
+              "resumo": string, 
+              "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
+              "fonte": string, 
+              "tempo_min": number 
+            } 
+          ] 
+        }`,
         messages: [
           {
             role: "user",
