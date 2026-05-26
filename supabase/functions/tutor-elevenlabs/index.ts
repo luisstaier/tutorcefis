@@ -40,7 +40,6 @@ serve(async (req) => {
         .trim();
     };
     
-
     const addNaturalPauses = (text: string) => {
       return text
         .replace(/\. /g, '.  ')        // pausa após ponto
