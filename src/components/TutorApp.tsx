@@ -643,7 +643,7 @@ export default function TutorApp() {
         <Stepper currentStep={step} />
         
         <div className="mt-8 transition-all duration-300">
-          {renderStep()}
+          {renderContent()}
         </div>
       </div>
     </main>
