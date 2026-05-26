@@ -91,11 +91,11 @@ export default function CourseDetails({
 
   const fetchLesson = async (selectedLessonId?: number) => {
     if (!course?.id) return;
-    
-    // Se já temos a galeria e o lessonId, apenas trocamos localmente
+
+    // Se já temos a galeria E a aula tem videoUrl, troca localmente
     if (selectedLessonId && lessonsGallery.length > 0) {
       const foundLesson = lessonsGallery.find(l => l.id === selectedLessonId);
-      if (foundLesson) {
+      if (foundLesson && foundLesson.videoUrl) {
         setIsSwitchingLesson(true);
         setShowQuiz(false);
         setQuiz(null);
@@ -103,7 +103,7 @@ export default function CourseDetails({
         setCurrentQuestionIndex(0);
         setIsQuizFinished(false);
         setQuizError(null);
-        
+
         setLesson(foundLesson);
         setCurrentVideoUrl(foundLesson.videoUrl);
         setIsSwitchingLesson(false);
@@ -122,18 +122,27 @@ export default function CourseDetails({
     } else {
       setIsLoadingLesson(true);
     }
-    
+
     setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
         body: { courseId: course.id, lessonId: selectedLessonId, userKey }
       });
       if (error) throw error;
-      
+
       const current = data?.current || data;
       setLesson(current);
       setCurrentVideoUrl(current?.videoUrl || null);
-      if (data?.lessons) setLessonsGallery(data.lessons);
+      if (data?.lessons) {
+        // Mescla videoUrls novos no gallery existente (preservando o que já tinha)
+        setLessonsGallery(prev => {
+          if (prev.length === 0) return data.lessons;
+          return prev.map(p => {
+            const updated = data.lessons.find((nl: any) => nl.id === p.id);
+            return updated && updated.videoUrl ? { ...p, ...updated } : p;
+          });
+        });
+      }
     } catch (err) {
       console.error("Error fetching lesson:", err);
       setHasError(true);
