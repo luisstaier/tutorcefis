@@ -139,7 +139,41 @@ export default function CourseDetails({
     }
   }, [lesson?.id]);
 
-  const handleViewCertificate = async () => {
+  const fetchMotivationalMessage = async (context: string) => {
+    setIsMotivationalLoading(true);
+    setShowMotivational(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('tutor-duvidas', {
+        body: { 
+          pergunta: `Gere uma mensagem motivacional estoica personalizada curta (máximo 2 parágrafos). Contexto: ${context}. O aluno está estudando o curso "${course?.title}" e a aula "${lesson?.title}".`, 
+          perfil: userProfile, 
+          userKey 
+        }
+      });
+      if (error) throw error;
+      setMotivationalMessage(data?.resposta || "Mantenha o foco. A disciplina é a ponte entre metas e conquistas.");
+    } catch (err) {
+      console.error("Erro ao buscar mensagem motivacional:", err);
+      setMotivationalMessage("A persistência é o caminho do êxito.");
+    } finally {
+      setIsMotivationalLoading(false);
+    }
+  };
+
+  // Timer de inatividade (10 minutos)
+  useEffect(() => {
+    const checkInactivity = () => {
+      const now = Date.now();
+      if (now - lastActivity > 10 * 60 * 1000 && !showMotivational) {
+        fetchMotivationalMessage("O aluno está inativo há 10 minutos.");
+      }
+    };
+
+    const interval = setInterval(checkInactivity, 60000); // Checa a cada minuto
+    return () => clearInterval(interval);
+  }, [lastActivity, showMotivational]);
+
+
     setIsCertificateLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-proxy', {
