@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -734,7 +734,39 @@ export default function CourseDetails({
             )}
           </CardContent>
           {lesson && (
-            <CardFooter className="p-4 bg-muted/30 border-t border-border">
+            <CardFooter className="p-4 bg-muted/30 border-t border-border flex-col gap-3">
+              {lessonsGallery.length > 1 && (() => {
+                const idx = lessonsGallery.findIndex(l => l.id === lesson?.id);
+                const prev = idx > 0 ? lessonsGallery[idx - 1] : null;
+                const next = idx >= 0 && idx < lessonsGallery.length - 1 ? lessonsGallery[idx + 1] : null;
+                return (
+                  <div className="flex justify-between items-center w-full gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!prev || isSwitchingLesson}
+                      onClick={() => prev && fetchLesson(prev.id)}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Aula anterior
+                    </Button>
+                    <span className="text-xs text-secondary">
+                      {idx + 1} / {lessonsGallery.length}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!next || isSwitchingLesson}
+                      onClick={() => next && fetchLesson(next.id)}
+                      className="gap-1"
+                    >
+                      Próxima aula
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })()}
               <div className="flex justify-between items-center w-full">
                 <p className="text-xs text-secondary">Pronto para testar o que aprendeu nesta aula?</p>
                 {!showQuiz && !isQuizFinished && (
