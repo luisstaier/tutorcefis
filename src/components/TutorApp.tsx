@@ -394,6 +394,7 @@ export default function TutorApp() {
                       <SelectItem value="analogias">🔄 Com analogias e comparações</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
                 <div className="space-y-2">
                   <Label>O que você deseja aprender agora? (Objetivo)</Label>
                   <Input value={formData.objetivo} onChange={e => setFormData({...formData, objetivo: e.target.value})} placeholder="Ex: Dominar o IRPF 2024, entender auditoria contábil..." required />
