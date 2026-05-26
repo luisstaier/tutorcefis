@@ -156,8 +156,23 @@ serve(async (req) => {
     try {
       sessionData = JSON.parse(cleanedText);
     } catch (parseError) {
-      console.error("Parse error:", cleanedText);
-      throw new Error("Erro ao processar os dados da sessão.");
+      console.error("Parse error inicial, tentando reparar:", parseError.message);
+      // Tentativa de reparo: escapar aspas duplas dentro de valores de string
+      // Estratégia: para cada par "chave": "valor", escapar aspas internas no valor
+      try {
+        const repaired = cleanedText.replace(
+          /"(titulo|resumo|fonte|origem)"\s*:\s*"((?:[^"\\]|\\.)*?)"(\s*[,}\]])/g,
+          (_m: string, key: string, val: string, tail: string) => {
+            const safeVal = val.replace(/\\"/g, '"').replace(/"/g, '\\"');
+            return `"${key}": "${safeVal}"${tail}`;
+          }
+        );
+        sessionData = JSON.parse(repaired);
+        console.log("JSON reparado com sucesso.");
+      } catch (repairError) {
+        console.error("Parse error (cleanedText):", cleanedText);
+        throw new Error("Erro ao processar os dados da sessão.");
+      }
     }
 
     return new Response(JSON.stringify(sessionData), {
