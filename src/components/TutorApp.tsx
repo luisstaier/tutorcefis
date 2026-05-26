@@ -661,7 +661,14 @@ export default function TutorApp() {
                             </Badge>
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
-                          <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.origem === 'catalogo_cefis' ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <p className="text-[10px] text-muted-foreground italic">Informação gerada por:</p>
+                            {item.origem === 'catalogo_cefis' ? (
+                              <span className="text-[10px] font-bold text-accent">Conteúdo Original CEFIS</span>
+                            ) : (
+                              <TutorAiLogo className="scale-75 origin-left" />
+                            )}
+                          </div>
                           
                           {item.curso_id && lessons.length > 0 && (
                             <div className="pt-1 space-y-1">
