@@ -81,7 +81,35 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
-    const diagnosis = JSON.parse(claudeResult.content[0].text);
+    const rawText = claudeResult.content[0].text;
+    
+    // Robust JSON extraction
+    let cleanedText = rawText.trim();
+    
+    // 1. Remove markdown code blocks if present
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    }
+    
+    // 2. Extract content between first { and last }
+    const firstBrace = cleanedText.indexOf("{");
+    const lastBrace = cleanedText.lastIndexOf("}");
+    
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error("No JSON braces found in Claude response:", rawText);
+      throw new Error("A IA não retornou um formato de dados válido.");
+    }
+    
+    cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+
+    let diagnosis;
+    try {
+      diagnosis = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error("Failed to parse cleaned JSON:", cleanedText);
+      console.error("Original text:", rawText);
+      throw new Error("Erro ao processar a resposta da IA.");
+    }
 
     return new Response(JSON.stringify(diagnosis), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
