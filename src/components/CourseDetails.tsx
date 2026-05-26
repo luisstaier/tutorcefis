@@ -929,7 +929,53 @@ export default function CourseDetails({
           </div>
         </section>
       )}
+
+      {/* POPUP MOTIVACIONAL */}
+      <Dialog open={showMotivational} onOpenChange={setShowMotivational}>
+        <DialogContent className="sm:max-w-md bg-card border-accent/20">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-serif text-accent">
+              <Quote className="w-5 h-5" /> 
+              Momento de Reflexão
+            </DialogTitle>
+            <DialogDescription className="text-secondary italic">
+              Uma mensagem personalizada do seu tutor para impulsionar sua jornada.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6 flex flex-col items-center gap-6">
+            {isMotivationalLoading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 text-accent animate-spin" />
+                <p className="text-xs text-muted-foreground animate-pulse">O tutor está preparando algo para você...</p>
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500 w-full">
+                <div className="p-5 rounded-2xl bg-accent/5 border border-accent/10 relative">
+                  <Quote className="absolute -top-2 -left-2 w-8 h-8 text-accent/20" />
+                  <p className="text-lg font-serif italic leading-relaxed text-foreground text-center">
+                    "{motivationalMessage}"
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <TutorAiLogo className="scale-90" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button 
+              onClick={() => setShowMotivational(false)}
+              className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold px-8 rounded-full"
+            >
+              Continuar Estudando
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </div>
   );
 }
+
