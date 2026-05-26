@@ -94,6 +94,13 @@ export default function TutorApp() {
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState<number | null>(null);
+  const [isPreparingAudio, setIsPreparingAudio] = useState<number | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const savedKey = sessionStorage.getItem("cefis_user_key");
