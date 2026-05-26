@@ -157,17 +157,20 @@ export default function TutorApp() {
     }
   };
 
-  const handleSearchCourses = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearchCourses = async (query?: string) => {
+    const q = query ?? searchQuery;
+    if (query) setSearchQuery(query);
+    
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(searchQuery)}`, {
+      const { data, error: functionError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(q)}`, {
         method: 'GET'
       });
 
       if (functionError) throw functionError;
       setCourses(data.data || []);
+      setStep(5); // Sempre mudar para tela de catálogo ao buscar
     } catch (err: any) {
       console.error('Search error:', err);
       setError(err.message || 'Erro ao carregar cursos.');
@@ -180,9 +183,9 @@ export default function TutorApp() {
     { id: 0, label: "Início", icon: Home },
     { id: 1, label: "Diagnóstico", icon: ClipboardCheck },
     { id: 2, label: "Plano", icon: LayoutDashboard },
-    { id: 3, label: "Sessão Rápida (Tenho X min)", icon: Zap },
+    { id: 3, label: "Sessão Rápida", icon: Zap },
     { id: 4, label: "Dúvidas", icon: MessageCircle },
-    { id: 5, label: "Catálogo", icon: Library },
+    { id: 5, label: "Explorar Catálogo", icon: Library },
   ];
 
   const renderNavigation = () => {
@@ -211,68 +214,88 @@ export default function TutorApp() {
     switch (step) {
       case 0:
         return (
-          <Card className="max-w-md mx-auto border-border shadow-sm overflow-hidden">
-            <div className="h-2 bg-accent w-full" />
-            <CardHeader>
-              <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
-              <CardDescription className="text-secondary text-lg">
-                Vamos personalizar sua jornada de aprendizado para que você alcance seus objetivos mais rápido.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleOnboardingSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nome">Nome completo</Label>
-                  <Input 
-                    id="nome" 
-                    value={formData.nome} 
-                    onChange={e => setFormData({...formData, nome: e.target.value})} 
-                    required 
-                    placeholder="Como prefere ser chamado?"
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="objetivo">Objetivo de aprendizado</Label>
-                  <Input 
-                    id="objetivo" 
-                    value={formData.objetivo} 
-                    onChange={e => setFormData({...formData, objetivo: e.target.value})} 
-                    required 
-                    placeholder="O que você quer dominar?"
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="experiencia">Experiência profissional</Label>
-                  <Input 
-                    id="experiencia" 
-                    value={formData.experiencia} 
-                    onChange={e => setFormData({...formData, experiencia: e.target.value})} 
-                    required 
-                    placeholder="Área de atuação e cargo"
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nivel">Nível de conhecimento</Label>
-                  <Select onValueChange={val => setFormData({...formData, nivel: val})} required>
-                    <SelectTrigger className="focus:ring-accent">
-                      <SelectValue placeholder="Selecione seu nível" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="iniciante">Iniciante</SelectItem>
-                      <SelectItem value="intermediário">Intermediário</SelectItem>
-                      <SelectItem value="avançado">Avançado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                  Começar Jornada
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <div className="max-w-4xl mx-auto space-y-6">
+            <Card className="max-w-md mx-auto border-border shadow-sm overflow-hidden">
+              <div className="h-2 bg-accent w-full" />
+              <CardHeader>
+                <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
+                <CardDescription className="text-secondary text-lg">
+                  Vamos personalizar sua jornada de aprendizado para que você alcance seus objetivos mais rápido.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleOnboardingSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nome">Nome completo</Label>
+                    <Input 
+                      id="nome" 
+                      value={formData.nome} 
+                      onChange={e => setFormData({...formData, nome: e.target.value})} 
+                      required 
+                      placeholder="Como prefere ser chamado?"
+                      className="focus-visible:ring-accent"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="objetivo">Objetivo de aprendizado</Label>
+                    <Input 
+                      id="objetivo" 
+                      value={formData.objetivo} 
+                      onChange={e => setFormData({...formData, objetivo: e.target.value})} 
+                      required 
+                      placeholder="O que você quer dominar?"
+                      className="focus-visible:ring-accent"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="experiencia">Experiência profissional</Label>
+                    <Input 
+                      id="experiencia" 
+                      value={formData.experiencia} 
+                      onChange={e => setFormData({...formData, experiencia: e.target.value})} 
+                      required 
+                      placeholder="Área de atuação e cargo"
+                      className="focus-visible:ring-accent"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nivel">Nível de conhecimento</Label>
+                    <Select onValueChange={val => setFormData({...formData, nivel: val})} required>
+                      <SelectTrigger className="focus:ring-accent">
+                        <SelectValue placeholder="Selecione seu nível" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="iniciante">Iniciante</SelectItem>
+                        <SelectItem value="intermediário">Intermediário</SelectItem>
+                        <SelectItem value="avançado">Avançado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    Começar Jornada
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <div className="max-w-2xl mx-auto">
+              <Card 
+                className="border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors cursor-pointer"
+                onClick={() => setStep(5)}
+              >
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-accent">
+                    <Library className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-accent">Explorar todo o catálogo da CEFIS</h3>
+                    <p className="text-sm text-secondary">Acesse milhares de cursos reais e certificados.</p>
+                  </div>
+                  <Search className="text-accent w-5 h-5 opacity-50" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         );
       case 1:
         return (
@@ -416,14 +439,26 @@ export default function TutorApp() {
                             <MarkdownRenderer content={stepItem.descricao} />
                           </div>
                           
-                          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border/50">
-                            <div className="flex items-center gap-1 text-xs text-secondary font-medium">
-                              <Clock className="w-3 h-3" /> {stepItem.tempo_estimado_min} min
-                            </div>
-                            {stepItem.fonte && (
-                              <div className="text-xs text-secondary font-medium italic truncate max-w-[250px]">
-                                Fonte: {stepItem.fonte}
+                          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border/50">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1 text-xs text-secondary font-medium">
+                                <Clock className="w-3 h-3" /> {stepItem.tempo_estimado_min} min
                               </div>
+                              {stepItem.fonte && (
+                                <div className="text-xs text-secondary font-medium italic truncate max-w-[250px]">
+                                  Fonte: {stepItem.fonte}
+                                </div>
+                              )}
+                            </div>
+                            {stepItem.origem === 'catalogo_cefis' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
+                                onClick={() => handleSearchCourses(stepItem.fonte || stepItem.titulo)}
+                              >
+                                <Search className="w-3 h-3" /> Ver no catálogo
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -589,8 +624,23 @@ export default function TutorApp() {
                       </div>
                     </div>
                     <div className="flex justify-start">
-                      <div className="bg-white p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm">
+                      <div className="bg-white p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
                         <MarkdownRenderer content={chat.resposta} />
+                        <div className="pt-2 flex justify-end">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
+                            onClick={() => {
+                              // Tentar extrair o nome do curso da resposta se for possível,
+                              // ou apenas abrir o catálogo para explorar.
+                              // Como regra geral, buscaremos pelo contexto da dúvida se não houver curso óbvio.
+                              handleSearchCourses(chat.pergunta);
+                            }}
+                          >
+                            <Library className="w-3 h-3" /> Explorar cursos relacionados
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -634,7 +684,7 @@ export default function TutorApp() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSearchCourses} className="flex flex-col sm:flex-row gap-2">
+                <form onSubmit={(e) => { e.preventDefault(); handleSearchCourses(); }} className="flex flex-col sm:flex-row gap-2">
                   <Input 
                     placeholder="Contabilidade, Impostos, Auditoria, Carreira..." 
                     value={searchQuery}
