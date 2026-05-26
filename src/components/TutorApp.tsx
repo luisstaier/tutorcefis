@@ -156,6 +156,7 @@ export default function TutorApp() {
   const [currentlyPlayingId, setCurrentlyPlayingId] = useState<number | null>(null);
   const [isPreparingAudio, setIsPreparingAudio] = useState<number | null>(null);
   const [selectedAiContent, setSelectedAiContent] = useState<{ titulo: string; conteudo: string } | null>(null);
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -314,13 +315,33 @@ export default function TutorApp() {
         const { data: duvData } = await supabase.functions.invoke('tutor-duvidas', {
           body: { pergunta: q, perfil: formData, userKey }
         });
-        setChatHistory(prev => [...prev, { pergunta: q, resposta: duvData.resposta, fonte: duvData.curso_id ? { curso: duvData.curso_titulo, aula: "Geral", curso_id: duvData.curso_id } : undefined }]);
+        const finalResponse = duvData.resposta;
+        setChatHistory(prev => [...prev, { pergunta: q, resposta: finalResponse, fonte: duvData.curso_id ? { curso: duvData.curso_titulo, aula: "Geral", curso_id: duvData.curso_id } : undefined }]);
+        if (isVoiceActive) {
+          handleListenResponse(chatHistory.length, finalResponse);
+        }
       } else {
-        setChatHistory(prev => [...prev, { pergunta: q, resposta: data.resposta, fonte: data.fonte }]);
+        const finalResponse = data.resposta;
+        setChatHistory(prev => [...prev, { pergunta: q, resposta: finalResponse, fonte: data.fonte }]);
+        if (isVoiceActive) {
+          handleListenResponse(chatHistory.length, finalResponse);
+        }
       }
     } finally {
       setIsAsking(false);
     }
+  };
+
+  const handleToggleVoice = () => {
+    setIsVoiceActive(prev => {
+      const newState = !prev;
+      if (!newState && audioRef.current) {
+        audioRef.current.pause();
+        setCurrentlyPlayingId(null);
+      }
+      toast.info(newState ? "Voz do Tutor ativada" : "Voz do Tutor desativada");
+      return newState;
+    });
   };
 
   const handleStartRecording = async () => {
@@ -925,6 +946,33 @@ export default function TutorApp() {
               ))}
               {isAsking && <div className="flex justify-start"><div className="bg-muted p-4 rounded-2xl animate-pulse"><Loader2 className="animate-spin w-4 h-4" /></div></div>}
             </CardContent>
+            <div className="px-4 py-2 border-t bg-muted/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isVoiceActive ? "default" : "outline"}
+                  onClick={handleToggleVoice}
+                  className={cn(
+                    "h-8 gap-2 font-bold transition-all",
+                    isVoiceActive ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "text-secondary border-dashed"
+                  )}
+                >
+                  <Sparkles className={cn("w-3 h-3", isVoiceActive && "animate-pulse")} />
+                  {isVoiceActive ? "Voz Ativa" : "Ativar Voz"}
+                </Button>
+              </div>
+              {isVoiceActive && (
+                <span className="text-[10px] text-accent font-bold animate-pulse flex items-center gap-1">
+                  <div className="flex gap-0.5 items-end h-3">
+                    <div className="w-0.5 h-1 bg-accent animate-[bounce_1s_infinite_0ms]" />
+                    <div className="w-0.5 h-2 bg-accent animate-[bounce_1s_infinite_200ms]" />
+                    <div className="w-0.5 h-3 bg-accent animate-[bounce_1s_infinite_400ms]" />
+                  </div>
+                  Ouvindo...
+                </span>
+              )}
+            </div>
             <form onSubmit={handleAskDuvida} className="p-4 border-t bg-card flex gap-2 items-center">
               <Button 
                 type="button"
