@@ -1055,7 +1055,7 @@ export default function TutorApp() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm"
+                        className="bg-accent hover:bg-accent/90 text-primary-foreground border-none font-bold shadow-sm"
                         onClick={() => {
                           console.log("navegando para curso (catálogo):", course.id, "Título:", course.title);
                           setSelectedCourse(course);
