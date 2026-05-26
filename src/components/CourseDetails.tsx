@@ -235,12 +235,15 @@ export default function CourseDetails({
     );
   };
 
-  if (!course) {
+  if (!course || !course.id) {
     return (
-      <div className="p-8 text-center space-y-4">
-        <p className="text-secondary">Curso não encontrado.</p>
-        <Button onClick={onBack} variant="outline" className="border-accent text-accent">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao catálogo
+      <div className="p-8 text-center space-y-6 max-w-md mx-auto">
+        <div className="bg-muted/30 p-8 rounded-3xl border border-border">
+          <Loader2 className="w-10 h-10 text-accent animate-spin mx-auto mb-4" />
+          <p className="text-secondary font-medium">Carregando informações do curso...</p>
+        </div>
+        <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao Catálogo
         </Button>
       </div>
     );
