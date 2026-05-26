@@ -54,6 +54,7 @@ serve(async (req) => {
     }
 
     const formattedCourses = coursesList.map((c: any) => ({
+      id: c.id,
       title: c.title,
       summary: c.summary,
     }));
