@@ -760,54 +760,16 @@ export default function TutorApp() {
         );
       case 3:
         return (
-          <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden">
+          <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden min-h-[400px]">
             <div className="h-2 bg-accent w-full" />
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
-                <Zap className="text-accent" /> Modo "Tenho X minutos"
+                <Zap className="text-accent" /> Sessão Rápida Personalizada
               </CardTitle>
-              <CardDescription>Otimize seu tempo com uma micro-aula focada gerada pelo tutor.</CardDescription>
+              <CardDescription>Conteúdo otimizado com IA baseado no seu tempo disponível.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="minutos">Quantos minutos você tem?</Label>
-                  <Input 
-                    id="minutos" 
-                    type="number" 
-                    placeholder="Ex: 15"
-                    value={modoData.minutos}
-                    onChange={e => setModoData({...modoData, minutos: e.target.value})}
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="topico">Qual tópico deseja revisar?</Label>
-                  <Input 
-                    id="topico" 
-                    placeholder="Ex: Impostos corporativos"
-                    value={modoData.topico}
-                    onChange={e => setModoData({...modoData, topico: e.target.value})}
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-              </div>
-              <Button 
-                onClick={() => handleGenerateSession()} 
-                disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
-                className="w-full bg-accent hover:bg-accent/90 text-primary-foreground h-12 font-bold shadow-lg shadow-accent/20"
-              >
-                {isGeneratingSession ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Otimizando conteúdo...
-                  </>
-                ) : (
-                  `Gerar Sessão de ${modoData.minutos || 'X'} min`
-                )}
-              </Button>
-              
-              <div className="pt-6 border-t border-border">
+              <div className="pt-6">
                 {isGeneratingSession ? (
                   <div className="flex flex-col items-center py-12">
                     <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
@@ -815,18 +777,25 @@ export default function TutorApp() {
                     <p className="text-sm text-secondary">Selecionando o melhor do catálogo CEFIS para você.</p>
                   </div>
                 ) : error ? (
-                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
-                    {error}
+                  <div className="space-y-4">
+                    <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
+                      {error}
+                    </div>
+                    <Button onClick={() => setShowStartSessionModal(true)} className="bg-accent text-primary-foreground font-bold">Tentar Novamente</Button>
                   </div>
                 ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-xl">Sua Micro-Trilha</h3>
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-xl">{modoData.topico}</h3>
+                        <p className="text-xs text-secondary">Sua micro-trilha exclusiva</p>
+                      </div>
                       <Badge className="bg-accent/10 text-accent border-none">{quickSession?.total_min ?? 0} min total</Badge>
                     </div>
                     <div className="space-y-4">
                       {quickSession.itens.map((item: any, i: number) => (
                         <Card key={i} className="border-border hover:border-accent/30 transition-all">
+
                           <CardContent className="pt-6 space-y-3">
                             <div className="flex justify-between items-start gap-4">
                               <h4 className="font-bold text-lg leading-tight">{item?.titulo ?? "Sem título"}</h4>
