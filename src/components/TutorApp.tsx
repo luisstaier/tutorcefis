@@ -359,8 +359,9 @@ export default function TutorApp() {
             <div className="max-w-2xl mx-auto">
               <Card 
                 className="border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors cursor-pointer"
-                onClick={() => setStep(5)}
+                onClick={() => handleSearchCourses("")}
               >
+
                 <CardContent className="p-6 flex items-center gap-4">
                   <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center shadow-sm text-accent">
                     <Library className="w-6 h-6" />
