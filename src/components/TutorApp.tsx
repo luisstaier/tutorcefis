@@ -953,9 +953,10 @@ export default function TutorApp() {
           {renderContent()}
         </div>
         
-        <footer className="mt-20 text-center border-t border-border pt-8 text-secondary/40 text-xs">
+        <footer className="mt-20 text-center border-t border-border pt-8 text-white/40 text-xs">
           © 2026 Tutor CEFIS - Inteligência Artificial integrada ao melhor conteúdo contábil.
         </footer>
+
       </div>
     </main>
   );
