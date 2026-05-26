@@ -209,6 +209,7 @@ export default function TutorApp() {
                 </div>
               </div>
               
+              <Button variant="link" className="w-full text-secondary" onClick={nextStep}>Ver Catálogo de Cursos</Button>
               <Button variant="link" className="w-full text-secondary" onClick={() => setStep(0)}>Reiniciar Tutorial</Button>
             </CardContent>
           </Card>
