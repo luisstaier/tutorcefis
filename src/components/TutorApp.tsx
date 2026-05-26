@@ -162,7 +162,12 @@ export default function TutorApp() {
         
         setChatHistory(prev => [...prev, {
           pergunta: perguntaAtual,
-          resposta: duvData.resposta || "Desculpe, não consegui processar sua dúvida."
+          resposta: duvData.resposta || "Desculpe, não consegui processar sua dúvida.",
+          fonte: duvData.curso_id ? {
+            curso: duvData.curso_titulo || "Curso relacionado",
+            aula: "Geral",
+            curso_id: duvData.curso_id
+          } : undefined
         }]);
       } else {
         // Sucesso com transcrição
