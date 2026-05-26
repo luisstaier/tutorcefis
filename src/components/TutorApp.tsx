@@ -841,10 +841,11 @@ export default function TutorApp() {
                         </Card>
                       ))}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
-                      <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
-                      <Button onClick={() => setStep(4)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Tirar uma dúvida</Button>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
+                  <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
+                  <Button onClick={() => setShowStartSessionModal(true)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Nova Sessão Rápida</Button>
+                </div>
+
                   </div>
                 ) : (
                   <div className="p-12 bg-muted/20 rounded-2xl border border-dashed border-secondary/30 text-center">
