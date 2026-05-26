@@ -572,8 +572,8 @@ export default function TutorApp() {
                                   size="sm" 
                                   className="h-6 text-[10px] text-accent hover:bg-accent/5 font-bold gap-1"
                                   onClick={() => {
-                                    console.log("Explorando curso do diagnóstico:", gap.curso_cefis_relacionado);
-                                    handleSearchCourses(gap.curso_cefis_relacionado, undefined, true);
+                                    console.log("navegando para curso (diagnóstico):", gap.curso_cefis_relacionado);
+                                    handleSearchCourses(gap.curso_cefis_relacionado, undefined, true, { source: 'plano', trail: studyPlan });
                                   }}
                                 >
                                   <Search className="w-2.5 h-2.5" /> Explorar
@@ -703,7 +703,7 @@ export default function TutorApp() {
                                 onClick={() => {
                                   const searchTitle = stepItem.fonte || stepItem.titulo;
                                   console.log("navegando para curso (plano):", stepItem.curso_id, "Título:", searchTitle);
-                                  handleSearchCourses(searchTitle, stepItem.curso_id, true);
+                                  handleSearchCourses(searchTitle, stepItem.curso_id, true, { source: 'plano', trail: studyPlan });
                                 }}
                               >
                                 <Search className="w-3 h-3" /> Explorar este curso
@@ -803,8 +803,11 @@ export default function TutorApp() {
                                     size="sm" 
                                     className="h-6 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1 px-1"
                                     onClick={() => {
-                                      console.log("Abrindo curso da sessão:", item.curso_id, item.fonte || item.titulo);
-                                      handleSearchCourses(item.fonte || item.titulo, item.curso_id);
+                                      console.log("navegando para curso (sessão):", item.curso_id, item.fonte || item.titulo);
+                                      handleSearchCourses(item.fonte || item.titulo, item.curso_id, true, { 
+                                        source: 'sessao_rapida', 
+                                        trail: quickSession.itens 
+                                      });
                                     }}
                                   >
                                     <Search className="w-2 h-2" /> Ver no catálogo
@@ -1097,7 +1100,9 @@ export default function TutorApp() {
       case 6:
         return (
           <CourseDetails 
-            course={selectedCourse} 
+            course={selectedCourse}
+            context={navigationContext}
+            onNavigate={(id, title, ctx) => handleSearchCourses(title, id, true, ctx)}
             userProfile={formData}
             onBack={() => setStep(previousStep)}
             onQuestion={(title: string) => {
