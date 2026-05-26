@@ -1,0 +1,113 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { minutos, topico, perfil } = await req.json();
+    
+    const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
+    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+
+    if (!cefisApiKey || !anthropicApiKey) {
+      throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
+    }
+
+    // 1. Busca cursos/aulas reais da CEFIS sobre o tópico
+    const cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    cefisUrl.searchParams.set("count", "10");
+    cefisUrl.searchParams.set("search", topico);
+
+    const cefisResponse = await fetch(cefisUrl.toString(), {
+      headers: {
+        "Authorization": `Bearer ${cefisApiKey}`,
+        "Accept": "application/json",
+      },
+    });
+
+    const cefisResult = await cefisResponse.json();
+    const coursesList = (cefisResult.data || []).map((c: any) => ({
+      title: c.title,
+      summary: c.summary,
+      duration: c.duration // em segundos
+    }));
+
+    console.log(`Cursos encontrados para o tópico "${topico}": ${coursesList.length}`);
+
+    // 2. Chama a Claude para montar a micro-trilha
+    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": anthropicApiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        system: `Você é o Tutor CEFIS. O aluno tem ${minutos} minutos para aprender sobre ${topico}. Monte uma micro-trilha que CABE no tempo informado (some os tempos; não ultrapasse). Priorize conteúdos reais da CEFIS da lista (com fonte = título exato). Para o que não houver no catálogo, gere um resumo enxuto calibrado pelo tempo (~140 palavras de leitura por minuto), marcado como gerado_pelo_tutor. Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato: { "total_min": number, "itens": [ { "titulo": string, "resumo": string, "origem": "catalogo_cefis"|"gerado_pelo_tutor", "fonte": string, "tempo_min": number } ] }.`,
+        messages: [
+          {
+            role: "user",
+            content: `Perfil do Aluno: ${JSON.stringify(perfil)}
+            Minutos disponíveis: ${minutos}
+            Tópico: ${topico}
+            
+            Catálogo Real CEFIS:
+            ${JSON.stringify(coursesList, null, 2)}`
+          }
+        ],
+      }),
+    });
+
+    if (!claudeResponse.ok) {
+      const errText = await claudeResponse.text();
+      console.error("Claude API Error:", errText);
+      throw new Error("Erro ao gerar sessão rápida com IA.");
+    }
+
+    const claudeResult = await claudeResponse.json();
+    const rawText = claudeResult.content[0].text;
+    
+    // Limpeza robusta do JSON
+    let cleanedText = rawText.trim();
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    }
+    
+    const firstBrace = cleanedText.indexOf("{");
+    const lastBrace = cleanedText.lastIndexOf("}");
+    
+    if (firstBrace === -1 || lastBrace === -1) {
+      throw new Error("A IA não retornou um formato de dados válido.");
+    }
+    
+    cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+
+    let sessionData;
+    try {
+      sessionData = JSON.parse(cleanedText);
+    } catch (parseError) {
+      console.error("Parse error:", cleanedText);
+      throw new Error("Erro ao processar os dados da sessão.");
+    }
+
+    return new Response(JSON.stringify(sessionData), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (error) {
+    console.error("Function error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

@@ -27,8 +27,10 @@ export default function TutorApp() {
   const [courses, setCourses] = useState<any[]>([]);
   const [diagnosis, setDiagnosis] = useState<any[]>([]);
   const [studyPlan, setStudyPlan] = useState<any[]>([]);
+  const [quickSession, setQuickSession] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [isGeneratingSession, setIsGeneratingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const nextStep = () => setStep((s) => s + 1);
@@ -77,6 +79,31 @@ export default function TutorApp() {
       setIsGeneratingPlan(false);
     }
   };
+
+  const handleGenerateSession = async () => {
+    if (!modoData.minutos || !modoData.topico) return;
+    
+    setIsGeneratingSession(true);
+    setError(null);
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('tutor-tempo', {
+        body: {
+          minutos: parseInt(modoData.minutos),
+          topico: modoData.topico,
+          perfil: formData
+        }
+      });
+
+      if (functionError) throw functionError;
+      setQuickSession(data);
+    } catch (err: any) {
+      console.error('Session generation error:', err);
+      setError(err.message || 'Erro ao gerar sessão rápida.');
+    } finally {
+      setIsGeneratingSession(false);
+    }
+  };
+
 
 
   const handleSearchCourses = async (e: React.FormEvent) => {
@@ -329,19 +356,63 @@ export default function TutorApp() {
                     onChange={e => setModoData({...modoData, topico: e.target.value})}
                   />
                 </div>
-                <Button className="w-full bg-accent hover:bg-accent/90 text-white h-12">
-                  Gerar Sessão de {modoData.minutos || 'X'} min
+                <Button 
+                  onClick={handleGenerateSession} 
+                  disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
+                  className="w-full bg-accent hover:bg-accent/90 text-white h-12"
+                >
+                  {isGeneratingSession ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Otimizando conteúdo...
+                    </>
+                  ) : (
+                    `Gerar Sessão de ${modoData.minutos || 'X'} min`
+                  )}
                 </Button>
               </div>
               
               <div className="pt-6 border-t border-border">
-                <div className="p-8 bg-muted/20 rounded-lg border border-dashed border-secondary/30 text-center">
-                  <BookOpen className="mx-auto text-secondary/40 w-12 h-12 mb-4" />
-                  <p className="text-secondary italic">Resultado da sessão aparecerá aqui...</p>
-                </div>
+                {quickSession ? (
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-lg">Sua Micro-Trilha ({quickSession.total_min} min)</h3>
+                    <div className="space-y-4">
+                      {quickSession.itens.map((item: any, i: number) => (
+                        <div key={i} className="p-4 bg-muted/30 rounded-lg border border-border space-y-2">
+                          <div className="flex justify-between items-start gap-2">
+                            <h4 className="font-bold text-md">{item.titulo}</h4>
+                            <Badge variant="outline" className="text-[10px] shrink-0">
+                              {item.tempo_min} min
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-secondary">{item.resumo}</p>
+                          <div className="flex items-center justify-between pt-2">
+                            <Badge 
+                              className={`${
+                                item.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
+                              } text-white border-none text-[10px]`}
+                            >
+                              {item.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
+                            </Badge>
+                            {item.fonte && (
+                              <span className="text-[10px] text-secondary italic truncate max-w-[150px]">
+                                {item.fonte}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-8 bg-muted/20 rounded-lg border border-dashed border-secondary/30 text-center">
+                    <BookOpen className="mx-auto text-secondary/40 w-12 h-12 mb-4" />
+                    <p className="text-secondary italic">Resultado da sessão aparecerá aqui...</p>
+                  </div>
+                )}
               </div>
               
-              <Button variant="link" className="w-full text-secondary" onClick={nextStep}>Ver Catálogo de Cursos</Button>
+              <Button variant="link" className="w-full text-secondary" onClick={() => setStep(4)}>Ver Catálogo de Cursos</Button>
               <Button variant="link" className="w-full text-secondary" onClick={() => setStep(0)}>Reiniciar Tutorial</Button>
             </CardContent>
           </Card>
