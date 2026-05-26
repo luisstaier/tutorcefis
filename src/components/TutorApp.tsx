@@ -1089,7 +1089,7 @@ export default function TutorApp() {
       <StartSessionModal 
         open={showStartSessionModal} 
         onOpenChange={setShowStartSessionModal}
-        topico={modoData.topico}
+        studyPlan={studyPlan}
         onStart={(minutos: string, topico: string) => {
           setModoData({ minutos, topico });
           setShowStartSessionModal(false);
@@ -1097,6 +1097,7 @@ export default function TutorApp() {
           handleGenerateSession(minutos, topico);
         }}
       />
+
 
 
       <div className="max-w-4xl mx-auto px-4">
