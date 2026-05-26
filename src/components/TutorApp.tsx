@@ -78,6 +78,8 @@ export default function TutorApp() {
     } finally {
       setIsGeneratingPlan(false);
     }
+  };
+
   const handleGenerateSession = async () => {
     if (!modoData.minutos || !modoData.topico) return;
     
