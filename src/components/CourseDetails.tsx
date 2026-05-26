@@ -173,7 +173,7 @@ export default function CourseDetails({
     return () => clearInterval(interval);
   }, [lastActivity, showMotivational]);
 
-
+  const handleViewCertificate = async () => {
     setIsCertificateLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-proxy', {
