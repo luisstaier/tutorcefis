@@ -22,34 +22,43 @@ serve(async (req) => {
       throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
     }
 
-    // 1. Busca cursos/aulas reais da CEFIS sobre o tópico
-    let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
-    cefisUrl.searchParams.set("count", "15");
-    cefisUrl.searchParams.set("search", topico);
+    // 1. Busca conteúdo real da CEFIS relacionado ao tópico (Catálogo local primeiro)
+    let rawCourses = [];
+    try {
+      const searchResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/cefis-search`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: topico, limit: 15 }),
+      });
+      
+      if (searchResponse.ok) {
+        rawCourses = await searchResponse.json();
+      }
+    } catch (e) {
+      console.error("Erro ao buscar no catálogo local:", e);
+    }
 
-    let cefisResponse = await fetch(cefisUrl.toString(), {
-      headers: {
-        "Authorization": `Bearer ${cefisApiKey}`,
-        "Accept": "application/json",
-      },
-    });
+    // Fallback: Se não encontrar nada localmente, busca na API externa
+    if (!rawCourses || rawCourses.length === 0) {
+      console.log(`Nenhum curso local para "${topico}". Buscando na API...`);
+      const cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+      cefisUrl.searchParams.set("count", "15");
+      cefisUrl.searchParams.set("search", topico);
 
-    let cefisResult = await cefisResponse.json();
-    let rawCourses = cefisResult.data || [];
-
-    // Fallback: Se não encontrar nada pelo tópico, busca cursos gerais para ter contexto
-    if (rawCourses.length === 0) {
-      console.log(`Nenhum curso encontrado para "${topico}". Buscando cursos gerais...`);
-      const fallbackUrl = new URL("https://api-v3.cefis.com.br/courses");
-      fallbackUrl.searchParams.set("count", "10");
-      const fallbackResponse = await fetch(fallbackUrl.toString(), {
+      const cefisResponse = await fetch(cefisUrl.toString(), {
         headers: {
           "Authorization": `Bearer ${cefisApiKey}`,
           "Accept": "application/json",
         },
       });
-      const fallbackResult = await fallbackResponse.json();
-      rawCourses = fallbackResult.data || [];
+
+      if (cefisResponse.ok) {
+        const cefisResult = await cefisResponse.json();
+        rawCourses = cefisResult.data || [];
+      }
     }
 
     const coursesList = rawCourses.map((c: any) => ({
