@@ -802,9 +802,32 @@ export default function TutorApp() {
                       </div>
                       <p className="text-sm text-secondary">{item.resumo}</p>
                       <div className="flex items-center gap-1.5 pt-1">
-                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.curso_id ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
+                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por:</p>
+                        {item.curso_id ? (
+                          <CefisLogo className="w-12 text-primary" />
+                        ) : (
+                          <TutorAiLogo className="scale-75 origin-left" />
+                        )}
                       </div>
-                      {item.curso_id ? <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false)}>Iniciar Curso</Button> : null}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] font-bold" 
+                        onClick={() => {
+                          if (item.curso_id) {
+                            handleSearchCourses(undefined, item.curso_id, false);
+                          } else {
+                            setSelectedAiContent({
+                              titulo: item.titulo,
+                              conteudo: item.conteudo || item.resumo
+                            });
+                            setPreviousStep(3);
+                            setStep(7);
+                          }
+                        }}
+                      >
+                        {item.curso_id ? 'Iniciar Curso' : 'Iniciar'}
+                      </Button>
                     </div>
                   ))}
                   
