@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster, toast } from "sonner";
+import CourseDetails from "./CourseDetails";
 
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
@@ -1072,7 +1073,7 @@ export default function TutorApp() {
             course={selectedCourse} 
             userProfile={formData}
             onBack={() => setStep(previousStep)}
-            onQuestion={(title) => {
+            onQuestion={(title: string) => {
               setDuvida(`Tenho uma dúvida sobre o curso: ${title}\n`);
               setStep(4);
             }}
