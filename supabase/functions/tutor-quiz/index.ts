@@ -81,7 +81,15 @@ serve(async (req) => {
     console.log("resposta bruta do quiz:", text);
     
     // Limpeza de cercas markdown: extrai do primeiro { até o último }
-    const clean = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    const firstBrace = text.indexOf('{');
+    const lastBrace = text.lastIndexOf('}');
+    
+    if (firstBrace === -1 || lastBrace === -1) {
+      console.error("JSON não encontrado na resposta:", text);
+      throw new Error("Resposta da IA não contém JSON válido");
+    }
+
+    const clean = text.substring(firstBrace, lastBrace + 1);
     console.log("Conteúdo extraído para parse:", clean);
     const data = JSON.parse(clean);
 
