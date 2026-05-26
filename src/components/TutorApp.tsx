@@ -584,7 +584,7 @@ export default function TutorApp() {
                   size="sm"
                   className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20"
                 >
-                  {isGeneratingPlan ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : "Gerar Plano"}
+                  {isGeneratingPlan ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : "Gerar Plano de Estudos"}
                 </Button>
               )}
             </CardHeader>
