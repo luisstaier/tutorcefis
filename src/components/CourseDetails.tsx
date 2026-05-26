@@ -499,7 +499,7 @@ export default function CourseDetails({
           <Button 
             variant="ghost" 
             onClick={onBack}
-            className="text-secondary hover:text-accent font-medium -ml-2"
+            className="text-secondary hover:text-foreground hover:bg-muted font-medium -ml-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> 
             {context?.source === 'catalogo' ? 'Voltar ao Catálogo' : 'Voltar'}
