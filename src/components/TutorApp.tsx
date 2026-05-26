@@ -894,17 +894,18 @@ export default function TutorApp() {
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <div className="flex items-center gap-3 text-xs text-secondary font-medium">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {Math.floor(course.duration / 3600)}h {Math.floor((course.duration % 3600) / 60)}min
+                      <div className="flex items-center gap-3 text-xs text-white/80 font-medium">
+                        <span className="flex items-center gap-1 bg-[#132442] px-2 py-1 rounded-md border border-white/10">
+                          <Clock className="w-3 h-3 text-primary" /> {Math.floor(course.duration / 3600)}h {Math.floor((course.duration % 3600) / 60)}min
                         </span>
-                        <span className="flex items-center gap-1">
-                          <PlayCircle className="w-3 h-3" /> {course.lessonCount} aulas
+                        <span className="flex items-center gap-1 bg-[#132442] px-2 py-1 rounded-md border border-white/10">
+                          <PlayCircle className="w-3 h-3 text-primary" /> {course.lessonCount} aulas
                         </span>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-accent hover:text-accent hover:bg-accent/5 font-bold">
+                      <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm">
                         Ver detalhes
                       </Button>
+
                     </div>
                   </CardContent>
                 </Card>
@@ -952,9 +953,10 @@ export default function TutorApp() {
           {renderContent()}
         </div>
         
-        <footer className="mt-20 text-center border-t border-border pt-8 text-secondary/40 text-xs">
+        <footer className="mt-20 text-center border-t border-border pt-8 text-white/40 text-xs">
           © 2026 Tutor CEFIS - Inteligência Artificial integrada ao melhor conteúdo contábil.
         </footer>
+
       </div>
     </main>
   );
