@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
 export default function TutorApp() {
-  const [step, setStep] = useState(0); // 0: Onboarding, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas
+  const [step, setStep] = useState(0); // 0: Onboarding, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo
   const [formData, setFormData] = useState({
     nome: "",
     objetivo: "",
@@ -163,6 +163,17 @@ export default function TutorApp() {
   };
 
   const renderStep = () => {
+    return (
+      <div className="w-full max-w-4xl mx-auto mb-8 flex justify-center gap-4 border-b pb-4">
+        <Button variant={step === 2 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(2)} disabled={step < 2} className="text-xs">O Plano</Button>
+        <Button variant={step === 3 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(3)} disabled={step < 2} className="text-xs">Sessão Rápida</Button>
+        <Button variant={step === 4 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(4)} disabled={step < 2} className="text-xs">Dúvidas</Button>
+        <Button variant={step === 5 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(5)} disabled={step < 2} className="text-xs">Catálogo</Button>
+      </div>
+    );
+  };
+
+  const renderContent = () => {
     switch (step) {
       case 4:
         return (
@@ -513,12 +524,12 @@ export default function TutorApp() {
                 )}
               </div>
               
-              <Button variant="link" className="w-full text-secondary" onClick={() => setStep(4)}>Ver Catálogo de Cursos</Button>
+              <Button variant="link" className="w-full text-secondary" onClick={() => setStep(5)}>Ver Catálogo de Cursos</Button>
               <Button variant="link" className="w-full text-secondary" onClick={() => setStep(0)}>Reiniciar Tutorial</Button>
             </CardContent>
           </Card>
         );
-      case 4:
+      case 5:
         return (
           <div className="space-y-6">
             <Card className="max-w-4xl mx-auto border-border shadow-sm">
