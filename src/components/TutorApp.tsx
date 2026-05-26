@@ -554,7 +554,10 @@ export default function TutorApp() {
                                   variant="ghost" 
                                   size="sm" 
                                   className="h-6 text-[10px] text-accent hover:bg-accent/5 font-bold gap-1"
-                                  onClick={() => handleSearchCourses(gap.curso_cefis_relacionado)}
+                                  onClick={() => {
+                                    console.log("Explorando curso do diagnóstico:", gap.curso_cefis_relacionado);
+                                    handleSearchCourses(gap.curso_cefis_relacionado);
+                                  }}
                                 >
                                   <Search className="w-2.5 h-2.5" /> Explorar
                                 </Button>
@@ -681,6 +684,7 @@ export default function TutorApp() {
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
                                 onClick={() => {
+                                  console.log("Abrindo curso do plano:", stepItem.curso_id, stepItem.fonte || stepItem.titulo);
                                   handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id, true);
                                 }}
                               >
@@ -780,7 +784,10 @@ export default function TutorApp() {
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-6 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1 px-1"
-                                    onClick={() => handleSearchCourses(item.fonte || item.titulo, item.curso_id)}
+                                    onClick={() => {
+                                      console.log("Abrindo curso da sessão:", item.curso_id, item.fonte || item.titulo);
+                                      handleSearchCourses(item.fonte || item.titulo, item.curso_id);
+                                    }}
                                   >
                                     <Search className="w-2 h-2" /> Ver no catálogo
                                   </Button>
@@ -914,6 +921,7 @@ export default function TutorApp() {
                             size="sm" 
                             className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
                             onClick={() => {
+                              console.log("Abrindo curso da dúvida:", chat.fonte?.curso_id, chat.fonte?.curso || chat.pergunta);
                               handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id, true);
                             }}
                           >
@@ -1039,6 +1047,7 @@ export default function TutorApp() {
                         size="sm" 
                         className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm"
                         onClick={() => {
+                          console.log("Abrindo curso:", course.id, course.title);
                           setSelectedCourse(course);
                           setPreviousStep(step);
                           setStep(6);

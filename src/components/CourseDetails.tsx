@@ -35,6 +35,7 @@ export default function CourseDetails({
   const quizTimerRef = useRef<any>(null);
 
   useEffect(() => {
+    console.log("CourseDetails montado com courseId:", course.id);
     fetchLesson();
     return () => {
       if (quizTimerRef.current) clearTimeout(quizTimerRef.current);
