@@ -584,7 +584,7 @@ export default function CourseDetails({
                 <Loader2 className="w-10 h-10 text-[#b3e51d] animate-spin" />
                 <p className="text-white/60 text-sm font-medium">Preparando seu ambiente de aprendizado...</p>
               </div>
-            ) : preferredStreamSource ? (
+            ) : currentVideoUrl ? (
               <div className="w-full h-full">
                 {isSwitchingLesson && (
                   <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -599,7 +599,7 @@ export default function CourseDetails({
                 poster={lesson?.thumbnail || lesson?.poster || course?.banner}
               >
                 <source 
-                  src={preferredStreamSource?.link_secure} 
+                  src={currentVideoUrl} 
                   type="video/mp4" 
                 />
                 Seu navegador não suporta vídeos.
