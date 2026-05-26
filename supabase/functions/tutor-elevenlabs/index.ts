@@ -19,36 +19,39 @@ serve(async (req) => {
       throw new Error("ELEVENLABS_API_KEY não configurada.");
     }
 
-    // Limpeza de markdown e limite de 1000 caracteres
-    const cleanForAudio = (text: string) => {
-      return text
-        .replace(/#{1,6}\s+/g, '')        // remove ## títulos
-        .replace(/\*\*(.*?)\*\*/g, '$1')   // remove **negrito** mas mantém texto
-        .replace(/\*(.*?)\*/g, '$1')       // remove *itálico*
-        .replace(/`(.*?)`/g, '$1')         // remove `código`
-        .replace(/^[-*+]\s+/gm, '')        // remove marcadores de lista
-        .replace(/^\d+\.\s+/gm, '')        // remove listas numeradas
-        .replace(/^>\s+/gm, '')            // remove blockquotes
-        .replace(/\|.*?\|/g, '')           // remove tabelas
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → só texto
-        .replace(/---+/g, '')              // remove separadores
-        .replace(/\n{3,}/g, '\n\n')        // máximo 2 quebras de linha seguidas
-        // Converte R$ para "reais" para soar natural no áudio:
-        .replace(/R\$\s?(\d+[\d.,]*)/g, '$1 reais')
-        // Remove $ solto (que não seja R$):
+    const processTextForAudio = (text: string) => {
+      // 1. Primeiro normaliza encoding
+      let result = text.normalize('NFC')
+      
+      // 2. Remove markdown
+      result = result
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/`(.*?)`/g, '$1')
+        .replace(/^[-*+]\s+/gm, '')
+        .replace(/^\d+\.\s+/gm, '')
+        .replace(/^>\s+/gm, '')
+        .replace(/\|.*?\|/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/---+/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+      
+      // 3. Converte valores monetários para fala natural
+      result = result
+        .replace(/R\$\s?(\d[\d.,]*)/g, '$1 reais')
         .replace(/(?<!R)\$/g, '')
-        .trim();
-    };
-    
-    const addNaturalPauses = (text: string) => {
-      return text
-        .replace(/\. /g, '.  ')        // pausa após ponto
-        .replace(/: /g, ':  ')         // pausa após dois pontos
-        .replace(/\n\n/g, '\n\n  ')    // pausa entre parágrafos
-        .replace(/([!?]) /g, '$1  ');  // pausa após exclamação/interrogação
-    };
+      
+      // 4. Adiciona pausas naturais
+      result = result
+        .replace(/\. /g, '.  ')
+        .replace(/: /g, ':  ')
+        .replace(/([!?]) /g, '$1  ')
+      
+      return result.trim()
+    }
 
-    const cleanText = addNaturalPauses(cleanForAudio(text));
+    const cleanText = processTextForAudio(text);
 
     const splitIntoChunks = (text: string, maxChars = 500) => {
       const paragraphs = text.split('\n\n');
