@@ -105,6 +105,10 @@ export default function TutorApp() {
     }
   }, []);
 
+  useEffect(() => {
+    console.log("TutorApp Step mudou para:", step, "Course selecionado:", selectedCourse?.id);
+  }, [step, selectedCourse]);
+
   const handleCompleteLesson = (courseId: number, lessonId: number) => {
     setCompletedLessons(prev => {
       const courseLessons = prev[courseId] || [];
@@ -280,7 +284,7 @@ export default function TutorApp() {
     
     try {
       const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
-        body: courseId ? { id: courseId } : { search: q }
+        body: (courseId !== undefined && courseId !== null) ? { id: courseId } : { search: q }
       });
 
 
@@ -327,15 +331,20 @@ export default function TutorApp() {
 
       if (courseId && finalCourses.length > 0) {
         setSelectedCourse(finalCourses[0]);
+        setCourses(finalCourses);
         setPreviousStep(step);
         setStep(6);
       } else if (autoOpen && finalCourses.length > 0) {
         setSelectedCourse(finalCourses[0]);
+        setCourses(finalCourses);
         setPreviousStep(step);
         setStep(6);
       } else {
         setCourses(finalCourses);
-        if (!autoOpen) setStep(5);
+        setStep(5);
+        if (autoOpen && finalCourses.length === 0) {
+          toast.info("Não encontramos o curso exato, mas você pode explorar o catálogo.");
+        }
       }
     } catch (err: any) {
       console.error('Search error:', err);
@@ -678,7 +687,7 @@ export default function TutorApp() {
                                 </div>
                               )}
                             </div>
-                            {stepItem.origem === 'catalogo_cefis' && (
+                            {(stepItem.origem === 'catalogo_cefis' || stepItem.fonte || stepItem.curso_id) && (
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
@@ -1046,7 +1055,7 @@ export default function TutorApp() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm"
+                        className="bg-accent hover:bg-accent/90 text-primary-foreground border-none font-bold shadow-sm"
                         onClick={() => {
                           console.log("navegando para curso (catálogo):", course.id, "Título:", course.title);
                           setSelectedCourse(course);
