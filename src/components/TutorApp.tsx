@@ -696,7 +696,7 @@ export default function TutorApp() {
                             size="sm" 
                             className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
                             onClick={() => {
-                              handleSearchCourses(chat.fonte?.curso || chat.pergunta);
+                              handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id);
                             }}
                           >
                             <Library className="w-3 h-3" /> {chat.fonte ? "Explorar este curso" : "Explorar cursos relacionados"}
