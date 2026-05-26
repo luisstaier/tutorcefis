@@ -15,6 +15,7 @@ serve(async (req) => {
     if (!anthropicApiKey) throw new Error("ANTHROPIC_API_KEY ausente");
 
     // 1. Busca transcrição
+    console.log(`Buscando transcrição para aula ${lessonId}...`);
     const subResponse = await fetch(`https://api-v3.cefis.com.br/lessons/${lessonId}/subtitles`);
     const subtitlesResult = await subResponse.json();
     const subtitles = Array.isArray(subtitlesResult) ? subtitlesResult : (subtitlesResult.data || []);
@@ -39,10 +40,14 @@ serve(async (req) => {
       .trim();
 
     if (!cleanText || cleanText.length < 50) {
+      console.log("Legenda muito curta ou vazia para aula", lessonId);
       return new Response(JSON.stringify({ fallback: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const model = "claude-sonnet-4-6";
+    console.log(`Usando modelo: ${model}`);
 
     // 3. Chama Claude para gerar o quiz
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
@@ -53,9 +58,9 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: model,
         max_tokens: 1500,
-        system: `Crie 4 questões de múltipla escolha baseadas ESTRITAMENTE no conteúdo da transcrição fornecida. Nível ${nivel || 'intermediário'}. Cada questão tem 4 alternativas (a,b,c,d), uma correta. Responda ESTRITAMENTE em JSON (limpe cercas markdown): { "questoes": [ { "pergunta": "...", "alternativas": {"a": "...", "b": "...", "c": "...", "d": "..."}, "correta": "a", "explicacao": "..." } ] }`,
+        system: `Crie 4 questões de múltipla escolha baseadas ESTRITAMENTE no conteúdo da transcrição fornecida. Nível ${nivel || 'intermediário'}. Cada questão tem 4 alternativas (a,b,c,d), uma correta. Responda ESTRITAMENTE em JSON válido, sem texto explicativo fora do JSON. Formato: { "questoes": [ { "pergunta": "...", "alternativas": {"a": "...", "b": "...", "c": "...", "d": "..."}, "correta": "a", "explicacao": "..." } ] }`,
         messages: [
           { 
             role: "user", 
@@ -72,15 +77,18 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
+    console.log("Resposta bruta do Claude:", JSON.stringify(claudeResult));
+    
     let rawContent = claudeResult.content[0].text.trim();
     
-    // Limpeza de cercas markdown
+    // Limpeza de cercas markdown: extrai do primeiro { até o último }
     const firstBrace = rawContent.indexOf("{");
     const lastBrace = rawContent.lastIndexOf("}");
     if (firstBrace !== -1 && lastBrace !== -1) {
       rawContent = rawContent.substring(firstBrace, lastBrace + 1);
     }
     
+    console.log("Conteúdo extraído para parse:", rawContent);
     const data = JSON.parse(rawContent);
 
     return new Response(JSON.stringify(data), {
