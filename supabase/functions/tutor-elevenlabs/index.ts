@@ -40,15 +40,6 @@ serve(async (req) => {
         .trim();
     };
     
-    const truncateForAudio = (text: string, maxChars = 2500) => {
-      if (text.length <= maxChars) return text;
-      const truncated = text.substring(0, maxChars);
-      const lastPeriod = truncated.lastIndexOf('.');
-      // Se encontrou um ponto final e ele está nos últimos 30% do limite, corta lá
-      return lastPeriod > maxChars * 0.7
-        ? truncated.substring(0, lastPeriod + 1)
-        : truncated;
-    };
 
     const addNaturalPauses = (text: string) => {
       return text
