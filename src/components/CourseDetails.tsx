@@ -44,8 +44,17 @@ export default function CourseDetails({
   const [quizAnswers, setQuizAnswers] = useState<any[]>([]);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [isCertificateLoading, setIsCertificateLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizTimerRef = useRef<any>(null);
+
+  // Calcula progresso do curso
+  const totalLessons = lessonsGallery.length || course?.lessonCount || 0;
+  const completedCount = lessonsGallery.filter(l => isLessonCompleted(course?.id, l.id)).length;
+  const courseProgressPercent = totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0;
+  const isCourseCompleted = courseProgressPercent >= 80;
+
   const normalizedGoals = Array.isArray(course?.goals)
     ? course.goals
         .map((goal: unknown) => (typeof goal === "string" ? goal : String(goal ?? "")))
@@ -65,7 +74,7 @@ export default function CourseDetails({
     fetchLesson();
   }, [course?.id]);
 
-  // Listener "vídeo finalizado" — re-anexa quando a aula muda (sem refetch)
+  // Listeners do vídeo
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !lesson?.id) return;
@@ -75,11 +84,26 @@ export default function CourseDetails({
       onCompleteLesson(course.id, lesson.id);
     };
 
+    const handleTimeUpdate = () => {
+      if (video.duration) {
+        const progress = (video.currentTime / video.duration) * 100;
+        setVideoProgress(progress);
+
+        // Se atingir 80% e ainda não estiver completa
+        if (progress >= 80 && !isLessonCompleted(course.id, lesson.id)) {
+          console.log("Atingiu 80% do vídeo, marcando como concluída automaticamente.");
+          onCompleteLesson(course.id, lesson.id);
+        }
+      }
+    };
+
     video.addEventListener('ended', handleEnded);
+    video.addEventListener('timeupdate', handleTimeUpdate);
     return () => {
       video.removeEventListener('ended', handleEnded);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [lesson?.id, course?.id]);
+  }, [lesson?.id, course?.id, completedCount]); // completedCount para forçar re-check de conclusão
 
   useEffect(() => {
     return () => {
@@ -93,6 +117,35 @@ export default function CourseDetails({
       videoRef.current.load();
     }
   }, [lesson?.id]);
+
+  const handleViewCertificate = async () => {
+    setIsCertificateLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cefis-proxy', {
+        body: { 
+          method: 'GET',
+          path: '/performance/certificates',
+          userKey
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Se existir certificado, abre o primeiro (simplificado)
+        const cert = data[0];
+        window.open(cert.file_url || 'https://cefis.com.br', '_blank');
+      } else {
+        toast.info("Complete a avaliação final no site da CEFIS para emitir seu certificado.");
+        window.open('https://cefis.com.br', '_blank');
+      }
+    } catch (err) {
+      console.error("Erro ao buscar certificado:", err);
+      toast.error("Não foi possível carregar seu certificado. Tente pelo site da CEFIS.");
+    } finally {
+      setIsCertificateLoading(false);
+    }
+  };
 
   const fetchLesson = async (selectedLessonId?: number) => {
     if (!course?.id) return;
@@ -519,6 +572,49 @@ export default function CourseDetails({
           )}
         </div>
 
+      {/* BARRA DE PROGRESSO DO CURSO */}
+      <section className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 shadow-sm">
+        <div className="flex-1 w-full space-y-2">
+          <div className="flex justify-between text-sm font-bold">
+            <span className="text-foreground">Progresso do Curso</span>
+            <span className="text-accent">{completedCount} de {totalLessons} aulas concluídas</span>
+          </div>
+          <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-[#b3e51d] transition-all duration-500" 
+              style={{ width: `${courseProgressPercent}%` }}
+            />
+          </div>
+        </div>
+        {isCourseCompleted && (
+          <Badge className="bg-[#b3e51d] text-[#051124] border-none font-black px-3 py-1 animate-bounce">
+            CURSO CONCLUÍDO! ✅
+          </Badge>
+        )}
+      </section>
+
+      {/* CARD DE CERTIFICADO */}
+      {isCourseCompleted && (
+        <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30 shadow-lg overflow-hidden animate-in zoom-in-95 duration-500">
+          <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+              <span className="text-3xl">🎓</span>
+            </div>
+            <div className="flex-1 text-center md:text-left space-y-1">
+              <h3 className="text-xl font-bold">Parabéns! Você concluiu o curso</h3>
+              <p className="text-secondary text-sm">Você assistiu todas as aulas e está pronto para o próximo nível.</p>
+            </div>
+            <Button 
+              onClick={handleViewCertificate}
+              disabled={isCertificateLoading}
+              className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold px-8"
+            >
+              {isCertificateLoading ? <Loader2 className="animate-spin mr-2" /> : "📄 Ver meu certificado"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* SEÇÃO 1 — HEADER DO CURSO */}
       <section className="relative rounded-3xl overflow-hidden border border-border bg-card shadow-sm">
         <div className="h-48 sm:h-64 overflow-hidden relative">
@@ -622,6 +718,12 @@ export default function CourseDetails({
                 />
                 Seu navegador não suporta vídeos.
               </video>
+              <div className="absolute bottom-0 left-0 w-full h-1.5 bg-white/20 z-10">
+                <div 
+                  className="h-full bg-[#b3e51d] shadow-[0_0_10px_rgba(179,229,29,0.8)] transition-all duration-300" 
+                  style={{ width: `${videoProgress}%` }}
+                />
+              </div>
               </div>
             ) : (
               <div className="p-12 text-center space-y-4">
