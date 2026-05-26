@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,19 +31,26 @@ export default function CourseDetails({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<any[]>([]);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizTimerRef = useRef<any>(null);
 
   useEffect(() => {
-    console.log("CourseDetails montado com courseId:", course.id);
+    console.log("CourseDetails montado com courseId:", course?.id);
+    if (!course?.id) {
+      console.error("CourseDetails: course.id is missing");
+      return;
+    }
     fetchLesson();
     return () => {
       if (quizTimerRef.current) clearTimeout(quizTimerRef.current);
     };
-  }, [course.id]);
+  }, [course?.id]);
 
   const fetchLesson = async () => {
+    if (!course?.id) return;
     setIsLoadingLesson(true);
+    setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
         body: { courseId: course.id }
@@ -59,6 +66,7 @@ export default function CourseDetails({
       }, 10000);
     } catch (err) {
       console.error("Error fetching lesson:", err);
+      setHasError(true);
     } finally {
       setIsLoadingLesson(false);
     }
@@ -90,7 +98,8 @@ export default function CourseDetails({
   };
 
   const handleAnswer = (answer: string) => {
-    const currentQuestion = quiz.questoes[currentQuestionIndex];
+    const currentQuestion = quiz?.questoes?.[currentQuestionIndex];
+    if (!currentQuestion) return;
     const isCorrect = answer === currentQuestion.correta;
     
     setQuizAnswers([...quizAnswers, { 
@@ -103,7 +112,7 @@ export default function CourseDetails({
   };
 
   const nextQuestion = () => {
-    if (currentQuestionIndex < quiz.questoes.length - 1) {
+    if (currentQuestionIndex < (quiz?.questoes?.length || 0) - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       setIsQuizFinished(true);
@@ -169,7 +178,8 @@ export default function CourseDetails({
       );
     }
 
-    const currentQuestion = quiz.questoes[currentQuestionIndex];
+    const currentQuestion = quiz?.questoes?.[currentQuestionIndex];
+    if (!currentQuestion) return null;
     const currentAnswer = quizAnswers.find(a => a.questionIndex === currentQuestionIndex);
 
     return (
@@ -182,7 +192,7 @@ export default function CourseDetails({
         <h3 className="text-xl font-bold">{currentQuestion.pergunta}</h3>
 
         <div className="grid gap-3">
-          {Object.entries(currentQuestion.alternativas).map(([key, value]) => {
+          {currentQuestion?.alternativas && Object.entries(currentQuestion.alternativas).map(([key, value]) => {
             const isSelected = currentAnswer?.selected === key;
             const isCorrect = key === currentQuestion.correta;
             const showFeedback = !!currentAnswer;
@@ -224,6 +234,36 @@ export default function CourseDetails({
       </div>
     );
   };
+
+  if (!course) {
+    return (
+      <div className="p-8 text-center space-y-4">
+        <p className="text-secondary">Curso não encontrado.</p>
+        <Button onClick={onBack} variant="outline" className="border-accent text-accent">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao catálogo
+        </Button>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="p-8 text-center space-y-6 max-w-md mx-auto">
+        <div className="bg-red-50 border border-red-100 p-6 rounded-2xl">
+          <h3 className="text-red-800 font-bold mb-2">Ops! Algo deu errado</h3>
+          <p className="text-red-600 text-sm">Não conseguimos carregar os detalhes desta aula no momento. Por favor, tente novamente.</p>
+        </div>
+        <div className="flex gap-4 justify-center">
+          <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+          </Button>
+          <Button onClick={fetchLesson} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
@@ -318,7 +358,7 @@ export default function CourseDetails({
                 <Loader2 className="w-10 h-10 text-[#b3e51d] animate-spin" />
                 <p className="text-white/60 text-sm font-medium">Preparando seu ambiente de aprendizado...</p>
               </div>
-            ) : lesson?.stream_sources ? (
+            ) : (lesson?.stream_sources && lesson.stream_sources.length > 0) ? (
               <video 
                 ref={videoRef}
                 controls 
@@ -327,7 +367,7 @@ export default function CourseDetails({
               >
                 {/* Procura pela fonte 'sd' como solicitado, senão pega a primeira */}
                 <source 
-                  src={lesson.stream_sources.find((s: any) => s.quality === "sd")?.link_secure || lesson.stream_sources[0].link_secure} 
+                  src={lesson.stream_sources.find((s: any) => s.quality === "sd")?.link_secure || lesson.stream_sources[0]?.link_secure} 
                   type="video/mp4" 
                 />
                 Seu navegador não suporta vídeos.
@@ -374,9 +414,3 @@ export default function CourseDetails({
   );
 }
 
-// Para evitar erro se o CardFooter não for importado
-const CardFooter = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("flex items-center p-6 pt-0", className)}>
-    {children}
-  </div>
-);
