@@ -35,8 +35,18 @@ serve(async (req) => {
         .replace(/\n{3,}/g, '\n\n')        // máximo 2 quebras de linha seguidas
         .trim();
     };
+    
+    const truncateForAudio = (text: string, maxChars = 2500) => {
+      if (text.length <= maxChars) return text;
+      const truncated = text.substring(0, maxChars);
+      const lastPeriod = truncated.lastIndexOf('.');
+      // Se encontrou um ponto final e ele está nos últimos 30% do limite, corta lá
+      return lastPeriod > maxChars * 0.7
+        ? truncated.substring(0, lastPeriod + 1)
+        : truncated;
+    };
 
-    const cleanText = cleanForAudio(text).substring(0, 1000);
+    const cleanText = truncateForAudio(cleanForAudio(text));
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
