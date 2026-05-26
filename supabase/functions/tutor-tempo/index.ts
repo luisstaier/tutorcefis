@@ -51,6 +51,7 @@ serve(async (req) => {
     }
 
     const coursesList = rawCourses.map((c: any) => ({
+      id: c.id,
       title: c.title,
       summary: c.summary,
       duration: c.duration // em segundos
