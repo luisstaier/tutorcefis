@@ -681,6 +681,7 @@ export default function TutorApp() {
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
                                 onClick={() => {
+                                  console.log("Abrindo curso do plano:", stepItem.curso_id, stepItem.fonte || stepItem.titulo);
                                   handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id, true);
                                 }}
                               >
