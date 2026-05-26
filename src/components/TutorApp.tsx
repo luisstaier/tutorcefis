@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, RefreshCw } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
@@ -93,26 +93,6 @@ export default function TutorApp() {
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
-  const [isIndexing, setIsIndexing] = useState(false);
-  const [indexStatus, setIndexStatus] = useState<{ total: number; indexados: number } | null>(null);
-
-  const handleSeedCatalog = async () => {
-    setIsIndexing(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('cefis-seed', {
-        body: { userKey }
-      });
-      if (error) throw error;
-      setIndexStatus(data);
-      toast.success(`Catálogo atualizado: ${data.indexados} cursos indexados.`);
-    } catch (err: any) {
-      setError("Erro ao indexar catálogo: " + err.message);
-      toast.error("Erro ao atualizar catálogo.");
-    } finally {
-      setIsIndexing(false);
-    }
-  };
 
   useEffect(() => {
     const savedKey = sessionStorage.getItem("cefis_user_key");
@@ -568,24 +548,6 @@ export default function TutorApp() {
       case 5:
         return (
           <div className="space-y-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-serif font-bold">Catálogo de Cursos</h2>
-              <div className="flex flex-col items-end gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleSeedCatalog} 
-                  disabled={isIndexing}
-                  className="text-[10px] h-8 text-secondary hover:text-accent gap-1.5 border border-border/50"
-                >
-                  {isIndexing ? <Loader2 className="animate-spin w-3 h-3" /> : <RefreshCw className="w-3 h-3" />}
-                  {isIndexing ? "Indexando cursos..." : "Atualizar catálogo"}
-                </Button>
-                {indexStatus && (
-                  <span className="text-[9px] text-accent font-medium">✓ Catálogo atualizado: {indexStatus.indexados} cursos</span>
-                )}
-              </div>
-            </div>
             <Card className="max-w-4xl mx-auto border-border shadow-sm overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2 font-serif"><Search className="text-accent" /> Explorar Catálogo</CardTitle>

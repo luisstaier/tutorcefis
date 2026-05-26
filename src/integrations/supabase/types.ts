@@ -14,60 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      cefis_catalog: {
-        Row: {
-          average_rating: number | null
-          categories: string | null
-          course_id: number
-          created_at: string
-          duration: number | null
-          fts: unknown
-          goals: string | null
-          id: number
-          keywords: string | null
-          lesson_count: number | null
-          subtitle: string | null
-          summary: string | null
-          teacher_name: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          average_rating?: number | null
-          categories?: string | null
-          course_id: number
-          created_at?: string
-          duration?: number | null
-          fts?: unknown
-          goals?: string | null
-          id?: number
-          keywords?: string | null
-          lesson_count?: number | null
-          subtitle?: string | null
-          summary?: string | null
-          teacher_name?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          average_rating?: number | null
-          categories?: string | null
-          course_id?: number
-          created_at?: string
-          duration?: number | null
-          fts?: unknown
-          goals?: string | null
-          id?: number
-          keywords?: string | null
-          lesson_count?: number | null
-          subtitle?: string | null
-          summary?: string | null
-          teacher_name?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

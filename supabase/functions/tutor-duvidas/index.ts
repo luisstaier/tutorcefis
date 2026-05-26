@@ -22,42 +22,36 @@ serve(async (req) => {
       throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
     }
 
-    // 1. Busca conteúdo real da CEFIS relacionado à pergunta (Catálogo local primeiro)
-    let coursesList = [];
-    try {
-      const searchResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/cefis-search`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: pergunta || "", limit: 10 }),
-      });
-      
-      if (searchResponse.ok) {
-        coursesList = await searchResponse.json();
-      }
-    } catch (e) {
-      console.error("Erro ao buscar no catálogo local:", e);
-    }
+    // 1. Busca conteúdo real da CEFIS relacionado à pergunta
+    let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    cefisUrl.searchParams.set("count", "10");
+    cefisUrl.searchParams.set("search", pergunta || "");
 
-    if (!coursesList || coursesList.length === 0) {
-      console.log("Nenhum curso local encontrado. Realizando busca na API...");
-      const cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    let cefisResponse = await fetch(cefisUrl.toString(), {
+      headers: {
+        "Authorization": `Bearer ${cefisApiKey}`,
+        "Accept": "application/json",
+      },
+    });
+
+    let cefisResult = await cefisResponse.json();
+    let coursesList = cefisResult.data || [];
+
+    console.log(`Busca 1 (pergunta: "${pergunta}") retornou ${coursesList.length} cursos.`);
+
+    if (coursesList.length === 0) {
+      console.log("Nenhum curso específico encontrado. Realizando busca geral...");
+      cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
       cefisUrl.searchParams.set("count", "10");
-      cefisUrl.searchParams.set("search", pergunta || "");
       
-      const cefisResponse = await fetch(cefisUrl.toString(), {
+      cefisResponse = await fetch(cefisUrl.toString(), {
         headers: {
           "Authorization": `Bearer ${cefisApiKey}`,
           "Accept": "application/json",
         },
       });
-      
-      if (cefisResponse.ok) {
-        const cefisResult = await cefisResponse.json();
-        coursesList = cefisResult.data || [];
-      }
+      cefisResult = await cefisResponse.json();
+      coursesList = cefisResult.data || [];
     }
 
     const formattedCourses = coursesList.map((c: any) => ({

@@ -22,50 +22,45 @@ serve(async (req) => {
       throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
     }
 
-    // 1. Buscar cursos relevantes na CEFIS (Catálogo local primeiro)
-    let coursesList = [];
-    try {
-      const searchResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/cefis-search`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: perfil.objetivo, limit: 20 }),
-      });
-      
-      if (searchResponse.ok) {
-        const searchResult = await searchResponse.json();
-        coursesList = searchResult || [];
-      }
-    } catch (e) {
-      console.error("Erro ao buscar no catálogo local:", e);
-    }
+    // 1. Buscar cursos relevantes na CEFIS
+    let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    cefisUrl.searchParams.set("count", "15");
+    cefisUrl.searchParams.set("search", perfil.objetivo);
 
-    // Fallback para API externa se local estiver vazio
+    let cefisResponse = await fetch(cefisUrl.toString(), {
+      headers: {
+        "Authorization": `Bearer ${cefisApiKey}`,
+        "Accept": "application/json",
+      },
+    });
+
+    let cefisResult = await cefisResponse.json();
+    let coursesList = cefisResult.data || [];
+
+    console.log(`Busca 1 (objetivo: "${perfil.objetivo}") retornou ${coursesList.length} cursos.`);
+
+    // Se vierem poucos cursos, faz uma segunda busca geral (sem search)
     if (coursesList.length < 8) {
-      const cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+      console.log("Poucos cursos encontrados. Realizando busca geral...");
+      cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
       cefisUrl.searchParams.set("count", "15");
-      cefisUrl.searchParams.set("search", perfil.objetivo);
-
-      const cefisResponse = await fetch(cefisUrl.toString(), {
+      
+      cefisResponse = await fetch(cefisUrl.toString(), {
         headers: {
           "Authorization": `Bearer ${cefisApiKey}`,
           "Accept": "application/json",
         },
       });
-
-      if (cefisResponse.ok) {
-        const cefisResult = await cefisResponse.json();
-        const apiCourses = cefisResult.data || [];
-        
-        const existingIds = new Set(coursesList.map((c: any) => c.course_id || c.id));
-        apiCourses.forEach((c: any) => {
-          if (!existingIds.has(c.id)) {
-            coursesList.push(c);
-          }
-        });
-      }
+      cefisResult = await cefisResponse.json();
+      const generalCourses = cefisResult.data || [];
+      console.log(`Busca 2 (geral) retornou ${generalCourses.length} cursos.`);
+      
+      const existingIds = new Set(coursesList.map((c: any) => c.id));
+      generalCourses.forEach((c: any) => {
+        if (!existingIds.has(c.id)) {
+          coursesList.push(c);
+        }
+      });
     }
 
     const formattedCourses = coursesList.map((c: any) => ({
