@@ -268,7 +268,7 @@ export default function TutorApp() {
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
               step === item.id 
-                ? "bg-accent text-white shadow-md shadow-accent/20" 
+                ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" 
                 : "text-secondary hover:bg-accent/10 hover:text-accent"
             )}
           >
@@ -549,7 +549,7 @@ export default function TutorApp() {
                   <div className="p-4 bg-muted/50 rounded-lg border border-dashed border-border mb-6">
                     <p className="text-secondary italic">Nenhum plano gerado ainda.</p>
                   </div>
-                  <Button onClick={handleGeneratePlan} className="bg-accent text-white">Gerar Plano de Estudos</Button>
+                  <Button onClick={handleGeneratePlan} className="bg-accent text-primary-foreground">Gerar Plano de Estudos</Button>
                 </div>
               )}
             </CardContent>
@@ -705,7 +705,7 @@ export default function TutorApp() {
                 {chatHistory.map((chat, i) => (
                   <div key={i} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex justify-end">
-                      <div className="bg-accent text-white p-4 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md shadow-accent/10">
+                      <div className="bg-accent text-primary-foreground p-4 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md shadow-accent/10">
                         {chat.pergunta}
                       </div>
                     </div>
@@ -804,7 +804,7 @@ export default function TutorApp() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="space-y-1">
                         {courses.length === 1 && (
-                          <Badge className="bg-accent text-white border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
+                          <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
                         )}
                         <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
                       </div>
