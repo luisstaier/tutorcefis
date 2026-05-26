@@ -501,7 +501,7 @@ export default function TutorApp() {
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
-                                onClick={() => handleSearchCourses(stepItem.fonte || stepItem.titulo)}
+                                onClick={() => handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id)}
                               >
                                 <Search className="w-3 h-3" /> Ver no catálogo
                               </Button>
