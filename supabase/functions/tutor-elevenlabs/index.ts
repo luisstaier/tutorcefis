@@ -33,6 +33,10 @@ serve(async (req) => {
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → só texto
         .replace(/---+/g, '')              // remove separadores
         .replace(/\n{3,}/g, '\n\n')        // máximo 2 quebras de linha seguidas
+        // Converte R$ para "reais" para soar natural no áudio:
+        .replace(/R\$\s?(\d+[\d.,]*)/g, '$1 reais')
+        // Remove $ solto (que não seja R$):
+        .replace(/(?<!R)\$/g, '')
         .trim();
     };
     
