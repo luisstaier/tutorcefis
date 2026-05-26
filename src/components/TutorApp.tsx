@@ -771,7 +771,7 @@ export default function TutorApp() {
                 </div>
               </div>
               <Button 
-                onClick={handleGenerateSession} 
+                onClick={() => handleGenerateSession()} 
                 disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
                 className="w-full bg-accent hover:bg-accent/90 text-primary-foreground h-12 font-bold shadow-lg shadow-accent/20"
               >
