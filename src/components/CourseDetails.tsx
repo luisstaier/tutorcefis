@@ -34,7 +34,7 @@ export default function CourseDetails({
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<any[]>([]);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
@@ -281,34 +281,31 @@ export default function CourseDetails({
 
     return (
       <>
-        {/* Mobile Overlay */}
+        {/* Mobile/Desktop Overlay Backdrop */}
         {isSidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-sm transition-opacity"
+            className=\"fixed inset-0 bg-black/20 z-30 backdrop-blur-[1px] transition-opacity\"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
         
         <aside className={cn(
-          "fixed left-0 top-0 h-full bg-card border-r border-border z-40 transition-all duration-300 overflow-y-auto shadow-2xl lg:shadow-none",
-          isSidebarOpen ? "w-[260px] translate-x-0" : "w-0 -translate-x-full lg:w-0"
+          \"fixed left-0 top-0 h-full bg-card/95 border-r border-border z-40 transition-all duration-300 overflow-y-auto shadow-xl backdrop-blur-md\",
+          isSidebarOpen ? \"w-[200px] translate-x-0\" : \"w-0 -translate-x-full\"
         )}>
-          <div className="p-4 space-y-6 pt-24">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-[10px] uppercase tracking-wider text-secondary flex items-center gap-2">
-                {isPlano ? "Sua trilha de estudos" : "Sua sessão rápida"}
+          <div className=\"p-4 space-y-6 pt-24\">
+            <div className=\"flex items-center justify-between\">
+              <h3 className=\"font-bold text-[9px] uppercase tracking-wider text-secondary flex items-center gap-2\">
+                {isPlano ? \"Sua trilha de estudos\" : \"Sua sessão rápida\"}
               </h3>
-              <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={() => setIsSidebarOpen(false)}>
-                <X className="w-4 h-4" />
+              <Button variant=\"ghost\" size=\"icon\" className=\"h-6 w-6\" onClick={() => setIsSidebarOpen(false)}>
+                <X className=\"w-3 h-3\" />
               </Button>
             </div>
 
-            <div className="space-y-1">
+            <div className=\"space-y-1\">
               {trail.map((item: any, i: number) => {
                 const itemTitle = isPlano ? item.titulo : item.titulo;
-                const itemCourseId = item.curso_id || (isPlano ? undefined : item.curso_id);
-                const itemSearch = isPlano ? item.fonte : item.titulo;
-                
                 const isCurrent = (course.id && item.curso_id === course.id) || 
                                  (course.title && (isPlano ? item.fonte === course.title : item.titulo === course.title));
                 
@@ -326,30 +323,27 @@ export default function CourseDetails({
                       if (window.innerWidth < 1024) setIsSidebarOpen(false);
                     }}
                     className={cn(
-                      "w-full text-left p-3 rounded-xl transition-all group",
-                      isCurrent ? "bg-accent/10 border border-accent/20" : "hover:bg-muted/50"
+                      \"w-full text-left p-2 rounded-lg transition-all group\",
+                      isCurrent ? \"bg-accent/10 border border-accent/20\" : \"hover:bg-muted/50\"
                     )}
                   >
-                    <div className="flex gap-3 items-start">
-                      <div className="mt-1 shrink-0">
+                    <div className=\"flex gap-2 items-start\">
+                      <div className=\"mt-1 shrink-0\">
                         {isCurrent ? (
-                          <div className="w-4 h-4 rounded-full bg-[#b3e51d] shadow-[0_0_8px_rgba(179,229,29,0.5)]" />
+                          <div className=\"w-3 h-3 rounded-full bg-[#b3e51d] shadow-[0_0_8px_rgba(179,229,29,0.5)]\" />
                         ) : isPast ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />
+                          <CheckCircle2 className=\"w-3 h-3 text-[#b3e51d]\" />
                         ) : (
-                          <div className="w-4 h-4 rounded-full border-2 border-muted" />
+                          <div className=\"w-3 h-3 rounded-full border-2 border-muted\" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className=\"flex-1 min-w-0\">
                         <p className={cn(
-                          "text-[11px] font-bold leading-tight",
-                          isCurrent ? "text-accent" : "text-foreground"
+                          \"text-[10px] font-bold leading-tight\",
+                          isCurrent ? \"text-accent\" : \"text-foreground\"
                         )}>
                           {itemTitle}
                         </p>
-                        {!isPlano && item.tempo_min && (
-                          <p className="text-[9px] text-secondary mt-0.5">{item.tempo_min} min</p>
-                        )}
                       </div>
                     </div>
                   </button>
@@ -396,10 +390,7 @@ export default function CourseDetails({
   }
 
   return (
-    <div className={cn(
-      "relative transition-all duration-300",
-      context && context.source !== 'catalogo' && isSidebarOpen && "lg:pl-[260px]"
-    )}>
+    <div className=\"relative min-h-screen\">
       {renderSidebar()}
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500 pb-20">
