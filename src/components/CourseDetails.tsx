@@ -562,7 +562,7 @@ export default function CourseDetails({
           {lesson && (
             <CardFooter className="p-4 bg-muted/30 border-t border-border">
               <div className="flex justify-between items-center w-full">
-                <p className="font-bold text-sm">{lesson.title}</p>
+                <p className="text-xs text-secondary">Pronto para testar o que aprendeu nesta aula?</p>
                 {!showQuiz && !isQuizFinished && (
                   <Button 
                     size="sm" 
