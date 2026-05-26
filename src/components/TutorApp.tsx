@@ -249,19 +249,23 @@ export default function TutorApp() {
     }
   };
 
-  const handleGenerateSession = async () => {
-    if (!modoData.minutos || !modoData.topico) return;
+  const handleGenerateSession = async (manualMinutos?: string, manualTopico?: string) => {
+    const mins = manualMinutos || modoData.minutos;
+    const top = manualTopico || modoData.topico;
+    
+    if (!mins || !top) return;
     
     setIsGeneratingSession(true);
     setError(null);
     try {
       const { data, error: functionError } = await supabase.functions.invoke('tutor-tempo', {
         body: {
-          minutos: parseInt(modoData.minutos),
-          topico: modoData.topico,
+          minutos: parseInt(mins),
+          topico: top,
           perfil: formData
         }
       });
+
 
       if (functionError) throw functionError;
       setQuickSession(data);
