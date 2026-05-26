@@ -135,8 +135,11 @@ export default function CourseDetails({
 
   useEffect(() => {
     // Forçar recarga da tag video quando a aula muda
-    if (lesson?.id && videoRef.current) {
-      videoRef.current.load();
+    if (lesson?.id) {
+      triggeredMilestonesRef.current = [];
+      if (videoRef.current) {
+        videoRef.current.load();
+      }
     }
   }, [lesson?.id]);
 
