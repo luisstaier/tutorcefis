@@ -783,7 +783,7 @@ export default function TutorApp() {
                       <div className="space-y-3">
                         <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
                         <div className="flex flex-wrap gap-2">
-                          {["5", "10", "30", "45", "60", "90", "120", "180"].map((m) => (
+                          {["5", "10", "30", "45", "60", "90"].map((m) => (
                             <Button 
                               key={m} 
                               variant={modoData.minutos === m ? "default" : "outline"}
