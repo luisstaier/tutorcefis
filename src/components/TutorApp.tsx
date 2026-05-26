@@ -66,6 +66,7 @@ export default function TutorApp() {
     objetivo: "",
     experiencia: "",
     nivel: "",
+    estiloAprendizagem: "",
   });
 
   const [modoData, setModoData] = useState({
@@ -132,7 +133,8 @@ export default function TutorApp() {
         nome: data.userName || "",
         experiencia: data.occupation || "",
         nivel: data.nivel === 1 ? "iniciante" : data.nivel === 2 ? "intermediário" : data.nivel === 3 ? "avançado" : "iniciante",
-        objetivo: ""
+        objetivo: "",
+        estiloAprendizagem: ""
       };
       localStorage.setItem("tutor_cefis_profile", JSON.stringify(profile));
 
@@ -381,6 +383,17 @@ export default function TutorApp() {
                     </Select>
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label>Como você aprende melhor?</Label>
+                  <Select value={formData.estiloAprendizagem} onValueChange={val => setFormData({...formData, estiloAprendizagem: val})}>
+                    <SelectTrigger><SelectValue placeholder="Selecione seu estilo..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="exemplos práticos">🔍 Com exemplos práticos e casos reais</SelectItem>
+                      <SelectItem value="explicação teórica">📖 Com explicação teórica primeiro</SelectItem>
+                      <SelectItem value="direto ao ponto">⚡ Direto ao ponto, de forma objetiva</SelectItem>
+                      <SelectItem value="analogias">🔄 Com analogias e comparações</SelectItem>
+                    </SelectContent>
+                  </Select>
                 <div className="space-y-2">
                   <Label>O que você deseja aprender agora? (Objetivo)</Label>
                   <Input value={formData.objetivo} onChange={e => setFormData({...formData, objetivo: e.target.value})} placeholder="Ex: Dominar o IRPF 2024, entender auditoria contábil..." required />
