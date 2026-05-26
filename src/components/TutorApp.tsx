@@ -30,6 +30,25 @@ const MarkdownRenderer = ({ content, className = "" }: { content: string; classN
     </ReactMarkdown>
   </div>
 );
+const CefisLogo = ({ className = "" }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 1862.89 641.11" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M1862.89,340.46c-.78,6.53-1.54,13.07-2.35,19.59-8,63.91-32.87,120.52-74.93,169.23C1735.3,587.53,1672,624.33,1596,636.44,1491.8,653,1399.79,625.5,1322.17,553.77c-52.5-48.51-85.11-108.81-96.28-179.37-16.47-104.12,11-196,82.75-273.6,48.45-52.35,108.82-83.89,179.08-96.3,10.74-1.9,21.7-2.57,32.55-3.84a8.6,8.6,0,0,0,1.88-.66H1562a35.74,35.74,0,0,0,3.53.75c10.3,1.24,20.69,1.94,30.89,3.74C1667,17,1727.17,49.07,1776.18,101.3,1823.72,152,1851.77,212,1860.53,281c.83,6.54,1.58,13.08,2.36,19.62Zm-320.83-254c-129.18,0-234.16,104.63-234.22,233.76-.06,128.56,102.79,231.63,229.1,234.27,131.41,2.74,237-101.75,239.37-229.37C1778.78,192.82,1671.92,86.34,1542.06,86.5Z"/>
+    <path d="M474.76,267.24v56.52H358.91v93.06H488.07V473h-199V128.08H481.31v59.54H362.14v79.62Z"/>
+    <path d="M1107,141.56c-5,19.07-10,37.83-15,57-16.45-9.75-34.3-13.27-52.46-15.4a76.54,76.54,0,0,0-38.32,4.83c-26.14,10.67-31,40.06-9.84,59,9,8,19.38,13.8,30.26,18.65,20.52,9.14,40.49,19.23,58.55,32.66,18.27,13.59,31.93,30.6,37.23,53.25,8.31,35.59-4.17,86.58-52.58,111-18.77,9.48-38.79,13.61-59.62,14.2-34.09,1-66.76-6.18-98.75-17.31-3.14-1.09-3.93-2.27-3.08-5.61,4.48-17.67,8.67-35.41,12.95-53.06,23.89,12,49.42,16.55,75.6,18.25,12.86.84,25.4-.75,37-7a37.57,37.57,0,0,0,9.21-59.1c-9.11-9.42-20.52-15.46-32-21.28-20.47-10.4-40.91-20.74-59.58-34.33-17.42-12.69-31.07-28.19-36.81-49.17-8.8-32.21.55-60.14,22.79-84,20-21.44,45.76-32.1,74.3-36.13,33.18-4.67,65.34.42,96.61,11.9C1104.51,140.34,1105.48,140.86,1107,141.56Z"/>
+    <path d="M232.72,195.54c-18.09-7.63-36.71-12-56.16-12.41-48.95-1-81.22,27.36-94.55,68.81-12.17,37.83-10.79,76,4.4,112.88,13.4,32.51,39.23,49.81,73.66,54.49,23.66,3.21,46.61-.28,68.87-8.71l5.11-1.92c3.29,18.5,6.54,36.82,9.93,55.93-7.69,2.27-15.23,4.83-22.94,6.72a240.25,240.25,0,0,1-80.29,6.31A152.62,152.62,0,0,1,7.9,368.08c-9.36-32-9.75-64.31-4.58-96.93,4.26-26.88,12.36-52.37,27-75.57,20.45-32.35,49.93-52.14,86.23-62.7,22.9-6.66,46.39-7.26,69.94-6.93,14.85.2,29.57,1.85,43.83,6.22A127.44,127.44,0,0,1,245,138c1,.44,2.19,2.37,2,3.29-4.39,17.84-9,35.62-13.55,53.42C233.33,194.91,233.07,195.1,232.72,195.54Z"/>
+    <path d="M608.14,187.52v86.4H720.66v56.51H608.06V473H538.4V128.12h189v59.4Z"/>
+    <path d="M784.41,131.4h69.33V473H784.41Z"/>
+    <path d="M1520.6,507a191.57,191.57,0,0,0-6.76-47.86c-12.76-46.73-39.2-82.81-82.8-105.31-21-10.83-43.47-17.06-66.83-19.94-12.76-1.58-25.62-2.25-39-3.37.77-1.94,1.52-4.21,2.55-6.35,10.28-21.43,23.58-41,38.12-59.67,27.28-35.12,58.7-66.23,92.56-95a7.49,7.49,0,0,1,4.37-1.76q107.4-.09,214.82,0a3.05,3.05,0,0,1,.54.14c0,.34,0,.82-.16,1-27.26,29.61-49,63.1-68.47,98.11-36.59,65.79-62.17,135.78-79.09,209-2.14,9.29-4,18.65-6,28C1524.11,506,1524,508.42,1520.6,507Z"/>
+    <path d="M1534.78,508.91c2.67-9.93,5.31-20.05,8.14-30.12,15-53.49,32-106.33,54.07-157.41,9.23-21.33,19.54-42.1,32-61.77,2.31-3.63,4.42-4.77,8.89-4,29.19,4.8,58.45,9.2,88.19,13.81a15.8,15.8,0,0,1-1.79,1.87c-35.23,25.67-65.81,56.23-93.73,89.52a605.92,605.92,0,0,0-91.18,146.3C1538.62,508.86,1538.12,511.48,1534.78,508.91Z"/>
+    <path d="M1544.15,509.74c5.21-10.16,10.12-20.48,15.68-30.44,29.07-52,64.35-99.61,104.08-143.95q8.86-9.89,18.08-19.45c.93-1,3-1.86,4.1-1.51,21.64,6.71,43.22,13.62,64.81,20.5.35.12.62.49.87.69-82,42.81-148.53,103.8-206.62,174.77Z"/>
+  </svg>
+);
+
 
 export default function TutorApp() {
   const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo
@@ -241,7 +260,7 @@ export default function TutorApp() {
 
   const renderNavigation = () => {
     return (
-      <nav className="flex flex-wrap justify-center gap-1 md:gap-4 mb-8 bg-white/50 backdrop-blur-sm p-2 rounded-2xl border border-border sticky top-4 z-50">
+      <nav className="flex flex-wrap justify-center gap-1 md:gap-4 mb-8 bg-card/50 backdrop-blur-sm p-2 rounded-2xl border border-border sticky top-4 z-50">
         {navItems.map((item) => (
           <button
             key={item.id}
@@ -249,7 +268,7 @@ export default function TutorApp() {
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
               step === item.id 
-                ? "bg-accent text-white shadow-md shadow-accent/20" 
+                ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" 
                 : "text-secondary hover:bg-accent/10 hover:text-accent"
             )}
           >
@@ -326,7 +345,7 @@ export default function TutorApp() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
                     Começar Jornada
                   </Button>
                 </form>
@@ -339,7 +358,7 @@ export default function TutorApp() {
                 onClick={() => setStep(5)}
               >
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-accent">
+                  <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center shadow-sm text-accent">
                     <Library className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
@@ -366,7 +385,7 @@ export default function TutorApp() {
                 </div>
               ) : error ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
                     {error}
                   </div>
                   <Button onClick={() => setStep(0)} variant="outline">Tentar novamente</Button>
@@ -391,7 +410,7 @@ export default function TutorApp() {
                                   gap.prioridade === 'alta' ? 'bg-accent hover:bg-accent' : 
                                   gap.prioridade === 'media' ? 'bg-secondary hover:bg-secondary' : 
                                   'bg-success hover:bg-success'
-                                } text-white border-none`}
+                                } text-primary-foreground border-none`}
                               >
                                 {gap.prioridade.toUpperCase()}
                               </Badge>
@@ -427,7 +446,7 @@ export default function TutorApp() {
                       <Button 
                         onClick={handleGeneratePlan} 
                         disabled={isGeneratingPlan}
-                        className="bg-accent hover:bg-accent/90 text-white font-bold"
+                        className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
                       >
                         {isGeneratingPlan ? (
                           <>
@@ -472,7 +491,7 @@ export default function TutorApp() {
                   <div className="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
                     {studyPlan.map((stepItem, i) => (
                       <div key={i} className="relative">
-                        <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-white border-2 border-accent flex items-center justify-center text-accent font-bold z-10 shadow-sm">
+                        <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-card border-2 border-accent flex items-center justify-center text-accent font-bold z-10 shadow-sm">
                           {stepItem.passo}
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-3 hover:bg-muted/50 transition-colors">
@@ -481,7 +500,7 @@ export default function TutorApp() {
                             <Badge 
                               className={`${
                                 stepItem.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
-                              } text-white border-none shrink-0`}
+                              } text-primary-foreground border-none shrink-0`}
                             >
                               {stepItem.origem === 'catalogo_cefis' ? (
                                 <span className="flex items-center gap-1">📚 CEFIS</span>
@@ -521,7 +540,7 @@ export default function TutorApp() {
                     ))}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 pt-6 border-t border-border">
-                    <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-white font-bold">Ir para Sessão Rápida</Button>
+                    <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Ir para Sessão Rápida</Button>
                     <Button variant="outline" onClick={() => setStep(4)} className="border-accent text-accent hover:bg-accent/5 font-bold">Tirar Dúvida Agora</Button>
                   </div>
                 </div>
@@ -530,7 +549,7 @@ export default function TutorApp() {
                   <div className="p-4 bg-muted/50 rounded-lg border border-dashed border-border mb-6">
                     <p className="text-secondary italic">Nenhum plano gerado ainda.</p>
                   </div>
-                  <Button onClick={handleGeneratePlan} className="bg-accent text-white">Gerar Plano de Estudos</Button>
+                  <Button onClick={handleGeneratePlan} className="bg-accent text-primary-foreground">Gerar Plano de Estudos</Button>
                 </div>
               )}
             </CardContent>
@@ -573,7 +592,7 @@ export default function TutorApp() {
               <Button 
                 onClick={handleGenerateSession} 
                 disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
-                className="w-full bg-accent hover:bg-accent/90 text-white h-12 font-bold shadow-lg shadow-accent/20"
+                className="w-full bg-accent hover:bg-accent/90 text-primary-foreground h-12 font-bold shadow-lg shadow-accent/20"
               >
                 {isGeneratingSession ? (
                   <>
@@ -593,7 +612,7 @@ export default function TutorApp() {
                     <p className="text-sm text-secondary">Selecionando o melhor do catálogo CEFIS para você.</p>
                   </div>
                 ) : error ? (
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm mb-4">
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
                     {error}
                   </div>
                 ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
@@ -619,7 +638,7 @@ export default function TutorApp() {
                               <Badge 
                                 className={`${
                                   item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
-                                } text-white border-none`}
+                                } text-primary-foreground border-none`}
                               >
                                 {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
                               </Badge>
@@ -647,7 +666,7 @@ export default function TutorApp() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
                       <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
-                      <Button onClick={() => setStep(4)} className="bg-accent hover:bg-accent/90 text-white font-bold">Tirar uma dúvida</Button>
+                      <Button onClick={() => setStep(4)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Tirar uma dúvida</Button>
                     </div>
                   </div>
                 ) : (
@@ -664,7 +683,7 @@ export default function TutorApp() {
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm flex flex-col h-[650px] overflow-hidden">
             <div className="h-2 bg-accent w-full" />
-            <CardHeader className="bg-white/80 backdrop-blur-sm z-10 border-b border-border">
+            <CardHeader className="bg-card/80 backdrop-blur-sm z-10 border-b border-border">
               <CardTitle className="text-2xl flex items-center gap-2">
                 <MessageCircle className="text-accent" /> Tire suas dúvidas
               </CardTitle>
@@ -686,12 +705,12 @@ export default function TutorApp() {
                 {chatHistory.map((chat, i) => (
                   <div key={i} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex justify-end">
-                      <div className="bg-accent text-white p-4 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md shadow-accent/10">
+                      <div className="bg-accent text-primary-foreground p-4 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md shadow-accent/10">
                         {chat.pergunta}
                       </div>
                     </div>
                     <div className="flex justify-start">
-                      <div className="bg-white p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
+                      <div className="bg-card p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
                         {chat.fonte && (
                           <Badge variant="outline" className="mb-2 bg-success/5 text-success border-success/20 flex items-center gap-1 w-fit text-[10px] py-0 px-2 h-6">
                             <BookOpen className="w-3 h-3" />
@@ -717,7 +736,7 @@ export default function TutorApp() {
                 ))}
                 {isAsking && (
                   <div className="flex justify-start animate-pulse">
-                    <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-border flex items-center gap-3 shadow-sm">
+                    <div className="bg-card p-4 rounded-2xl rounded-tl-none border border-border flex items-center gap-3 shadow-sm">
                       <Loader2 className="w-4 h-4 animate-spin text-accent" />
                       <span className="text-sm text-secondary font-medium">Tutor está consultando o catálogo...</span>
                     </div>
@@ -725,7 +744,7 @@ export default function TutorApp() {
                 )}
               </div>
               
-              <form onSubmit={handleAskDuvida} className="p-4 bg-white border-t border-border flex gap-2">
+              <form onSubmit={handleAskDuvida} className="p-4 bg-card border-t border-border flex gap-2">
                 <Input 
                   placeholder="Ex: Como funciona a tributação do Simples Nacional?" 
                   value={duvida}
@@ -733,7 +752,7 @@ export default function TutorApp() {
                   disabled={isAsking}
                   className="flex-1 h-12 focus-visible:ring-accent bg-muted/30 border-none"
                 />
-                <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent hover:bg-accent/90 text-white shrink-0 rounded-xl shadow-lg shadow-accent/20">
+                <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent hover:bg-accent/90 text-primary-foreground shrink-0 rounded-xl shadow-lg shadow-accent/20">
                   <Send className="w-5 h-5" />
                 </Button>
               </form>
@@ -761,7 +780,7 @@ export default function TutorApp() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 h-12 focus-visible:ring-accent"
                   />
-                  <Button type="submit" disabled={isLoading} className="h-12 px-8 bg-accent hover:bg-accent/90 text-white font-bold shadow-lg shadow-accent/20">
+                  <Button type="submit" disabled={isLoading} className="h-12 px-8 bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20">
                     {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
                     Buscar Cursos
                   </Button>
@@ -770,7 +789,7 @@ export default function TutorApp() {
             </Card>
 
             {error && (
-              <div className="max-w-4xl mx-auto p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+              <div className="max-w-4xl mx-auto p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
                 {error}
               </div>
             )}
@@ -785,7 +804,7 @@ export default function TutorApp() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="space-y-1">
                         {courses.length === 1 && (
-                          <Badge className="bg-accent text-white border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
+                          <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
                         )}
                         <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
                       </div>
@@ -847,20 +866,19 @@ export default function TutorApp() {
   };
 
   return (
-    <main className="min-h-screen pb-12 bg-[#FAF8F3]">
+    <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
       <div className="max-w-4xl mx-auto px-4">
         <header className="py-8 flex flex-col items-center">
-          <div className="mb-6 flex flex-col items-center cursor-pointer" onClick={() => setStep(0)}>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-                <BookOpen className="text-white w-6 h-6" />
+          <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
+            <div className="flex flex-col items-center gap-4 mb-1 transition-transform duration-300 group-hover:scale-105">
+              <CefisLogo className="w-48 sm:w-64 text-primary" />
+              <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">TUTOR IA</span>
               </div>
-              <h1 className="text-4xl font-black text-foreground tracking-tight">
-                Tutor <span className="text-accent">CEFIS</span>
-              </h1>
             </div>
-            <p className="text-secondary font-medium italic">Seu aprendizado, no seu tempo.</p>
+            <p className="text-secondary font-medium italic mt-2">Seu aprendizado, no seu tempo.</p>
           </div>
+
           
           {renderNavigation()}
         </header>
