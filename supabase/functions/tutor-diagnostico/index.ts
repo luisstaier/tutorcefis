@@ -75,7 +75,8 @@ serve(async (req) => {
 
         Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato:
         { "lacunas": [ { "topico": string, "por_que_importa": string, "prioridade": "alta"|"media"|"baixa", "curso_cefis_relacionado": string } ] }
-        Em curso_cefis_relacionado, use o título exato de um curso da lista, ou "" se nenhum cobrir o tópico.`,
+        Em curso_cefis_relacionado, use o título exato de um curso da lista, ou "" se nenhum cobrir o tópico.
+        PROIBIDO usar emojis em qualquer campo da resposta.`,
         messages: [
           {
             role: "user",

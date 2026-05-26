@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles, Target, Award, Book, Dumbbell, FileText, Check, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -321,10 +321,10 @@ export default function CourseDetails({
     if (isQuizFinished) {
       const correctCount = (quizAnswers || []).filter(a => a.isCorrect).length;
       let message = "";
-      if (correctCount === 4) message = "Excelente! Você dominou o conteúdo desta aula. 🎯";
-      else if (correctCount === 3) message = "Muito bom! Você está no caminho certo. ⭐";
-      else if (correctCount === 2) message = "Bom começo! Recomendamos rever a aula. 📖";
-      else message = "Continue praticando! O tutor pode te ajudar com as dúvidas. 💪";
+      if (correctCount === 4) message = "Excelente! Você dominou o conteúdo desta aula.";
+      else if (correctCount === 3) message = "Muito bom! Você está no caminho certo.";
+      else if (correctCount === 2) message = "Bom começo! Recomendamos rever a aula.";
+      else message = "Continue praticando! O tutor pode te ajudar com as dúvidas.";
 
       return (
         <div className="p-6 bg-card border border-border rounded-xl space-y-6 text-center animate-in fade-in slide-in-from-bottom-4">
@@ -394,7 +394,7 @@ export default function CourseDetails({
           <div className="p-4 bg-muted/30 rounded-xl space-y-2 animate-in zoom-in-95">
             <p className="text-sm">
               <span className={currentAnswer.isCorrect ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-                {currentAnswer.isCorrect ? "✅ Correto!" : `❌ Incorreto. A resposta correta era ${currentQuestion.correta.toUpperCase()}.`}
+                {currentAnswer.isCorrect ? "Correto!" : `Incorreto. A resposta correta era ${currentQuestion.correta.toUpperCase()}.`}
               </span>
             </p>
             <p className="text-sm text-secondary leading-relaxed italic">
@@ -459,7 +459,7 @@ export default function CourseDetails({
                     <div key={i} className="w-full text-left p-2 rounded-lg bg-muted/20 border border-transparent">
                       <div className="flex gap-2 items-start">
                         <div className="mt-1 shrink-0">
-                          <span className="text-xs">✨</span>
+                          <Sparkles className="w-3 h-3 text-accent" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-medium leading-tight text-secondary">
@@ -589,7 +589,7 @@ export default function CourseDetails({
         </div>
         {isCourseCompleted && (
           <Badge className="bg-[#b3e51d] text-[#051124] border-none font-black px-3 py-1 animate-bounce">
-            CURSO CONCLUÍDO! ✅
+            CURSO CONCLUÍDO!
           </Badge>
         )}
       </section>
@@ -599,7 +599,7 @@ export default function CourseDetails({
         <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30 shadow-lg overflow-hidden animate-in zoom-in-95 duration-500">
           <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
             <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
-              <span className="text-3xl">🎓</span>
+              <GraduationCap className="w-8 h-8 text-accent" />
             </div>
             <div className="flex-1 text-center md:text-left space-y-1">
               <h3 className="text-xl font-bold">Parabéns! Você concluiu o curso</h3>
@@ -610,7 +610,7 @@ export default function CourseDetails({
               disabled={isCertificateLoading}
               className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold px-8"
             >
-              {isCertificateLoading ? <Loader2 className="animate-spin mr-2" /> : "📄 Ver meu certificado"}
+              {isCertificateLoading ? <Loader2 className="animate-spin mr-2" /> : <><FileText className="w-4 h-4 mr-2" /> Ver meu certificado</>}
             </Button>
           </CardContent>
         </Card>
@@ -627,7 +627,7 @@ export default function CourseDetails({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 text-white">
             <Badge className="bg-[#b3e51d] text-[#051124] hover:bg-[#b3e51d] border-none mb-3 font-bold">
-              📚 Conteúdo CEFIS
+              <BookOpen className="w-3 h-3 inline mr-1" /> Conteúdo CEFIS
             </Badge>
             <h1 className="text-2xl sm:text-4xl font-bold font-serif leading-tight">{course?.title || "Curso"}</h1>
           </div>
