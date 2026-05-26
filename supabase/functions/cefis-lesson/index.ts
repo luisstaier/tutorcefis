@@ -42,7 +42,7 @@ serve(async (req) => {
     }));
 
     return new Response(JSON.stringify({
-      current: firstPlayable,
+      current: selected,
       lessons: gallery,
       total: lessons.length,
     }), {
