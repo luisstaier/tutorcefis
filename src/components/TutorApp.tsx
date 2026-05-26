@@ -213,14 +213,10 @@ export default function TutorApp() {
     setStep(5);
     
     try {
-      let endpoint = `cefis-courses?search=${encodeURIComponent(q)}`;
-      if (courseId) {
-        endpoint = `cefis-courses?id=${courseId}`;
-      }
-      
-      const { data, error: functionError } = await supabase.functions.invoke(endpoint, {
-        method: 'GET'
+      const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
+        body: courseId ? { id: courseId } : { search: q }
       });
+
 
       if (functionError) throw functionError;
       
@@ -228,23 +224,41 @@ export default function TutorApp() {
       
       // Retry logic if no results and we have a query (and not searching by ID)
       if (finalCourses.length === 0 && q && !courseId) {
-        // Try fallback with just keywords if the full title doesn't work
-        const keywords = q.split(' ')
-          .filter(word => word.length > 2) // Filter out small words like "de", "da", "o"
+        // Fallback 1: Try first 3 significant words
+        const keywords3 = q.split(' ')
+          .filter(word => word.length > 3) 
           .slice(0, 3)
           .join(' ');
           
-        if (keywords && keywords !== q) {
-          console.log(`Fallback: Nenhuma correspondência exata para "${q}". Tentando palavras-chave: "${keywords}"`);
-          const { data: retryData, error: retryError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(keywords)}`, {
-            method: 'GET'
+        if (keywords3 && keywords3 !== q) {
+          const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
+            body: { search: keywords3 }
           });
           if (!retryError && retryData.data && retryData.data.length > 0) {
             finalCourses = retryData.data;
-            setSearchQuery(keywords); // Update the input field to reflect what actually worked
+            setSearchQuery(keywords3);
+          }
+        }
+
+        // Fallback 2: If still empty, try just the first 2 significant words
+        if (finalCourses.length === 0) {
+          const keywords2 = q.split(' ')
+            .filter(word => word.length > 3)
+            .slice(0, 2)
+            .join(' ');
+            
+          if (keywords2 && keywords2 !== keywords3) {
+            const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
+              body: { search: keywords2 }
+            });
+            if (!retryError && retryData.data && retryData.data.length > 0) {
+              finalCourses = retryData.data;
+              setSearchQuery(keywords2);
+            }
           }
         }
       }
+
       
       setCourses(finalCourses);
     } catch (err: any) {
@@ -271,13 +285,20 @@ export default function TutorApp() {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setStep(item.id)}
+            onClick={() => {
+              if (item.id === 5 && courses.length === 0) {
+                handleSearchCourses(searchQuery);
+              } else {
+                setStep(item.id);
+              }
+            }}
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
               step === item.id 
                 ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" 
                 : "text-secondary hover:bg-accent/10 hover:text-accent"
             )}
+
           >
             <item.icon className="w-4 h-4" />
             <span className="hidden sm:inline">{item.label}</span>
@@ -362,8 +383,9 @@ export default function TutorApp() {
             <div className="max-w-2xl mx-auto">
               <Card 
                 className="border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors cursor-pointer"
-                onClick={() => setStep(5)}
+                onClick={() => handleSearchCourses("")}
               >
+
                 <CardContent className="p-6 flex items-center gap-4">
                   <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center shadow-sm text-accent">
                     <Library className="w-6 h-6" />
