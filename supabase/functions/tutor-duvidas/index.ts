@@ -11,7 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { pergunta, perfil } = await req.json();
+    const body = await req.json();
+    const { pergunta, perfil } = body;
     
     const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
@@ -23,7 +24,7 @@ serve(async (req) => {
     // 1. Busca conteúdo real da CEFIS relacionado à pergunta
     let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
     cefisUrl.searchParams.set("count", "10");
-    cefisUrl.searchParams.set("search", pergunta);
+    cefisUrl.searchParams.set("search", pergunta || "");
 
     let cefisResponse = await fetch(cefisUrl.toString(), {
       headers: {
@@ -57,7 +58,7 @@ serve(async (req) => {
       summary: c.summary,
     }));
 
-    // 2. Chama Claude API
+    // 2. Chama Claude API com o modelo e versão solicitados
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -66,7 +67,7 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20240620",
+        model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: `Você é o Tutor CEFIS. Responda à dúvida do aluno de forma clara e adaptada ao nível dele, USANDO o conteúdo real da CEFIS fornecido. 
         Cite o curso da CEFIS relacionado quando houver (ex: 'Para se aprofundar, recomendo o curso X da CEFIS'). 
@@ -77,9 +78,9 @@ serve(async (req) => {
           {
             role: "user",
             content: `Perfil do Aluno:
-            Nome: ${perfil.nome || 'Aluno'}
-            Objetivo: ${perfil.objetivo}
-            Nível: ${perfil.nivel}
+            Nome: ${perfil?.nome || 'Aluno'}
+            Objetivo: ${perfil?.objetivo || 'Não informado'}
+            Nível: ${perfil?.nivel || 'Não informado'}
 
             Cursos Disponíveis no Catálogo CEFIS:
             ${JSON.stringify(formattedCourses, null, 2)}
@@ -92,8 +93,8 @@ serve(async (req) => {
 
     if (!claudeResponse.ok) {
       const errText = await claudeResponse.text();
-      console.error("Claude API Error:", errText);
-      throw new Error("Erro ao consultar o tutor.");
+      console.error("Claude API ERROR Response:", errText);
+      throw new Error(`Erro Claude API: ${errText}`);
     }
 
     const claudeResult = await claudeResponse.json();
@@ -107,7 +108,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Function error:", error);
+    console.error("DETAILED Edge Function Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
