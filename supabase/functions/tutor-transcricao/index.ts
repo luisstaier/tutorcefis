@@ -113,7 +113,8 @@ serve(async (req) => {
       resposta: answer,
       fonte: {
         curso: course.title,
-        aula: lesson.title
+        aula: lesson.title,
+        curso_id: course.id
       }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
