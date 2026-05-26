@@ -13,18 +13,30 @@ serve(async (req) => {
   try {
     const { text } = await req.json();
     const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
-    const voiceId = "pNInz6obpgDQGcFmaJgB"; // Adam
+    const voiceId = "N2lVS1w4EtoT3dr4eOWO"; // Callum
 
     if (!apiKey) {
       throw new Error("ELEVENLABS_API_KEY não configurada.");
     }
 
     // Limpeza de markdown e limite de 1000 caracteres
-    const cleanText = text
-      .replace(/[#*>-]/g, "")
-      .replace(/\n+/g, " ")
-      .trim()
-      .substring(0, 1000);
+    const cleanForAudio = (text: string) => {
+      return text
+        .replace(/#{1,6}\s+/g, '')        // remove ## títulos
+        .replace(/\*\*(.*?)\*\*/g, '$1')   // remove **negrito** mas mantém texto
+        .replace(/\*(.*?)\*/g, '$1')       // remove *itálico*
+        .replace(/`(.*?)`/g, '$1')         // remove `código`
+        .replace(/^[-*+]\s+/gm, '')        // remove marcadores de lista
+        .replace(/^\d+\.\s+/gm, '')        // remove listas numeradas
+        .replace(/^>\s+/gm, '')            // remove blockquotes
+        .replace(/\|.*?\|/g, '')           // remove tabelas
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → só texto
+        .replace(/---+/g, '')              // remove separadores
+        .replace(/\n{3,}/g, '\n\n')        // máximo 2 quebras de linha seguidas
+        .trim();
+    };
+
+    const cleanText = cleanForAudio(text).substring(0, 1000);
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
