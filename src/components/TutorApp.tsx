@@ -180,20 +180,43 @@ export default function TutorApp() {
     }
   };
 
-  const handleSearchCourses = async (query?: string) => {
+  const handleSearchCourses = async (query?: string, courseId?: number) => {
     const q = query ?? searchQuery;
     if (query) setSearchQuery(query);
     
     setIsLoading(true);
     setError(null);
+    setStep(5);
+    
     try {
-      const { data, error: functionError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(q)}`, {
+      let endpoint = `cefis-courses?search=${encodeURIComponent(q)}`;
+      if (courseId) {
+        endpoint = `cefis-courses?id=${courseId}`;
+      }
+      
+      const { data, error: functionError } = await supabase.functions.invoke(endpoint, {
         method: 'GET'
       });
 
       if (functionError) throw functionError;
-      setCourses(data.data || []);
-      setStep(5); // Sempre mudar para tela de catálogo ao buscar
+      
+      let finalCourses = data.data || [];
+      
+      // Retry logic if no results and we have a query (and not searching by ID)
+      if (finalCourses.length === 0 && q && !courseId) {
+        const keywords = q.split(' ').slice(0, 3).join(' ');
+        if (keywords && keywords !== q) {
+          console.log(`Retrying search with keywords: ${keywords}`);
+          const { data: retryData, error: retryError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(keywords)}`, {
+            method: 'GET'
+          });
+          if (!retryError && retryData.data) {
+            finalCourses = retryData.data;
+          }
+        }
+      }
+      
+      setCourses(finalCourses);
     } catch (err: any) {
       console.error('Search error:', err);
       setError(err.message || 'Erro ao carregar cursos.');
