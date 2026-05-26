@@ -88,12 +88,14 @@ serve(async (req) => {
         
         SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
 
-        Responda ESTRITAMENTE em formato JSON:
-        {
-          "resposta": "sua resposta em markdown",
-          "curso_id": number | null,
-          "curso_titulo": "titulo do curso mais relevante" | null
-        }`,
+        Responda ESTRITAMENTE neste formato de texto (sem JSON, sem code fences):
+        ###RESPOSTA###
+        (sua resposta em markdown aqui, pode ter várias linhas, aspas, etc)
+        ###CURSO_ID###
+        (apenas o número do id do curso mais relevante, ou a palavra null)
+        ###CURSO_TITULO###
+        (apenas o título do curso mais relevante, ou a palavra null)
+        ###FIM###`,
         messages: [
           {
             role: "user",
