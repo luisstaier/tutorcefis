@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster, toast } from "sonner";
+import CourseDetails from "./CourseDetails";
 
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
@@ -58,7 +59,8 @@ const CefisLogo = ({ className = "" }: { className?: string }) => (
 
 
 export default function TutorApp() {
-  const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo
+  const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo, 6: Detalhes
+  const [previousStep, setPreviousStep] = useState(0);
   const [formData, setFormData] = useState({
     nome: "",
     objetivo: "",
@@ -73,6 +75,8 @@ export default function TutorApp() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<any[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [completedLessons, setCompletedLessons] = useState<Record<number, number[]>>({}); // courseId -> lessonIds[]
   const [diagnosis, setDiagnosis] = useState<any[]>([]);
   const [studyPlan, setStudyPlan] = useState<any[]>([]);
   const [quickSession, setQuickSession] = useState<any>(null);
@@ -94,7 +98,31 @@ export default function TutorApp() {
     if (savedProfile) {
       setFormData(JSON.parse(savedProfile));
     }
+
+    const savedProgress = localStorage.getItem("tutor_cefis_progress");
+    if (savedProgress) {
+      setCompletedLessons(JSON.parse(savedProgress));
+    }
   }, []);
+
+  const handleCompleteLesson = (courseId: number, lessonId: number) => {
+    setCompletedLessons(prev => {
+      const courseLessons = prev[courseId] || [];
+      if (courseLessons.includes(lessonId)) return prev;
+      
+      const newProgress = {
+        ...prev,
+        [courseId]: [...courseLessons, lessonId]
+      };
+      localStorage.setItem("tutor_cefis_progress", JSON.stringify(newProgress));
+      toast.success("Aula marcada como concluída!");
+      return newProgress;
+    });
+  };
+
+  const isLessonCompleted = (courseId: number, lessonId: number) => {
+    return completedLessons[courseId]?.includes(lessonId) || false;
+  };
 
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
@@ -240,13 +268,15 @@ export default function TutorApp() {
     }
   };
 
-  const handleSearchCourses = async (query?: string, courseId?: number) => {
+  const handleSearchCourses = async (query?: string, courseId?: number, autoOpen = false) => {
     let q = query ?? searchQuery;
     if (query) setSearchQuery(query);
     
     setIsLoading(true);
     setError(null);
-    setStep(5);
+    
+    // Only change step if not auto-opening (which is used for background fetch)
+    if (!autoOpen && !courseId) setStep(5);
     
     try {
       const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
@@ -295,8 +325,18 @@ export default function TutorApp() {
         }
       }
 
-      
-      setCourses(finalCourses);
+      if (courseId && finalCourses.length > 0) {
+        setSelectedCourse(finalCourses[0]);
+        setPreviousStep(step);
+        setStep(6);
+      } else if (autoOpen && finalCourses.length > 0) {
+        setSelectedCourse(finalCourses[0]);
+        setPreviousStep(step);
+        setStep(6);
+      } else {
+        setCourses(finalCourses);
+        if (!autoOpen) setStep(5);
+      }
     } catch (err: any) {
       console.error('Search error:', err);
       setError(err.message || 'Erro ao carregar cursos.');
@@ -325,6 +365,7 @@ export default function TutorApp() {
               if (item.id === 5 && courses.length === 0) {
                 handleSearchCourses(searchQuery);
               } else {
+                setPreviousStep(step);
                 setStep(item.id);
               }
             }}
@@ -592,9 +633,17 @@ export default function TutorApp() {
                         <div className="absolute -left-10 top-0 w-8 h-8 flex items-center justify-center z-10">
                           <div className="w-2 h-2 rounded-full bg-accent/40" />
                         </div>
-                        <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-3 hover:bg-muted/50 transition-colors">
+                        <div className={cn(
+                          "p-4 rounded-lg border border-border space-y-3 transition-colors",
+                          stepItem.origem === 'catalogo_cefis' ? "bg-card hover:bg-muted/30" : "bg-muted/30"
+                        )}>
                           <div className="flex justify-between items-start gap-4">
-                            <h4 className="font-bold text-lg leading-tight">{stepItem.titulo}</h4>
+                            <h4 className="font-bold text-lg leading-tight flex items-center gap-2">
+                              {stepItem.titulo}
+                              {stepItem.curso_id && completedLessons[stepItem.curso_id]?.length > 0 && (
+                                <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />
+                              )}
+                            </h4>
                             <Badge 
                               className={`${
                                 stepItem.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
@@ -632,8 +681,7 @@ export default function TutorApp() {
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
                                 onClick={() => {
-                                  
-                                  handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id);
+                                  handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id, true);
                                 }}
                               >
                                 <Search className="w-3 h-3" /> Explorar este curso
@@ -866,7 +914,7 @@ export default function TutorApp() {
                             size="sm" 
                             className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
                             onClick={() => {
-                              handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id);
+                              handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id, true);
                             }}
                           >
                             <Library className="w-3 h-3" /> {chat.fonte ? "Explorar este curso" : "Explorar cursos relacionados"}
@@ -986,7 +1034,16 @@ export default function TutorApp() {
                           <PlayCircle className="w-3 h-3 text-primary" /> {course.lessonCount} aulas
                         </span>
                       </div>
-                      <Button variant="outline" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm"
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setPreviousStep(step);
+                          setStep(6);
+                        }}
+                      >
                         Ver detalhes
                       </Button>
 
@@ -1009,6 +1066,20 @@ export default function TutorApp() {
               <Button variant="outline" className="text-secondary border-border" onClick={() => setStep(0)}>Voltar ao Início</Button>
             </div>
           </div>
+        );
+      case 6:
+        return (
+          <CourseDetails 
+            course={selectedCourse} 
+            userProfile={formData}
+            onBack={() => setStep(previousStep)}
+            onQuestion={(title: string) => {
+              setDuvida(`Tenho uma dúvida sobre o curso: ${title}\n`);
+              setStep(4);
+            }}
+            onCompleteLesson={handleCompleteLesson}
+            isLessonCompleted={isLessonCompleted}
+          />
         );
       default:
         return null;
