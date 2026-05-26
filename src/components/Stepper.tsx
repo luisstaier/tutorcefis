@@ -5,6 +5,7 @@ export const steps = [
   { id: 'diagnostico', title: 'Diagnóstico' },
   { id: 'plano', title: 'Plano' },
   { id: 'modo', title: 'Modo' },
+  { id: 'conteudo', title: 'Conteúdo' },
 ];
 
 export const Stepper = ({ currentStep }: { currentStep: number }) => {

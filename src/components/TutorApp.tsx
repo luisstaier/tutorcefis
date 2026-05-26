@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, BookOpen, User } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 export default function TutorApp() {
   const [step, setStep] = useState(0);
@@ -20,6 +22,11 @@ export default function TutorApp() {
     minutos: "",
     topico: "",
   });
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [courses, setCourses] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => s - 1);
@@ -28,6 +35,28 @@ export default function TutorApp() {
     e.preventDefault();
     localStorage.setItem("tutor_cefs_profile", JSON.stringify(formData));
     nextStep();
+  };
+
+  const handleSearchCourses = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const url = new URL(`${window.location.origin}/functions/v1/cefis-courses`);
+      if (searchQuery) url.searchParams.set('search', searchQuery);
+      
+      const { data, error: functionError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(searchQuery)}`, {
+        method: 'GET'
+      });
+
+      if (functionError) throw functionError;
+      setCourses(data.data || []);
+    } catch (err: any) {
+      console.error('Search error:', err);
+      setError(err.message || 'Erro ao carregar cursos.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderStep = () => {
@@ -180,9 +209,96 @@ export default function TutorApp() {
                 </div>
               </div>
               
+              <Button variant="link" className="w-full text-secondary" onClick={nextStep}>Ver Catálogo de Cursos</Button>
               <Button variant="link" className="w-full text-secondary" onClick={() => setStep(0)}>Reiniciar Tutorial</Button>
             </CardContent>
           </Card>
+        );
+      case 4:
+        return (
+          <div className="space-y-6">
+            <Card className="max-w-4xl mx-auto border-border shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Search className="text-accent" /> Conteúdo CEFIS (Teste)
+                </CardTitle>
+                <CardDescription>Busque por cursos reais na plataforma CEFIS.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSearchCourses} className="flex gap-2">
+                  <Input 
+                    placeholder="Busque por contabilidade, impostos, carreira..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button type="submit" disabled={isLoading} className="bg-accent hover:bg-accent/90 text-white">
+                    {isLoading ? <Loader2 className="animate-spin" /> : "Buscar"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {error && (
+              <div className="max-w-4xl mx-auto p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+              {courses.map((course) => (
+                <Card key={course.id} className="border-border shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <CardTitle className="text-lg font-bold leading-tight">{course.title}</CardTitle>
+                      {course.averageRating && (
+                        <div className="flex items-center text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-xs font-bold shrink-0">
+                          <Star className="w-3 h-3 fill-current mr-1" />
+                          {course.averageRating}
+                        </div>
+                      )}
+                    </div>
+                    <CardDescription className="text-sm italic">{course.subtitle}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-secondary line-clamp-3">{course.summary || 'Sem resumo disponível.'}</p>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {course.categories?.slice(0, 3).map((cat: any) => (
+                        <Badge key={cat.id} variant="secondary" className="bg-muted/50 text-xs">
+                          {cat.name}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <div className="flex items-center gap-3 text-xs text-secondary font-medium">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {course.duration}h
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <PlayCircle className="w-3 h-3" /> {course.lessonCount} aulas
+                        </span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-accent hover:text-accent hover:bg-accent/5 font-bold">
+                        Ver detalhes
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {!isLoading && courses.length === 0 && !error && (
+                <div className="col-span-full py-12 text-center text-secondary italic">
+                  Faça uma busca para ver os cursos disponíveis.
+                </div>
+              )}
+            </div>
+            
+            <div className="max-w-4xl mx-auto flex justify-center">
+              <Button variant="link" className="text-secondary" onClick={() => setStep(0)}>Reiniciar Tutorial</Button>
+            </div>
+          </div>
         );
       default:
         return null;
