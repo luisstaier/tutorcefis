@@ -88,12 +88,14 @@ serve(async (req) => {
         
         SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
 
-        Responda ESTRITAMENTE em formato JSON:
-        {
-          "resposta": "sua resposta em markdown",
-          "curso_id": number | null,
-          "curso_titulo": "titulo do curso mais relevante" | null
-        }`,
+        Responda ESTRITAMENTE neste formato de texto (sem JSON, sem code fences):
+        ###RESPOSTA###
+        (sua resposta em markdown aqui, pode ter várias linhas, aspas, etc)
+        ###CURSO_ID###
+        (apenas o número do id do curso mais relevante, ou a palavra null)
+        ###CURSO_TITULO###
+        (apenas o título do curso mais relevante, ou a palavra null)
+        ###FIM###`,
         messages: [
           {
             role: "user",
@@ -118,26 +120,26 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
-    let rawContent = claudeResult.content[0].text.trim();
-    
-    // JSON parsing with cleanup
-    if (rawContent.startsWith("```")) {
-      rawContent = rawContent.replace(/^```json\s*/, "").replace(/```$/, "").trim();
-    }
-    
-    const firstBrace = rawContent.indexOf("{");
-    const lastBrace = rawContent.lastIndexOf("}");
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      rawContent = rawContent.substring(firstBrace, lastBrace + 1);
-    }
+    const rawContent: string = claudeResult.content[0].text;
 
-    const data = JSON.parse(rawContent);
+    // Parse delimitado (evita problemas de escaping de JSON com markdown)
+    const pick = (start: string, end: string) => {
+      const i = rawContent.indexOf(start);
+      if (i === -1) return "";
+      const from = i + start.length;
+      const j = rawContent.indexOf(end, from);
+      return (j === -1 ? rawContent.substring(from) : rawContent.substring(from, j)).trim();
+    };
 
-    return new Response(JSON.stringify({ 
-      resposta: data.resposta,
-      curso_id: data.curso_id,
-      curso_titulo: data.curso_titulo
-    }), {
+    const resposta = pick("###RESPOSTA###", "###CURSO_ID###") || rawContent.trim();
+    const cursoIdRaw = pick("###CURSO_ID###", "###CURSO_TITULO###");
+    const cursoTituloRaw = pick("###CURSO_TITULO###", "###FIM###");
+
+    const cursoIdNum = parseInt(cursoIdRaw, 10);
+    const curso_id = Number.isFinite(cursoIdNum) ? cursoIdNum : null;
+    const curso_titulo = cursoTituloRaw && cursoTituloRaw.toLowerCase() !== "null" ? cursoTituloRaw : null;
+
+    return new Response(JSON.stringify({ resposta, curso_id, curso_titulo }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
