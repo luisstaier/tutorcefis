@@ -678,7 +678,7 @@ export default function TutorApp() {
                                 </div>
                               )}
                             </div>
-                            {stepItem.origem === 'catalogo_cefis' && (
+                            {(stepItem.origem === 'catalogo_cefis' || stepItem.fonte || stepItem.curso_id) && (
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
