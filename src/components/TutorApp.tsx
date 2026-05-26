@@ -673,15 +673,30 @@ export default function TutorApp() {
                               ) : (
                                 <TutorAiLogo showText={false} className="scale-90" />
                               )}
-                              {item.curso_id ? (
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleSearchCourses(undefined, item.curso_id, false)}
-                                  className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-8"
-                                >
-                                  <PlayCircle className="w-4 h-4 mr-1.5" /> Iniciar Curso
-                                </Button>
-                              ) : null}
+                              <Button 
+                                size="sm"
+                                onClick={() => {
+                                  if (item.curso_id) {
+                                    handleSearchCourses(undefined, item.curso_id, false);
+                                  } else {
+                                    setSelectedAiContent({
+                                      titulo: item.titulo,
+                                      conteudo: item.conteudo || item.descricao
+                                    });
+                                    setPreviousStep(2);
+                                    setStep(7);
+                                  }
+                                }}
+                                className={cn(
+                                  "font-bold h-8",
+                                  item.curso_id 
+                                    ? "bg-accent hover:bg-accent/90 text-primary-foreground" 
+                                    : "bg-[#b3e51d] hover:bg-[#b3e51d]/90 text-[#051124]"
+                                )}
+                              >
+                                <PlayCircle className="w-4 h-4 mr-1.5" /> 
+                                {item.curso_id ? 'Iniciar Curso' : 'Iniciar'}
+                              </Button>
                             </div>
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
