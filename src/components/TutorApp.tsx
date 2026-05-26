@@ -548,10 +548,10 @@ export default function TutorApp() {
                   <Select value={formData.estiloAprendizagem} onValueChange={val => setFormData({...formData, estiloAprendizagem: val})}>
                     <SelectTrigger><SelectValue placeholder="Selecione seu estilo..." /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="exemplos práticos">🔍 Com exemplos práticos e casos reais</SelectItem>
-                      <SelectItem value="explicação teórica">📖 Com explicação teórica primeiro</SelectItem>
-                      <SelectItem value="direto ao ponto">⚡ Direto ao ponto, de forma objetiva</SelectItem>
-                      <SelectItem value="analogias">🔄 Com analogias e comparações</SelectItem>
+                      <SelectItem value="exemplos práticos">Com exemplos práticos e casos reais</SelectItem>
+                      <SelectItem value="explicação teórica">Com explicação teórica primeiro</SelectItem>
+                      <SelectItem value="direto ao ponto">Direto ao ponto, de forma objetiva</SelectItem>
+                      <SelectItem value="analogias">Com analogias e comparações</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

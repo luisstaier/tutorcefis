@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles, Target, Award, Book, Dumbbell, FileText, Check, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -321,10 +321,10 @@ export default function CourseDetails({
     if (isQuizFinished) {
       const correctCount = (quizAnswers || []).filter(a => a.isCorrect).length;
       let message = "";
-      if (correctCount === 4) message = "Excelente! Você dominou o conteúdo desta aula. 🎯";
-      else if (correctCount === 3) message = "Muito bom! Você está no caminho certo. ⭐";
-      else if (correctCount === 2) message = "Bom começo! Recomendamos rever a aula. 📖";
-      else message = "Continue praticando! O tutor pode te ajudar com as dúvidas. 💪";
+      if (correctCount === 4) message = "Excelente! Você dominou o conteúdo desta aula.";
+      else if (correctCount === 3) message = "Muito bom! Você está no caminho certo.";
+      else if (correctCount === 2) message = "Bom começo! Recomendamos rever a aula.";
+      else message = "Continue praticando! O tutor pode te ajudar com as dúvidas.";
 
       return (
         <div className="p-6 bg-card border border-border rounded-xl space-y-6 text-center animate-in fade-in slide-in-from-bottom-4">
@@ -394,7 +394,7 @@ export default function CourseDetails({
           <div className="p-4 bg-muted/30 rounded-xl space-y-2 animate-in zoom-in-95">
             <p className="text-sm">
               <span className={currentAnswer.isCorrect ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-                {currentAnswer.isCorrect ? "✅ Correto!" : `❌ Incorreto. A resposta correta era ${currentQuestion.correta.toUpperCase()}.`}
+                {currentAnswer.isCorrect ? "Correto!" : `Incorreto. A resposta correta era ${currentQuestion.correta.toUpperCase()}.`}
               </span>
             </p>
             <p className="text-sm text-secondary leading-relaxed italic">
@@ -610,7 +610,7 @@ export default function CourseDetails({
               disabled={isCertificateLoading}
               className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold px-8"
             >
-              {isCertificateLoading ? <Loader2 className="animate-spin mr-2" /> : "📄 Ver meu certificado"}
+              {isCertificateLoading ? <Loader2 className="animate-spin mr-2" /> : <><FileText className="w-4 h-4 mr-2" /> Ver meu certificado</>}
             </Button>
           </CardContent>
         </Card>
