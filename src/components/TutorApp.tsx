@@ -1006,11 +1006,30 @@ export default function TutorApp() {
                 <CardTitle className="text-2xl flex items-center gap-2 font-serif"><Search className="text-accent" /> Explorar Catálogo</CardTitle>
                 <CardDescription>Busque por cursos reais da plataforma CEFIS.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <form onSubmit={e => { e.preventDefault(); handleSearchCourses(); }} className="flex gap-2">
                   <Input placeholder="Contabilidade, Impostos..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-12" />
                   <Button type="submit" disabled={isLoading} className="h-12 bg-accent">{isLoading ? <Loader2 className="animate-spin" /> : <Search />}</Button>
                 </form>
+                {(() => {
+                  const stop = new Set(["de","da","do","das","dos","e","a","o","as","os","em","para","com","sobre","um","uma","no","na","nos","nas","por","ao","aos"]);
+                  const base = (formData.objetivo || "").toLowerCase();
+                  const tokens = base.split(/[^a-záàâãéêíóôõúüç0-9]+/i).filter(t => t.length > 2 && !stop.has(t));
+                  const tags = Array.from(new Set([formData.objetivo, ...tokens].filter(Boolean))).slice(0, 8) as string[];
+                  if (!tags.length) return null;
+                  return (
+                    <div className="pt-1">
+                      <p className="text-xs text-secondary mb-2">Sugestões baseadas no seu objetivo:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {tags.map((t, i) => (
+                          <Badge key={i} onClick={() => { setSearchQuery(t); handleSearchCourses(t); }} className="cursor-pointer bg-accent/10 text-accent border border-accent/30 hover:bg-accent hover:text-white transition-colors capitalize">
+                            {t}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
