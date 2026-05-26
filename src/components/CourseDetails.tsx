@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles, Target, Award, Book, Dumbbell, FileText, Check, XCircle } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles, Target, Award, Book, Dumbbell, FileText, Check, XCircle, Quote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { TutorAiLogo } from "./TutorAiLogo";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+
 
 interface CourseDetailsProps {
   course: any;
