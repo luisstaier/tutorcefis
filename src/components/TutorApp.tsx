@@ -656,9 +656,12 @@ export default function TutorApp() {
                               {item.titulo}
                               {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />}
                             </h4>
-                            <Badge className={item.origem === 'catalogo_cefis' ? 'bg-accent text-primary-foreground font-bold' : 'bg-success text-white font-bold'}>{item.origem === 'catalogo_cefis' ? "CEFIS" : "IA"}</Badge>
+                            <Badge className={item.origem === 'catalogo_cefis' ? 'bg-accent text-primary-foreground font-bold' : 'bg-success text-white font-bold'}>
+                              {item.origem === 'catalogo_cefis' ? "CEFIS" : "tutor.ai"}
+                            </Badge>
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
+                          <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.origem === 'catalogo_cefis' ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
                           
                           {item.curso_id && lessons.length > 0 && (
                             <div className="pt-1 space-y-1">
@@ -674,7 +677,7 @@ export default function TutorApp() {
 
                           <div className="flex justify-between items-center pt-2 border-t border-border/30 text-xs text-secondary">
                             <span><Clock className="inline w-3 h-3 mr-1" />{item.tempo_estimado_min} min</span>
-                            {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Ver Curso</Button>}
+                            {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Acessar Conteúdo</Button>}
                           </div>
                         </div>
                       </div>
@@ -773,9 +776,29 @@ export default function TutorApp() {
                         <span className="text-xs">{item.tempo_min} min</span>
                       </div>
                       <p className="text-sm text-secondary">{item.resumo}</p>
-                      {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Acessar Conteúdo</Button>}
+                      <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.curso_id ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
+                      {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Acessar Conteúdo</Button>}
                     </div>
                   ))}
+                  
+                  {quickSession.itens.some((item: any) => !item.curso_id) && (
+                    <div className="mt-6 p-4 rounded-xl border border-dashed border-accent/50 bg-accent/5">
+                      <p className="text-sm text-center text-secondary mb-3">
+                        💡 Se você adicionar mais alguns minutos de estudo, você pode fazer uma trilha completa com cursos em vídeo!
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="w-full border-accent text-accent hover:bg-accent hover:text-white font-bold transition-all"
+                        onClick={() => {
+                          const newMinutes = (parseInt(modoData.minutos) + 20).toString();
+                          setModoData({...modoData, minutos: newMinutes});
+                          handleGenerateSession();
+                        }}
+                      >
+                        <PlayCircle className="w-4 h-4 mr-2" /> Sugerir Trilha Completa
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
