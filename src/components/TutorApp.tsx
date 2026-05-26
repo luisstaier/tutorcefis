@@ -162,13 +162,14 @@ export default function TutorApp() {
     }
   };
 
-  const renderStep = () => {
+  const renderTabs = () => {
+    if (step < 2) return null;
     return (
-      <div className="w-full max-w-4xl mx-auto mb-8 flex justify-center gap-4 border-b pb-4">
-        <Button variant={step === 2 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(2)} disabled={step < 2} className="text-xs">O Plano</Button>
-        <Button variant={step === 3 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(3)} disabled={step < 2} className="text-xs">Sessão Rápida</Button>
-        <Button variant={step === 4 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(4)} disabled={step < 2} className="text-xs">Dúvidas</Button>
-        <Button variant={step === 5 ? "default" : "ghost"} onClick={() => step >= 2 && setStep(5)} disabled={step < 2} className="text-xs">Catálogo</Button>
+      <div className="w-full max-w-4xl mx-auto mb-8 flex flex-wrap justify-center gap-2 border-b pb-4">
+        <Button variant={step === 2 ? "default" : "outline"} onClick={() => setStep(2)} className="text-xs h-8">O Plano</Button>
+        <Button variant={step === 3 ? "default" : "outline"} onClick={() => setStep(3)} className="text-xs h-8">Sessão Rápida</Button>
+        <Button variant={step === 4 ? "default" : "outline"} onClick={() => setStep(4)} className="text-xs h-8">Dúvidas</Button>
+        <Button variant={step === 5 ? "default" : "outline"} onClick={() => setStep(5)} className="text-xs h-8">Catálogo</Button>
       </div>
     );
   };
@@ -643,6 +644,7 @@ export default function TutorApp() {
         <Stepper currentStep={step} />
         
         <div className="mt-8 transition-all duration-300">
+          {renderTabs()}
           {renderContent()}
         </div>
       </div>
