@@ -565,7 +565,7 @@ export default function TutorApp() {
                                   className="h-6 text-[10px] text-accent hover:bg-accent/5 font-bold gap-1"
                                   onClick={() => {
                                     console.log("Explorando curso do diagnóstico:", gap.curso_cefis_relacionado);
-                                    handleSearchCourses(gap.curso_cefis_relacionado);
+                                    handleSearchCourses(gap.curso_cefis_relacionado, undefined, true);
                                   }}
                                 >
                                   <Search className="w-2.5 h-2.5" /> Explorar
