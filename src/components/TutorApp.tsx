@@ -345,7 +345,7 @@ export default function TutorApp() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-white font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
                     Começar Jornada
                   </Button>
                 </form>
@@ -410,7 +410,7 @@ export default function TutorApp() {
                                   gap.prioridade === 'alta' ? 'bg-accent hover:bg-accent' : 
                                   gap.prioridade === 'media' ? 'bg-secondary hover:bg-secondary' : 
                                   'bg-success hover:bg-success'
-                                } text-white border-none`}
+                                } text-primary-foreground border-none`}
                               >
                                 {gap.prioridade.toUpperCase()}
                               </Badge>
@@ -446,7 +446,7 @@ export default function TutorApp() {
                       <Button 
                         onClick={handleGeneratePlan} 
                         disabled={isGeneratingPlan}
-                        className="bg-accent hover:bg-accent/90 text-white font-bold"
+                        className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
                       >
                         {isGeneratingPlan ? (
                           <>
@@ -500,7 +500,7 @@ export default function TutorApp() {
                             <Badge 
                               className={`${
                                 stepItem.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
-                              } text-white border-none shrink-0`}
+                              } text-primary-foreground border-none shrink-0`}
                             >
                               {stepItem.origem === 'catalogo_cefis' ? (
                                 <span className="flex items-center gap-1">📚 CEFIS</span>
@@ -540,7 +540,7 @@ export default function TutorApp() {
                     ))}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 pt-6 border-t border-border">
-                    <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-white font-bold">Ir para Sessão Rápida</Button>
+                    <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Ir para Sessão Rápida</Button>
                     <Button variant="outline" onClick={() => setStep(4)} className="border-accent text-accent hover:bg-accent/5 font-bold">Tirar Dúvida Agora</Button>
                   </div>
                 </div>
@@ -592,7 +592,7 @@ export default function TutorApp() {
               <Button 
                 onClick={handleGenerateSession} 
                 disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
-                className="w-full bg-accent hover:bg-accent/90 text-white h-12 font-bold shadow-lg shadow-accent/20"
+                className="w-full bg-accent hover:bg-accent/90 text-primary-foreground h-12 font-bold shadow-lg shadow-accent/20"
               >
                 {isGeneratingSession ? (
                   <>
@@ -638,7 +638,7 @@ export default function TutorApp() {
                               <Badge 
                                 className={`${
                                   item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
-                                } text-white border-none`}
+                                } text-primary-foreground border-none`}
                               >
                                 {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
                               </Badge>
@@ -666,7 +666,7 @@ export default function TutorApp() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
                       <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
-                      <Button onClick={() => setStep(4)} className="bg-accent hover:bg-accent/90 text-white font-bold">Tirar uma dúvida</Button>
+                      <Button onClick={() => setStep(4)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Tirar uma dúvida</Button>
                     </div>
                   </div>
                 ) : (
@@ -752,7 +752,7 @@ export default function TutorApp() {
                   disabled={isAsking}
                   className="flex-1 h-12 focus-visible:ring-accent bg-muted/30 border-none"
                 />
-                <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent hover:bg-accent/90 text-white shrink-0 rounded-xl shadow-lg shadow-accent/20">
+                <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent hover:bg-accent/90 text-primary-foreground shrink-0 rounded-xl shadow-lg shadow-accent/20">
                   <Send className="w-5 h-5" />
                 </Button>
               </form>
@@ -780,7 +780,7 @@ export default function TutorApp() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1 h-12 focus-visible:ring-accent"
                   />
-                  <Button type="submit" disabled={isLoading} className="h-12 px-8 bg-accent hover:bg-accent/90 text-white font-bold shadow-lg shadow-accent/20">
+                  <Button type="submit" disabled={isLoading} className="h-12 px-8 bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20">
                     {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
                     Buscar Cursos
                   </Button>
