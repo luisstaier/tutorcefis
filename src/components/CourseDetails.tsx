@@ -560,10 +560,8 @@ export default function CourseDetails({
           </div>
         </section>
       )}
-          </div>
-        </div>
-      </div>
     </div>
-  );
+  </div>
+);
 }
 
