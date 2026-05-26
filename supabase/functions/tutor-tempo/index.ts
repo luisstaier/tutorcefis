@@ -111,7 +111,9 @@ serve(async (req) => {
               "tempo_min": number 
             } 
           ] 
-        }`,
+        }
+        
+        REGRA CRÍTICA DE FORMATAÇÃO JSON: dentro dos valores de string (titulo, resumo, fonte), NUNCA use aspas duplas ("). Use SEMPRE aspas simples ('') para citar palavras. Exemplo CORRETO: "se você 'fechar o número' sem base...". Quebrar essa regra invalida o JSON.`,
         messages: [
           {
             role: "user",
