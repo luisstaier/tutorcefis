@@ -461,7 +461,15 @@ export default function TutorApp() {
             <Card className="max-w-md mx-auto border-border shadow-sm overflow-hidden">
               <div className="h-2 bg-accent w-full" />
               <CardHeader>
-                <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
+                  {isProfileLoaded && (
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Perfil CEFIS carregado
+                    </Badge>
+                  )}
+                </div>
                 <CardDescription className="text-secondary text-lg">
                   Vamos personalizar sua jornada de aprendizado para que você alcance seus objetivos mais rápido.
                 </CardDescription>
