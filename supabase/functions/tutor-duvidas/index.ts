@@ -120,26 +120,26 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
-    let rawContent = claudeResult.content[0].text.trim();
-    
-    // JSON parsing with cleanup
-    if (rawContent.startsWith("```")) {
-      rawContent = rawContent.replace(/^```json\s*/, "").replace(/```$/, "").trim();
-    }
-    
-    const firstBrace = rawContent.indexOf("{");
-    const lastBrace = rawContent.lastIndexOf("}");
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      rawContent = rawContent.substring(firstBrace, lastBrace + 1);
-    }
+    const rawContent: string = claudeResult.content[0].text;
 
-    const data = JSON.parse(rawContent);
+    // Parse delimitado (evita problemas de escaping de JSON com markdown)
+    const pick = (start: string, end: string) => {
+      const i = rawContent.indexOf(start);
+      if (i === -1) return "";
+      const from = i + start.length;
+      const j = rawContent.indexOf(end, from);
+      return (j === -1 ? rawContent.substring(from) : rawContent.substring(from, j)).trim();
+    };
 
-    return new Response(JSON.stringify({ 
-      resposta: data.resposta,
-      curso_id: data.curso_id,
-      curso_titulo: data.curso_titulo
-    }), {
+    const resposta = pick("###RESPOSTA###", "###CURSO_ID###") || rawContent.trim();
+    const cursoIdRaw = pick("###CURSO_ID###", "###CURSO_TITULO###");
+    const cursoTituloRaw = pick("###CURSO_TITULO###", "###FIM###");
+
+    const cursoIdNum = parseInt(cursoIdRaw, 10);
+    const curso_id = Number.isFinite(cursoIdNum) ? cursoIdNum : null;
+    const curso_titulo = cursoTituloRaw && cursoTituloRaw.toLowerCase() !== "null" ? cursoTituloRaw : null;
+
+    return new Response(JSON.stringify({ resposta, curso_id, curso_titulo }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
