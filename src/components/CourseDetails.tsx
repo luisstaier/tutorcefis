@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 interface CourseDetailsProps {
   course: any;
+  context?: { source: string; trail?: any[] } | null;
+  onNavigate?: (courseId: number, courseTitle: string, context: any) => void;
   onBack: () => void;
   userProfile: any;
   onQuestion: (courseTitle: string) => void;
@@ -17,6 +19,8 @@ interface CourseDetailsProps {
 
 export default function CourseDetails({ 
   course, 
+  context,
+  onNavigate,
   onBack, 
   userProfile, 
   onQuestion, 
@@ -28,7 +32,9 @@ export default function CourseDetails({
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [quiz, setQuiz] = useState<any>(null);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
+  const [quizError, setQuizError] = useState<string | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<any[]>([]);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
@@ -90,6 +96,7 @@ export default function CourseDetails({
     }
     
     setIsLoadingQuiz(true);
+    setQuizError(null);
     try {
       const { data, error } = await supabase.functions.invoke('tutor-quiz', {
         body: { 
@@ -99,10 +106,21 @@ export default function CourseDetails({
         }
       });
       if (error) throw error;
-      setQuiz(data);
-      setShowQuiz(true);
+      
+      if (data?.fallback) {
+        setQuizError("Quiz não disponível para esta aula — tente outra aula do curso.");
+        setQuiz(null);
+      } else {
+        setQuiz(data);
+        setShowQuiz(true);
+        // Scroll to quiz
+        setTimeout(() => {
+          document.getElementById('quiz-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
     } catch (err) {
       console.error("Error fetching quiz:", err);
+      setQuizError("Erro ao gerar o quiz. Tente novamente.");
     } finally {
       setIsLoadingQuiz(false);
     }
@@ -133,24 +151,33 @@ export default function CourseDetails({
   const renderQuiz = () => {
     if (isLoadingQuiz) {
       return (
-        <div className="flex flex-col items-center py-8">
-          <Loader2 className="w-8 h-8 text-[#b3e51d] animate-spin mb-2" />
-          <p className="text-sm font-medium">Gerando desafio personalizado...</p>
+        <div className="flex flex-col items-center py-12 bg-muted/20 rounded-2xl border border-dashed border-border animate-pulse">
+          <Loader2 className="w-10 h-10 text-accent animate-spin mb-4" />
+          <p className="text-lg font-bold text-accent">Gerando quiz com base na aula...</p>
+          <p className="text-sm text-secondary">Isso pode levar alguns segundos.</p>
         </div>
       );
     }
 
-    if (quiz?.fallback) {
+    if (quizError || quiz?.fallback) {
       return (
-        <div className="p-6 bg-muted/50 rounded-xl text-center space-y-4">
-          <p className="text-secondary">Quiz não disponível para esta aula no momento.</p>
-          <Button 
-            variant="outline" 
-            className="border-accent text-accent hover:bg-accent/5 font-bold"
-            onClick={() => onQuestion(course?.title || "Curso")}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" /> Tirar uma dúvida
-          </Button>
+        <div className="p-8 bg-muted/50 rounded-2xl text-center space-y-4 border border-border">
+          <p className="text-secondary font-medium">{quizError || "Quiz não disponível para esta aula — tente outra aula do curso."}</p>
+          <div className="flex justify-center gap-4">
+            <Button 
+              variant="outline" 
+              className="border-accent text-accent hover:bg-accent/5 font-bold"
+              onClick={() => onQuestion(course?.title || "Curso")}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" /> Tirar uma dúvida
+            </Button>
+            <Button 
+              className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
+              onClick={() => handleStartQuiz(lesson?.id)}
+            >
+              Tentar novamente
+            </Button>
+          </div>
         </div>
       );
     }
