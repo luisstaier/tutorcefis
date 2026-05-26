@@ -311,7 +311,11 @@ export default function TutorApp() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nivel">Nível de conhecimento</Label>
-                    <Select onValueChange={val => setFormData({...formData, nivel: val})} required>
+                    <Select 
+                      value={formData.nivel} 
+                      onValueChange={val => setFormData({...formData, nivel: val})} 
+                      required
+                    >
                       <SelectTrigger className="focus:ring-accent">
                         <SelectValue placeholder="Selecione seu nível" />
                       </SelectTrigger>
