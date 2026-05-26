@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
@@ -94,6 +94,13 @@ export default function TutorApp() {
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState<number | null>(null);
+  const [isPreparingAudio, setIsPreparingAudio] = useState<number | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const savedKey = sessionStorage.getItem("cefis_user_key");
@@ -254,6 +261,102 @@ export default function TutorApp() {
       }
     } finally {
       setIsAsking(false);
+    }
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+
+        try {
+          const { data, error } = await supabase.functions.invoke('tutor-whisper', {
+            body: formData,
+          });
+
+          if (error) throw error;
+          if (data.text) {
+            setDuvida(data.text);
+            // Auto submit
+            setTimeout(() => {
+              const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+              handleAskDuvida(fakeEvent);
+            }, 500);
+          }
+        } catch (err) {
+          toast.error("Não consegui entender — tente digitar.");
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      toast.error("Erro ao acessar microfone.");
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const handleListenResponse = async (index: number, text: string) => {
+    if (currentlyPlayingId === index) {
+      audioRef.current?.pause();
+      setCurrentlyPlayingId(null);
+      return;
+    }
+
+    setIsPreparingAudio(index);
+    try {
+      const { data, error } = await supabase.functions.invoke('tutor-elevenlabs', {
+        body: { text },
+      });
+
+      if (error) throw error;
+
+      const byteCharacters = atob(data.audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setCurrentlyPlayingId(index);
+      
+      audio.onended = () => {
+        setCurrentlyPlayingId(null);
+      };
+
+      audio.play();
+    } catch (err) {
+      toast.error("Áudio indisponível no momento");
+    } finally {
+      setIsPreparingAudio(null);
     }
   };
 
@@ -539,23 +642,62 @@ export default function TutorApp() {
                 <div key={i} className="space-y-4">
                   <div className="flex justify-end"><div className="bg-accent text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm">{chat.pergunta}</div></div>
                   <div className="flex justify-start">
-                    <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3">
+                    <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3 relative group">
                       <MarkdownRenderer content={chat.resposta} />
-                      {chat.fonte && (
-                        <div className="pt-2 border-t border-border/50 text-[10px] text-secondary flex items-center justify-between">
-                          <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
-                          {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
-                        </div>
-                      )}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                        {chat.fonte ? (
+                          <div className="text-[10px] text-secondary flex items-center gap-2">
+                            <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
+                            {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
+                          </div>
+                        ) : <span></span>}
+                        
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleListenResponse(i, chat.resposta)}
+                          className={cn(
+                            "h-7 text-[10px] gap-1 px-2 font-bold transition-all",
+                            currentlyPlayingId === i ? "text-accent bg-accent/10" : "text-secondary hover:text-accent"
+                          )}
+                        >
+                          {isPreparingAudio === i ? (
+                            <><Loader2 className="w-3 h-3 animate-spin" /> Preparando...</>
+                          ) : currentlyPlayingId === i ? (
+                            <><Pause className="w-3 h-3" /> Pausar</>
+                          ) : (
+                            <><Volume2 className="w-3 h-3 text-[#b3e51d]" /> Ouvir resposta</>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
               {isAsking && <div className="flex justify-start"><div className="bg-muted p-4 rounded-2xl animate-pulse"><Loader2 className="animate-spin w-4 h-4" /></div></div>}
             </CardContent>
-            <form onSubmit={handleAskDuvida} className="p-4 border-t bg-card flex gap-2">
-              <Input placeholder="Sua dúvida..." value={duvida} onChange={e => setDuvida(e.target.value)} disabled={isAsking} className="h-12 border-none bg-muted/30" />
-              <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent shrink-0 rounded-xl"><Send className="w-5 h-5" /></Button>
+            <form onSubmit={handleAskDuvida} className="p-4 border-t bg-card flex gap-2 items-center">
+              <Button 
+                type="button"
+                onClick={isRecording ? handleStopRecording : handleStartRecording}
+                className={cn(
+                  "h-12 w-12 shrink-0 rounded-xl transition-all duration-300",
+                  isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-muted/50 hover:bg-muted text-secondary hover:text-accent"
+                )}
+                disabled={isAsking}
+              >
+                {isRecording ? <div className="flex items-center gap-1 font-bold text-[10px]"><div className="w-2 h-2 bg-white rounded-full animate-ping" /> ⏹️</div> : <Mic className="w-5 h-5" />}
+              </Button>
+              <Input 
+                placeholder={isRecording ? "Gravando... 🔴" : "Sua dúvida..."} 
+                value={duvida} 
+                onChange={e => setDuvida(e.target.value)} 
+                disabled={isAsking || isRecording} 
+                className="h-12 border-none bg-muted/30" 
+              />
+              <Button type="submit" disabled={isAsking || isRecording || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent shrink-0 rounded-xl">
+                <Send className="w-5 h-5" />
+              </Button>
             </form>
           </Card>
         );
