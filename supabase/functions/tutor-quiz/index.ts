@@ -77,19 +77,13 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
-    console.log("Resposta bruta do Claude:", JSON.stringify(claudeResult));
-    
-    let rawContent = claudeResult.content[0].text.trim();
+    const text = claudeResult.content[0].text;
+    console.log("resposta bruta do quiz:", text);
     
     // Limpeza de cercas markdown: extrai do primeiro { até o último }
-    const firstBrace = rawContent.indexOf("{");
-    const lastBrace = rawContent.lastIndexOf("}");
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      rawContent = rawContent.substring(firstBrace, lastBrace + 1);
-    }
-    
-    console.log("Conteúdo extraído para parse:", rawContent);
-    const data = JSON.parse(rawContent);
+    const clean = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    console.log("Conteúdo extraído para parse:", clean);
+    const data = JSON.parse(clean);
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
