@@ -417,7 +417,7 @@ export default function CourseDetails({
           <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
           </Button>
-          <Button onClick={fetchLesson} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">
+          <Button onClick={() => fetchLesson()} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">
             Tentar Novamente
           </Button>
         </div>
@@ -552,7 +552,7 @@ export default function CourseDetails({
             ) : (
               <div className="p-12 text-center space-y-4">
                 <p className="text-white/60">Não foi possível carregar o vídeo desta aula.</p>
-                <Button onClick={fetchLesson} variant="secondary" size="sm">Tentar Novamente</Button>
+                <Button onClick={() => fetchLesson()} variant="secondary" size="sm">Tentar Novamente</Button>
               </div>
             )}
           </CardContent>
