@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2 } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -273,6 +273,95 @@ export default function CourseDetails({
     );
   };
 
+  const renderSidebar = () => {
+    if (!context || context.source === 'catalogo') return null;
+
+    const isPlano = context.source === 'plano';
+    const trail = context.trail || [];
+
+    return (
+      <>
+        {/* Mobile Overlay */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-sm transition-opacity"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+        
+        <aside className={cn(
+          "fixed left-0 top-0 h-full bg-card border-r border-border z-40 transition-all duration-300 overflow-y-auto shadow-2xl lg:shadow-none",
+          isSidebarOpen ? "w-[260px] translate-x-0" : "w-0 -translate-x-full lg:w-0"
+        )}>
+          <div className="p-4 space-y-6 pt-24">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[10px] uppercase tracking-wider text-secondary flex items-center gap-2">
+                {isPlano ? "Sua trilha de estudos" : "Sua sessão rápida"}
+              </h3>
+              <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" onClick={() => setIsSidebarOpen(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-1">
+              {trail.map((item: any, i: number) => {
+                const itemTitle = isPlano ? item.titulo : item.titulo;
+                const itemCourseId = item.curso_id || (isPlano ? undefined : item.curso_id);
+                const itemSearch = isPlano ? item.fonte : item.titulo;
+                
+                const isCurrent = (course.id && item.curso_id === course.id) || 
+                                 (course.title && (isPlano ? item.fonte === course.title : item.titulo === course.title));
+                
+                const currentIndex = trail.findIndex((t: any) => 
+                  (course.id && t.curso_id === course.id) || 
+                  (course.title && (isPlano ? t.fonte === course.title : t.titulo === course.title))
+                );
+                const isPast = currentIndex > i;
+                
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      onNavigate?.(item.curso_id, isPlano ? item.fonte : item.titulo, context);
+                      if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left p-3 rounded-xl transition-all group",
+                      isCurrent ? "bg-accent/10 border border-accent/20" : "hover:bg-muted/50"
+                    )}
+                  >
+                    <div className="flex gap-3 items-start">
+                      <div className="mt-1 shrink-0">
+                        {isCurrent ? (
+                          <div className="w-4 h-4 rounded-full bg-[#b3e51d] shadow-[0_0_8px_rgba(179,229,29,0.5)]" />
+                        ) : isPast ? (
+                          <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-muted" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "text-[11px] font-bold leading-tight",
+                          isCurrent ? "text-accent" : "text-foreground"
+                        )}>
+                          {itemTitle}
+                        </p>
+                        {!isPlano && item.tempo_min && (
+                          <p className="text-[9px] text-secondary mt-0.5">{item.tempo_min} min</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+      </>
+    );
+  };
+
   if (!course || !course.id) {
     return (
       <div className="p-8 text-center space-y-6 max-w-md mx-auto">
@@ -281,7 +370,7 @@ export default function CourseDetails({
           <p className="text-secondary font-medium">Carregando informações do curso...</p>
         </div>
         <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao Catálogo
+          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
         </Button>
       </div>
     );
@@ -307,14 +396,35 @@ export default function CourseDetails({
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
-      <Button 
-        variant="ghost" 
-        onClick={onBack}
-        className="text-secondary hover:text-accent font-medium mb-2 -ml-2"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-      </Button>
+    <div className={cn(
+      "relative transition-all duration-300",
+      context && context.source !== 'catalogo' && isSidebarOpen && "lg:pl-[260px]"
+    )}>
+      {renderSidebar()}
+
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500 pb-20">
+        <div className="flex items-center justify-between mb-2">
+          <Button 
+            variant="ghost" 
+            onClick={onBack}
+            className="text-secondary hover:text-accent font-medium -ml-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" /> 
+            {context?.source === 'catalogo' ? 'Voltar ao Catálogo' : 'Voltar'}
+          </Button>
+
+          {context && context.source !== 'catalogo' && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="border-accent/20 text-accent hover:bg-accent/5 h-8 gap-2 font-bold"
+            >
+              <Menu className="w-4 h-4" />
+              <span className="hidden sm:inline">{isSidebarOpen ? 'Esconder Trilha' : 'Ver Trilha'}</span>
+            </Button>
+          )}
+        </div>
 
       {/* SEÇÃO 1 — HEADER DO CURSO */}
       <section className="relative rounded-3xl overflow-hidden border border-border bg-card shadow-sm">
@@ -450,6 +560,9 @@ export default function CourseDetails({
           </div>
         </section>
       )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
