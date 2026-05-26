@@ -331,10 +331,12 @@ export default function TutorApp() {
 
       if (courseId && finalCourses.length > 0) {
         setSelectedCourse(finalCourses[0]);
+        setCourses(finalCourses);
         setPreviousStep(step);
         setStep(6);
       } else if (autoOpen && finalCourses.length > 0) {
         setSelectedCourse(finalCourses[0]);
+        setCourses(finalCourses);
         setPreviousStep(step);
         setStep(6);
       } else {
