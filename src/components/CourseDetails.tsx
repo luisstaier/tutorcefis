@@ -23,6 +23,7 @@ export default function CourseDetails({
   onCompleteLesson,
   isLessonCompleted
 }: CourseDetailsProps) {
+  console.log("CourseDetail montou com courseId:", course?.id);
   const [lesson, setLesson] = useState<any>(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [quiz, setQuiz] = useState<any>(null);
