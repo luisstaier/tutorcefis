@@ -54,6 +54,7 @@ serve(async (req) => {
     }
 
     const formattedCourses = coursesList.map((c: any) => ({
+      id: c.id,
       title: c.title,
       summary: c.summary,
     }));
@@ -70,10 +71,16 @@ serve(async (req) => {
         model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: `Você é o Tutor CEFIS. Responda à dúvida do aluno de forma clara e adaptada ao nível dele, USANDO o conteúdo real da CEFIS fornecido. 
-        Cite o curso da CEFIS relacionado quando houver (ex: 'Para se aprofundar, recomendo o curso X da CEFIS'). 
+        Cite o curso da CEFIS relacionado quando houver.
         Se o catálogo fornecido não cobrir a dúvida diretamente, responda com seu conhecimento técnico (contabilidade, impostos, carreira, etc), mas seja honesto e mencione que não há um curso específico sobre esse detalhe exato no catálogo atual da plataforma. 
         Nunca invente cursos ou títulos que não estão na lista.
-        Sua resposta deve ser em texto puro, podendo usar markdown para formatação básica.`,
+        
+        Responda ESTRITAMENTE em formato JSON:
+        {
+          "resposta": "sua resposta em markdown",
+          "curso_id": number | null,
+          "curso_titulo": "titulo do curso mais relevante" | null
+        }`,
         messages: [
           {
             role: "user",
@@ -98,12 +105,26 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
-    let answer = claudeResult.content[0].text;
+    let rawContent = claudeResult.content[0].text.trim();
     
-    // Limpeza de cercas markdown se a IA retornar a resposta dentro de blocos
-    answer = answer.replace(/^```[a-z]*\n/i, "").replace(/\n```$/i, "").trim();
+    // JSON parsing with cleanup
+    if (rawContent.startsWith("```")) {
+      rawContent = rawContent.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    }
+    
+    const firstBrace = rawContent.indexOf("{");
+    const lastBrace = rawContent.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      rawContent = rawContent.substring(firstBrace, lastBrace + 1);
+    }
 
-    return new Response(JSON.stringify({ resposta: answer }), {
+    const data = JSON.parse(rawContent);
+
+    return new Response(JSON.stringify({ 
+      resposta: data.resposta,
+      curso_id: data.curso_id,
+      curso_titulo: data.curso_titulo
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

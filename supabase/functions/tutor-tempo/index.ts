@@ -51,6 +51,7 @@ serve(async (req) => {
     }
 
     const coursesList = rawCourses.map((c: any) => ({
+      id: c.id,
       title: c.title,
       summary: c.summary,
       duration: c.duration // em segundos
@@ -89,6 +90,7 @@ serve(async (req) => {
               "resumo": string, 
               "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
               "fonte": string, 
+              "curso_id": number,
               "tempo_min": number 
             } 
           ] 

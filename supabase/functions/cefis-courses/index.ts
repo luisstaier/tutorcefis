@@ -14,6 +14,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const search = url.searchParams.get("search") || "";
+    const id = url.searchParams.get("id") || "";
     const count = url.searchParams.get("count") || "10";
     const page = url.searchParams.get("page") || "1";
 
@@ -30,11 +31,16 @@ serve(async (req) => {
       );
     }
 
-    const apiUrl = new URL("https://api-v3.cefis.com.br/courses");
-    apiUrl.searchParams.set("count", count);
-    apiUrl.searchParams.set("page", page);
-    if (search) {
-      apiUrl.searchParams.set("search", search);
+    let apiUrl;
+    if (id) {
+      apiUrl = new URL(`https://api-v3.cefis.com.br/courses/${id}`);
+    } else {
+      apiUrl = new URL("https://api-v3.cefis.com.br/courses");
+      apiUrl.searchParams.set("count", count);
+      apiUrl.searchParams.set("page", page);
+      if (search) {
+        apiUrl.searchParams.set("search", search);
+      }
     }
 
     console.log(`Fetching from CEFIS API: ${apiUrl.toString()}`);
@@ -70,7 +76,8 @@ serve(async (req) => {
     const result = await response.json();
     
     // Transform data according to requirements
-    const transformedData = (result.data || []).map((course: any) => ({
+    const courses = id ? [result.data || result] : (result.data || []);
+    const transformedData = courses.map((course: any) => ({
       id: course.id,
       title: course.title,
       subtitle: course.subtitle,

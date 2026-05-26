@@ -62,6 +62,7 @@ serve(async (req) => {
     }
 
     const formattedCourses = coursesList.map((c: any) => ({
+      id: c.id,
       title: c.title,
       subtitle: c.subtitle,
       summary: c.summary,
@@ -100,6 +101,7 @@ serve(async (req) => {
               "descricao": string, 
               "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
               "fonte": string, 
+              "curso_id": number,
               "tempo_estimado_min": number 
             } 
           ] 

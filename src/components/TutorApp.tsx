@@ -58,7 +58,7 @@ export default function TutorApp() {
   const [chatHistory, setChatHistory] = useState<{
     pergunta: string;
     resposta: string;
-    fonte?: { curso: string; aula: string };
+    fonte?: { curso: string; aula: string; curso_id?: number };
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
 
@@ -162,7 +162,12 @@ export default function TutorApp() {
         
         setChatHistory(prev => [...prev, {
           pergunta: perguntaAtual,
-          resposta: duvData.resposta || "Desculpe, não consegui processar sua dúvida."
+          resposta: duvData.resposta || "Desculpe, não consegui processar sua dúvida.",
+          fonte: duvData.curso_id ? {
+            curso: duvData.curso_titulo || "Curso relacionado",
+            aula: "Geral",
+            curso_id: duvData.curso_id
+          } : undefined
         }]);
       } else {
         // Sucesso com transcrição
@@ -180,20 +185,43 @@ export default function TutorApp() {
     }
   };
 
-  const handleSearchCourses = async (query?: string) => {
+  const handleSearchCourses = async (query?: string, courseId?: number) => {
     const q = query ?? searchQuery;
     if (query) setSearchQuery(query);
     
     setIsLoading(true);
     setError(null);
+    setStep(5);
+    
     try {
-      const { data, error: functionError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(q)}`, {
+      let endpoint = `cefis-courses?search=${encodeURIComponent(q)}`;
+      if (courseId) {
+        endpoint = `cefis-courses?id=${courseId}`;
+      }
+      
+      const { data, error: functionError } = await supabase.functions.invoke(endpoint, {
         method: 'GET'
       });
 
       if (functionError) throw functionError;
-      setCourses(data.data || []);
-      setStep(5); // Sempre mudar para tela de catálogo ao buscar
+      
+      let finalCourses = data.data || [];
+      
+      // Retry logic if no results and we have a query (and not searching by ID)
+      if (finalCourses.length === 0 && q && !courseId) {
+        const keywords = q.split(' ').slice(0, 3).join(' ');
+        if (keywords && keywords !== q) {
+          console.log(`Retrying search with keywords: ${keywords}`);
+          const { data: retryData, error: retryError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(keywords)}`, {
+            method: 'GET'
+          });
+          if (!retryError && retryData.data) {
+            finalCourses = retryData.data;
+          }
+        }
+      }
+      
+      setCourses(finalCourses);
     } catch (err: any) {
       console.error('Search error:', err);
       setError(err.message || 'Erro ao carregar cursos.');
@@ -478,7 +506,7 @@ export default function TutorApp() {
                                 variant="ghost" 
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
-                                onClick={() => handleSearchCourses(stepItem.fonte || stepItem.titulo)}
+                                onClick={() => handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id)}
                               >
                                 <Search className="w-3 h-3" /> Ver no catálogo
                               </Button>
@@ -602,7 +630,7 @@ export default function TutorApp() {
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-6 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1 px-1"
-                                    onClick={() => handleSearchCourses(item.fonte || item.titulo)}
+                                    onClick={() => handleSearchCourses(item.fonte || item.titulo, item.curso_id)}
                                   >
                                     <Search className="w-2 h-2" /> Ver no catálogo
                                   </Button>
@@ -673,7 +701,7 @@ export default function TutorApp() {
                             size="sm" 
                             className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
                             onClick={() => {
-                              handleSearchCourses(chat.fonte?.curso || chat.pergunta);
+                              handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id);
                             }}
                           >
                             <Library className="w-3 h-3" /> {chat.fonte ? "Explorar este curso" : "Explorar cursos relacionados"}
@@ -745,10 +773,18 @@ export default function TutorApp() {
 
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
               {courses.map((course) => (
-                <Card key={course.id} className="border-border shadow-sm hover:shadow-md transition-all hover:border-accent/20 group">
+                <Card key={course.id} className={cn(
+                  "border-border shadow-sm hover:shadow-md transition-all hover:border-accent/20 group",
+                  courses.length === 1 && "border-accent ring-1 ring-accent/20"
+                )}>
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start gap-2">
-                      <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
+                      <div className="space-y-1">
+                        {courses.length === 1 && (
+                          <Badge className="bg-accent text-white border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
+                        )}
+                        <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
+                      </div>
                       {course.averageRating && (
                         <div className="flex items-center text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-xs font-bold shrink-0">
                           <Star className="w-3 h-3 fill-current mr-1" />
