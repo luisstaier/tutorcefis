@@ -180,7 +180,7 @@ export default function TutorApp() {
     { id: 0, label: "Início", icon: Home },
     { id: 1, label: "Diagnóstico", icon: ClipboardCheck },
     { id: 2, label: "Plano", icon: LayoutDashboard },
-    { id: 3, label: "Sessão Rápida", icon: Zap },
+    { id: 3, label: "Sessão Rápida (Tenho X min)", icon: Zap },
     { id: 4, label: "Dúvidas", icon: MessageCircle },
     { id: 5, label: "Catálogo", icon: Library },
   ];
