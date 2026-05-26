@@ -58,7 +58,7 @@ export default function TutorApp() {
   const [chatHistory, setChatHistory] = useState<{
     pergunta: string;
     resposta: string;
-    fonte?: { curso: string; aula: string };
+    fonte?: { curso: string; aula: string; curso_id?: number };
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
 
