@@ -264,6 +264,102 @@ export default function TutorApp() {
     }
   };
 
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+
+        try {
+          const { data, error } = await supabase.functions.invoke('tutor-whisper', {
+            body: formData,
+          });
+
+          if (error) throw error;
+          if (data.text) {
+            setDuvida(data.text);
+            // Auto submit
+            setTimeout(() => {
+              const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+              handleAskDuvida(fakeEvent);
+            }, 500);
+          }
+        } catch (err) {
+          toast.error("Não consegui entender — tente digitar.");
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      toast.error("Erro ao acessar microfone.");
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const handleListenResponse = async (index: number, text: string) => {
+    if (currentlyPlayingId === index) {
+      audioRef.current?.pause();
+      setCurrentlyPlayingId(null);
+      return;
+    }
+
+    setIsPreparingAudio(index);
+    try {
+      const { data, error } = await supabase.functions.invoke('tutor-elevenlabs', {
+        body: { text },
+      });
+
+      if (error) throw error;
+
+      const byteCharacters = atob(data.audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+      const url = URL.createObjectURL(blob);
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setCurrentlyPlayingId(index);
+      
+      audio.onended = () => {
+        setCurrentlyPlayingId(null);
+      };
+
+      audio.play();
+    } catch (err) {
+      toast.error("Áudio indisponível no momento");
+    } finally {
+      setIsPreparingAudio(null);
+    }
+  };
+
   const handleSearchCourses = async (query?: string, courseId?: number, autoOpen = false, context?: any) => {
     let q = query ?? searchQuery;
     setIsLoading(true);
