@@ -665,7 +665,7 @@ export default function TutorApp() {
                                   item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
                                 } text-primary-foreground border-none`}
                               >
-                                {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
+                                {item?.origem === 'catalogo_cefis' ? <CefisLogo className="w-12 text-primary-foreground" /> : '✨ Tutor'}
                               </Badge>
                               <div className="flex items-center gap-4 overflow-hidden">
                                 {item?.fonte && (
