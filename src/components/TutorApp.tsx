@@ -1061,6 +1061,24 @@ export default function TutorApp() {
 
   return (
     <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
+      <Toaster position="top-center" richColors />
+      
+      <StartSessionModal 
+        open={showStartSessionModal} 
+        onOpenChange={setShowStartSessionModal}
+        topico={modoData.topico}
+        onStart={(minutos: string, topico: string) => {
+          setModoData({ minutos, topico });
+          setShowStartSessionModal(false);
+          setStep(3);
+          // Trigger a small delay to allow state to settle before calling generator
+          setTimeout(() => {
+            const startBtn = document.querySelector('button[class*="bg-accent"][class*="w-full"]') as HTMLButtonElement;
+            if (startBtn) startBtn.click();
+          }, 100);
+        }}
+      />
+
       <div className="max-w-4xl mx-auto px-4">
         <header className="py-8 flex flex-col items-center">
           <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
@@ -1073,6 +1091,12 @@ export default function TutorApp() {
             <p className="text-secondary font-medium italic mt-2">Seu aprendizado, no seu tempo.</p>
           </div>
 
+          <LevelBadge 
+            xp={xp} 
+            currentLevel={currentLevel} 
+            nextLevel={nextLevel} 
+            progress={progress} 
+          />
           
           {renderNavigation()}
         </header>
@@ -1089,3 +1113,4 @@ export default function TutorApp() {
     </main>
   );
 }
+
