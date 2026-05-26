@@ -605,8 +605,12 @@ export default function CourseDetails({
                   )}
                 >
                   <div className="relative aspect-video bg-muted overflow-hidden">
-                    {l.thumbnail ? (
-                      <img src={l.thumbnail} alt={l.title} className="w-full h-full object-cover" />
+                    {l.thumbnail || course?.banner ? (
+                      <img 
+                        src={l.thumbnail || course?.banner} 
+                        alt={l.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
                         <PlayCircle className="w-10 h-10 text-secondary/60" />
