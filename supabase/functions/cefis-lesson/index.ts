@@ -26,8 +26,10 @@ serve(async (req) => {
     const lessonsResult = await response.json();
     const lessons = Array.isArray(lessonsResult) ? lessonsResult : (lessonsResult.data || []);
 
-    // Primeira aula com stream como "current"
-    const firstPlayable = lessons.find((l: any) => l.stream_sources && l.stream_sources.length > 0) || lessons[0] || null;
+    // Se lessonId vier, retorna aquela aula específica
+    const selected = lessonId
+      ? lessons.find((l: any) => String(l.id) === String(lessonId))
+      : (lessons.find((l: any) => l.stream_sources && l.stream_sources.length > 0) || lessons[0] || null);
 
     // Lista enxuta para galeria (sem expor links secure de todas)
     const gallery = lessons.map((l: any, idx: number) => ({
