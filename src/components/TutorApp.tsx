@@ -329,7 +329,7 @@ export default function TutorApp() {
         }
       }
 
-      if (courseId && finalCourses.length > 0) {
+      if (courseId !== undefined && courseId !== null && finalCourses.length > 0) {
         setSelectedCourse(finalCourses[0]);
         setCourses(finalCourses);
         setPreviousStep(step);
