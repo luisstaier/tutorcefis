@@ -20,29 +20,55 @@ serve(async (req) => {
       throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
     }
 
-    // 1. Buscar cursos relevantes na CEFIS baseado no objetivo do aluno
-    const cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
-    cefisUrl.searchParams.set("count", "12");
+    // 1. Buscar cursos relevantes na CEFIS
+    let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    cefisUrl.searchParams.set("count", "15");
     cefisUrl.searchParams.set("search", perfil.objetivo);
 
-    const cefisResponse = await fetch(cefisUrl.toString(), {
+    let cefisResponse = await fetch(cefisUrl.toString(), {
       headers: {
         "Authorization": `Bearer ${cefisApiKey}`,
         "Accept": "application/json",
       },
     });
 
-    if (!cefisResponse.ok) {
-      throw new Error(`Erro na API CEFIS: ${cefisResponse.status}`);
+    let cefisResult = await cefisResponse.json();
+    let coursesList = cefisResult.data || [];
+
+    console.log(`Busca 1 (objetivo: "${perfil.objetivo}") retornou ${coursesList.length} cursos.`);
+
+    // Se vierem poucos cursos, faz uma segunda busca geral (sem search)
+    if (coursesList.length < 8) {
+      console.log("Poucos cursos encontrados. Realizando busca geral...");
+      cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+      cefisUrl.searchParams.set("count", "15");
+      
+      cefisResponse = await fetch(cefisUrl.toString(), {
+        headers: {
+          "Authorization": `Bearer ${cefisApiKey}`,
+          "Accept": "application/json",
+        },
+      });
+      cefisResult = await cefisResponse.json();
+      const generalCourses = cefisResult.data || [];
+      console.log(`Busca 2 (geral) retornou ${generalCourses.length} cursos.`);
+      
+      const existingIds = new Set(coursesList.map((c: any) => c.id));
+      generalCourses.forEach((c: any) => {
+        if (!existingIds.has(c.id)) {
+          coursesList.push(c);
+        }
+      });
     }
 
-    const cefisResult = await cefisResponse.json();
-    const coursesList = (cefisResult.data || []).map((c: any) => ({
+    const formattedCourses = coursesList.map((c: any) => ({
       title: c.title,
       subtitle: c.subtitle,
       summary: c.summary,
       duration: c.duration
     }));
+
+    console.log(`Total de cursos reais enviados ao Tutor: ${formattedCourses.length}`);
 
     // 2. Chamar Claude API para montagem do plano
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
@@ -55,7 +81,12 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 2500,
-        system: `Você é o Tutor CEFIS. Monte um plano de estudos sequencial e realista que leve o aluno do nível atual ao objetivo, resolvendo as lacunas na ordem certa. Use SOMENTE cursos da lista real da CEFIS fornecida (título exato). Quando uma lacuna não for coberta por nenhum curso da lista, crie um passo de material próprio e marque origem como 'gerado_pelo_tutor'. Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato: { "plano": [ { "passo": number, "titulo": string, "descricao": string, "origem": "catalogo_cefis"|"gerado_pelo_tutor", "fonte": string, "tempo_estimado_min": number } ] }. Em fonte, use o título exato do curso CEFIS, ou '' se for material gerado.`,
+        system: `Você é o Tutor CEFIS. Monte um plano de estudos sequencial e realista que leve o aluno do nível atual ao objetivo, resolvendo as lacunas na ordem certa. 
+        PRIORIZE usar os cursos reais da CEFIS da lista fornecida (origem 'catalogo_cefis', fonte = título exato). 
+        Só use 'gerado_pelo_tutor' para uma lacuna que NENHUM curso da lista cobrir. 
+        A maioria dos passos deve referenciar cursos reais da CEFIS. 
+        Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato: { "plano": [ { "passo": number, "titulo": string, "descricao": string, "origem": "catalogo_cefis"|"gerado_pelo_tutor", "fonte": string, "tempo_estimado_min": number } ] }. 
+        Em fonte, use o título exato do curso CEFIS da lista, ou '' se for material gerado.`,
         messages: [
           {
             role: "user",
@@ -68,8 +99,8 @@ serve(async (req) => {
             Lacunas Identificadas:
             ${JSON.stringify(lacunas, null, 2)}
 
-            Catálogo Real CEFIS:
-            ${JSON.stringify(coursesList, null, 2)}`
+            Catálogo Real CEFIS (Use preferencialmente estes cursos):
+            ${JSON.stringify(formattedCourses, null, 2)}`
           }
         ],
       }),
@@ -84,7 +115,6 @@ serve(async (req) => {
     const claudeResult = await claudeResponse.json();
     const rawText = claudeResult.content[0].text;
     
-    // Robust JSON extraction
     let cleanedText = rawText.trim();
     if (cleanedText.startsWith("```")) {
       cleanedText = cleanedText.replace(/^```json\s*/, "").replace(/```$/, "").trim();
