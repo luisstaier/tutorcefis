@@ -226,7 +226,9 @@ export default function TutorApp() {
           fonte: transData.fonte
         }]);
       }
+      addXp(75, "Dúvida enviada e respondida!");
     } catch (err: any) {
+
       console.error('Duvida error:', err);
       setError(err.message || 'Erro ao enviar dúvida.');
     } finally {
