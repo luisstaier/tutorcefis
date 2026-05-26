@@ -305,21 +305,41 @@ export default function CourseDetails({
 
             <div className="space-y-1">
               {trail.map((item: any, i: number) => {
-                const itemTitle = isPlano ? item.titulo : item.titulo;
+                const isPlanoItem = context.source === 'plano';
+                const isTutorGenerated = item.origem === 'gerado_pelo_tutor';
+                const itemTitle = item.titulo;
+                
                 const isCurrent = (course.id && item.curso_id === course.id) || 
-                                 (course.title && (isPlano ? item.fonte === course.title : item.titulo === course.title));
+                                 (course.title && (isPlanoItem ? item.fonte === course.title : item.titulo === course.title));
                 
                 const currentIndex = trail.findIndex((t: any) => 
                   (course.id && t.curso_id === course.id) || 
-                  (course.title && (isPlano ? t.fonte === course.title : t.titulo === course.title))
+                  (course.title && (isPlanoItem ? t.fonte === course.title : t.titulo === course.title))
                 );
                 const isPast = currentIndex > i;
                 
+                if (isTutorGenerated) {
+                  return (
+                    <div key={i} className="w-full text-left p-2 rounded-lg bg-muted/20 border border-transparent">
+                      <div className="flex gap-2 items-start">
+                        <div className="mt-1 shrink-0">
+                          <span className="text-xs">✨</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-medium leading-tight text-secondary">
+                            {itemTitle}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <button
                     key={i}
                     onClick={() => {
-                      onNavigate?.(item.curso_id, isPlano ? item.fonte : item.titulo, context);
+                      onNavigate?.(item.curso_id, isPlanoItem ? item.fonte : item.titulo, context);
                       if (window.innerWidth < 1024) setIsSidebarOpen(false);
                     }}
                     className={cn(
