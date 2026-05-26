@@ -224,24 +224,41 @@ export default function TutorApp() {
       
       // Retry logic if no results and we have a query (and not searching by ID)
       if (finalCourses.length === 0 && q && !courseId) {
-        // Try fallback with just keywords if the full title doesn't work
-        const keywords = q.split(' ')
-          .filter(word => word.length > 2) // Filter out small words like "de", "da", "o"
+        // Fallback 1: Try first 3 significant words
+        const keywords3 = q.split(' ')
+          .filter(word => word.length > 3) 
           .slice(0, 3)
           .join(' ');
           
-        if (keywords && keywords !== q) {
-          console.log(`Fallback: Nenhuma correspondência exata para "${q}". Tentando palavras-chave: "${keywords}"`);
+        if (keywords3 && keywords3 !== q) {
           const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
-            body: { search: keywords }
+            body: { search: keywords3 }
           });
-
           if (!retryError && retryData.data && retryData.data.length > 0) {
             finalCourses = retryData.data;
-            setSearchQuery(keywords); // Update the input field to reflect what actually worked
+            setSearchQuery(keywords3);
+          }
+        }
+
+        // Fallback 2: If still empty, try just the first 2 significant words
+        if (finalCourses.length === 0) {
+          const keywords2 = q.split(' ')
+            .filter(word => word.length > 3)
+            .slice(0, 2)
+            .join(' ');
+            
+          if (keywords2 && keywords2 !== keywords3) {
+            const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
+              body: { search: keywords2 }
+            });
+            if (!retryError && retryData.data && retryData.data.length > 0) {
+              finalCourses = retryData.data;
+              setSearchQuery(keywords2);
+            }
           }
         }
       }
+
       
       setCourses(finalCourses);
     } catch (err: any) {
