@@ -918,6 +918,7 @@ export default function TutorApp() {
                             size="sm" 
                             className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
                             onClick={() => {
+                              console.log("Abrindo curso da dúvida:", chat.fonte?.curso_id, chat.fonte?.curso || chat.pergunta);
                               handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id, true);
                             }}
                           >
