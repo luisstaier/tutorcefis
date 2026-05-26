@@ -561,5 +561,6 @@ export default function CourseDetails({
         </section>
       )}
     </div>
+  </div>
   );
 }
