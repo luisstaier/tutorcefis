@@ -840,7 +840,10 @@ export default function TutorApp() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <CefisLogo className="w-14 text-primary" />
+                          <div className="bg-white/90 px-1 py-0.5 rounded">
+                            <CefisLogo className="w-14 text-[#051124]" />
+                          </div>
+
                           {courses.length === 1 && (
                             <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5">CURSO ENCONTRADO</Badge>
                           )}
