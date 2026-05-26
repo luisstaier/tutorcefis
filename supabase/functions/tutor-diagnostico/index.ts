@@ -53,7 +53,7 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-latest", // Nome de modelo garantido pelo fabricante
+        model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: `Você é o Tutor CEFIS, um tutor de aprendizado pessoal. Analise o perfil do aluno e identifique as lacunas entre onde ele está e o objetivo dele. Use APENAS os cursos reais da CEFIS fornecidos como referência do que a plataforma oferece. Adapte a linguagem ao nível do aluno. NUNCA invente cursos que não estão na lista. Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato:
         { "lacunas": [ { "topico": string, "por_que_importa": string, "prioridade": "alta"|"media"|"baixa", "curso_cefis_relacionado": string } ] }
