@@ -21,14 +21,14 @@ serve(async (req) => {
     }
 
     // 1. Busca cursos/aulas reais da CEFIS sobre o tópico
-    let cefisUrl = new URL(\"https://api-v3.cefis.com.br/courses\");
-    cefisUrl.searchParams.set(\"count\", \"15\");
-    cefisUrl.searchParams.set(\"search\", topico);
+    let cefisUrl = new URL("https://api-v3.cefis.com.br/courses");
+    cefisUrl.searchParams.set("count", "15");
+    cefisUrl.searchParams.set("search", topico);
 
     let cefisResponse = await fetch(cefisUrl.toString(), {
       headers: {
-        \"Authorization\": `Bearer ${cefisApiKey}`,
-        \"Accept\": \"application/json\",
+        "Authorization": `Bearer ${cefisApiKey}`,
+        "Accept": "application/json",
       },
     });
 
@@ -37,13 +37,13 @@ serve(async (req) => {
 
     // Fallback: Se não encontrar nada pelo tópico, busca cursos gerais para ter contexto
     if (rawCourses.length === 0) {
-      console.log(`Nenhum curso encontrado para \"${topico}\". Buscando cursos gerais...`);
-      const fallbackUrl = new URL(\"https://api-v3.cefis.com.br/courses\");
-      fallbackUrl.searchParams.set(\"count\", \"10\");
+      console.log(`Nenhum curso encontrado para "${topico}". Buscando cursos gerais...`);
+      const fallbackUrl = new URL("https://api-v3.cefis.com.br/courses");
+      fallbackUrl.searchParams.set("count", "10");
       const fallbackResponse = await fetch(fallbackUrl.toString(), {
         headers: {
-          \"Authorization\": `Bearer ${cefisApiKey}`,
-          \"Accept\": \"application/json\",
+          "Authorization": `Bearer ${cefisApiKey}`,
+          "Accept": "application/json",
         },
       });
       const fallbackResult = await fallbackResponse.json();
@@ -67,29 +67,29 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: \"claude-sonnet-4-6\",
+        model: "claude-sonnet-4-6",
         max_tokens: 2000,
         system: `Você é o Tutor CEFIS. O aluno tem ${minutos} minutos para aprender sobre ${topico}. 
         SUA MISSÃO: Monte uma micro-trilha que CABE exatamente no tempo informado (some os tempos; não ultrapasse).
         
         REGRA DE OURO: PRIORIZE incluir conteúdos REAIS da CEFIS listados no contexto.
         - Se um curso do catálogo CEFIS for minimamente relevante ao tópico, use-o!
-        - Origem: \"catalogo_cefis\", Fonte: [Título Exato do Curso].
+        - Origem: "catalogo_cefis", Fonte: [Título Exato do Curso].
         - Use a duração real (duration) convertida para minutos se possível, ou estime uma parte do curso que caiba.
         
-        - Só use \"gerado_pelo_tutor\" se o catálogo REAL não cobrir NADA do tópico ou se sobrar tempo após incluir os cursos principais.
+        - Só use "gerado_pelo_tutor" se o catálogo REAL não cobrir NADA do tópico ou se sobrar tempo após incluir os cursos principais.
         - Quando gerar conteúdo próprio, crie um resumo enxuto calibrado pelo tempo (~140 palavras por minuto).
         
         Responda ESTRITAMENTE em JSON válido, neste formato: 
         { 
-          \"total_min\": number, 
-          \"itens\": [ 
+          "total_min": number, 
+          "itens": [ 
             { 
-              \"titulo\": string, 
-              \"resumo\": string, 
-              \"origem\": \"catalogo_cefis\"|\"gerado_pelo_tutor\", 
-              \"fonte\": string, 
-              \"tempo_min\": number 
+              "titulo": string, 
+              "resumo": string, 
+              "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
+              "fonte": string, 
+              "tempo_min": number 
             } 
           ] 
         }`,
