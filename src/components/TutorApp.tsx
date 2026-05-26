@@ -672,15 +672,15 @@ export default function TutorApp() {
                               ) : (
                                 <TutorAiLogo showText={false} className="scale-90" />
                               )}
-                              {item.curso_id && (
+                              {item.curso_id ? (
                                 <Button 
                                   size="sm"
-                                  onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}
+                                  onClick={() => handleSearchCourses(undefined, item.curso_id, false)}
                                   className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-8"
                                 >
-                                  <PlayCircle className="w-4 h-4 mr-1.5" /> Iniciar Trilha
+                                  <PlayCircle className="w-4 h-4 mr-1.5" /> Iniciar Curso
                                 </Button>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
