@@ -213,14 +213,10 @@ export default function TutorApp() {
     setStep(5);
     
     try {
-      let endpoint = `cefis-courses?search=${encodeURIComponent(q)}`;
-      if (courseId) {
-        endpoint = `cefis-courses?id=${courseId}`;
-      }
-      
-      const { data, error: functionError } = await supabase.functions.invoke(endpoint, {
-        method: 'GET'
+      const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
+        body: courseId ? { id: courseId } : { search: q }
       });
+
 
       if (functionError) throw functionError;
       
