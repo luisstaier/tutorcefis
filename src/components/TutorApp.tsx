@@ -169,7 +169,9 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setQuickSession(data);
+      addXp(100, "Sessão rápida iniciada!");
     } catch (err: any) {
+
       console.error('Session generation error:', err);
       setError(err.message || 'Erro ao gerar sessão rápida.');
     } finally {
