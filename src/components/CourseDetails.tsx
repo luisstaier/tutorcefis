@@ -100,12 +100,22 @@ export default function CourseDetails({
         const progress = (video.currentTime / video.duration) * 100;
         setVideoProgress(progress);
 
+        // Gatilhos de 25%, 50%, 75%
+        const milestones = [25, 50, 75];
+        milestones.forEach(milestone => {
+          if (progress >= milestone && progress < milestone + 1 && !triggeredMilestones.includes(milestone)) {
+            setTriggeredMilestones(prev => [...prev, milestone]);
+            fetchMotivationalMessage(`O aluno atingiu ${milestone}% da aula.`);
+          }
+        });
+
         // Se atingir 80% e ainda não estiver completa
         if (progress >= 80 && !isLessonCompleted(course.id, lesson.id)) {
           console.log("Atingiu 80% do vídeo, marcando como concluída automaticamente.");
           onCompleteLesson(course.id, lesson.id);
         }
       }
+      setLastActivity(Date.now());
     };
 
     video.addEventListener('ended', handleEnded);
