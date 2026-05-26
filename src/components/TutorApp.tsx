@@ -97,13 +97,15 @@ export default function TutorApp() {
   useEffect(() => {
     const savedKey = sessionStorage.getItem("cefis_user_key");
     const savedProfile = localStorage.getItem("tutor_cefis_profile");
-    
-    if (savedKey && savedProfile) {
-      setUserKey(savedKey);
+    const validKey = savedKey && savedKey !== "undefined" && savedKey !== "null" ? savedKey : null;
+
+    if (validKey && savedProfile) {
+      setUserKey(validKey);
       setFormData(JSON.parse(savedProfile));
       setIsAuthenticated(true);
       setStep(0);
     } else {
+      if (savedKey) sessionStorage.removeItem("cefis_user_key");
       setStep(-1);
     }
 
