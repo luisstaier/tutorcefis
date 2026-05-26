@@ -898,8 +898,25 @@ export default function TutorApp() {
         return (
           <Card className="max-w-3xl mx-auto border-border shadow-sm flex flex-col h-[600px]">
             <CardHeader className="border-b">
-              <CardTitle className="flex items-center gap-2 font-serif"><MessageCircle className="text-accent" /> Chat com o Tutor</CardTitle>
-              <CardDescription>Tire dúvidas técnicas baseadas no catálogo real da CEFIS.</CardDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2 font-serif"><MessageCircle className="text-accent" /> Chat com o Tutor</CardTitle>
+                  <CardDescription>Tire dúvidas técnicas baseadas no catálogo real da CEFIS.</CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isVoiceActive ? "default" : "outline"}
+                  onClick={handleToggleVoice}
+                  className={cn(
+                    "h-8 gap-2 font-bold transition-all shrink-0",
+                    isVoiceActive ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "text-secondary border-dashed"
+                  )}
+                >
+                  <Sparkles className={cn("w-3 h-3", isVoiceActive && "animate-pulse")} />
+                  {isVoiceActive ? "Voz Ativa" : "Ativar Voz"}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
               {chatHistory.length === 0 && <div className="text-center py-20 text-secondary italic">Como posso te ajudar hoje? Pergunte algo sobre contabilidade ou impostos.</div>}
