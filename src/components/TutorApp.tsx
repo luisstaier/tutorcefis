@@ -804,7 +804,7 @@ export default function TutorApp() {
                       <div className="flex items-center gap-1.5 pt-1">
                         <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.curso_id ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
                       </div>
-                      {item.curso_id ? <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Ver o curso</Button> : null}
+                      {item.curso_id ? <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false)}>Iniciar Curso</Button> : null}
                     </div>
                   ))}
                   
