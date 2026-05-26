@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface CourseDetailsProps {
   course: any;
