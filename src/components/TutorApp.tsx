@@ -426,10 +426,21 @@ export default function TutorApp() {
                               <MarkdownRenderer content={gap.por_que_importa} />
                             </div>
                             {gap.curso_cefis_relacionado && (
-                              <div className="text-xs bg-muted/30 p-2 rounded border border-border flex items-center gap-2">
-                                <span className="font-bold text-accent">Curso CEFIS:</span> {gap.curso_cefis_relacionado}
+                              <div className="text-xs bg-muted/30 p-2 rounded border border-border flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-accent">Curso CEFIS:</span> {gap.curso_cefis_relacionado}
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 text-[10px] text-accent hover:bg-accent/5 font-bold gap-1"
+                                  onClick={() => handleSearchCourses(gap.curso_cefis_relacionado)}
+                                >
+                                  <Search className="w-2.5 h-2.5" /> Explorar
+                                </Button>
                               </div>
                             )}
+
                           </CardContent>
                         </Card>
                       ))
