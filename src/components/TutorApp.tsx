@@ -12,26 +12,83 @@ import { cn } from "@/lib/utils";
 import { Toaster, toast } from "sonner";
 import CourseDetails from "./CourseDetails";
 
-const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
-  <div className={cn("text-sm", className)}>
-    <ReactMarkdown 
-      components={{
-        h1: ({node, ...props}) => <h1 className="font-serif text-xl font-bold mb-3 text-foreground" {...props} />,
-        h2: ({node, ...props}) => <h2 className="font-serif text-lg font-bold mb-2 text-foreground" {...props} />,
-        h3: ({node, ...props}) => <h3 className="font-serif text-md font-bold mb-2 text-foreground" {...props} />,
-        p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
-        ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-        ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-        li: ({node, ...props}) => <li className="mb-1" {...props} />,
-        blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-accent pl-4 italic my-4 text-secondary bg-accent/5 py-2 rounded-r" {...props} />,
-        strong: ({node, ...props}) => <strong className="font-bold text-accent" {...props} />,
-        a: ({node, ...props}) => <a className="text-accent underline hover:text-accent/80 transition-colors" target="_blank" rel="noopener noreferrer" {...props} />,
-      }}
-    >
-      {content}
-    </ReactMarkdown>
-  </div>
-);
+const MarkdownRenderer = ({ 
+  content, 
+  className = "", 
+  courseName, 
+  courseId, 
+  onCourseClick 
+}: { 
+  content: string; 
+  className?: string;
+  courseName?: string;
+  courseId?: number;
+  onCourseClick?: (id: number, title: string) => void;
+}) => {
+  const processedContent = useMemo(() => {
+    if (!courseName || !courseId || !onCourseClick) return content;
+    
+    // Procura por "Nome do Curso" ou Nome do Curso (destacado)
+    // Vamos usar regex para encontrar a primeira ocorrência do nome do curso entre aspas ou como texto exato
+    // Escapa caracteres especiais do nome do curso para o regex
+    const escapedName = courseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(["'])(${escapedName})\\1|(${escapedName})`, 'i');
+    
+    const match = content.match(regex);
+    if (!match) return content;
+
+    const matchedText = match[0];
+    const startIndex = match.index!;
+    
+    // Substitui apenas a primeira ocorrência por um marcador customizado para o Markdown ou link HTML
+    // Como estamos usando react-markdown, podemos injetar um link que o componente 'a' irá renderizar
+    // ou simplesmente retornar partes. Mas o react-markdown é mais limpo.
+    // Vamos envolver com um link markdown [Texto](course://id)
+    return (
+      content.slice(0, startIndex) + 
+      `[${matchedText}](course://${courseId})` + 
+      content.slice(startIndex + matchedText.length)
+    );
+  }, [content, courseName, courseId]);
+
+  return (
+    <div className={cn("text-sm", className)}>
+      <ReactMarkdown 
+        components={{
+          h1: ({node, ...props}) => <h1 className="font-serif text-xl font-bold mb-3 text-foreground" {...props} />,
+          h2: ({node, ...props}) => <h2 className="font-serif text-lg font-bold mb-2 text-foreground" {...props} />,
+          h3: ({node, ...props}) => <h3 className="font-serif text-md font-bold mb-2 text-foreground" {...props} />,
+          p: ({node, ...props}) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
+          ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+          ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+          li: ({node, ...props}) => <li className="mb-1" {...props} />,
+          blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-accent pl-4 italic my-4 text-secondary bg-accent/5 py-2 rounded-r" {...props} />,
+          strong: ({node, ...props}) => <strong className="font-bold text-accent" {...props} />,
+          a: ({node, ...props}) => {
+            const href = props.href || "";
+            if (href.startsWith("course://")) {
+              const id = parseInt(href.replace("course://", ""));
+              return (
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onCourseClick?.(id, props.children?.toString() || "");
+                  }}
+                  className="text-accent underline hover:text-accent/80 transition-colors font-bold decoration-[#b3e51d]"
+                >
+                  {props.children}
+                </button>
+              );
+            }
+            return <a className="text-accent underline hover:text-accent/80 transition-colors" target="_blank" rel="noopener noreferrer" {...props} />;
+          },
+        }}
+      >
+        {processedContent}
+      </ReactMarkdown>
+    </div>
+  );
+};
 
 const CefisLogo = ({ className = "" }: { className?: string }) => (
   <svg 
@@ -643,7 +700,12 @@ export default function TutorApp() {
                   <div className="flex justify-end"><div className="bg-accent text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm">{chat.pergunta}</div></div>
                   <div className="flex justify-start">
                     <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3 relative group">
-                      <MarkdownRenderer content={chat.resposta} />
+                      <MarkdownRenderer 
+                        content={chat.resposta} 
+                        courseName={chat.fonte?.curso}
+                        courseId={chat.fonte?.curso_id}
+                        onCourseClick={(id, title) => handleSearchCourses(undefined, id, false)}
+                      />
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
                         {chat.fonte ? (
                           <div className="text-[10px] text-secondary flex items-center gap-2">
