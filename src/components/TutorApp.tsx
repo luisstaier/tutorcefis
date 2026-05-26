@@ -783,7 +783,7 @@ export default function TutorApp() {
                       <div className="space-y-3">
                         <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
                         <div className="flex flex-wrap gap-2">
-                          {["5", "10", "30"].map((m) => (
+                          {["5", "10", "30", "45", "60", "90", "120", "180"].map((m) => (
                             <Button 
                               key={m} 
                               variant={modoData.minutos === m ? "default" : "outline"}
@@ -797,17 +797,6 @@ export default function TutorApp() {
                             </Button>
                           ))}
                         </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-wider text-secondary">Ou digite os minutos</Label>
-                        <Input 
-                          type="number" 
-                          value={modoData.minutos} 
-                          onChange={(e) => setModoData(prev => ({ ...prev, minutos: e.target.value }))}
-                          placeholder="Ex: 15"
-                          className="focus-visible:ring-accent h-12 bg-muted/30 border-border"
-                        />
                       </div>
                     </div>
 
