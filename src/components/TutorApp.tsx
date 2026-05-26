@@ -591,11 +591,23 @@ export default function TutorApp() {
                               >
                                 {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
                               </Badge>
-                              {item?.fonte && (
-                                <span className="text-xs text-secondary italic truncate max-w-[200px]">
-                                  {item.fonte}
-                                </span>
-                              )}
+                              <div className="flex items-center gap-4 overflow-hidden">
+                                {item?.fonte && (
+                                  <span className="text-xs text-secondary italic truncate max-w-[150px]">
+                                    {item.fonte}
+                                  </span>
+                                )}
+                                {item?.origem === 'catalogo_cefis' && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1 px-1"
+                                    onClick={() => handleSearchCourses(item.fonte || item.titulo)}
+                                  >
+                                    <Search className="w-2 h-2" /> Ver no catálogo
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
