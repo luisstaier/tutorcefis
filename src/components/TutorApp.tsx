@@ -828,11 +828,15 @@ export default function TutorApp() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start gap-2">
                       <div className="space-y-1">
-                        {courses.length === 1 && (
-                          <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
-                        )}
+                        <div className="flex items-center gap-2 mb-1">
+                          <CefisLogo className="w-14 text-primary" />
+                          {courses.length === 1 && (
+                            <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5">CURSO ENCONTRADO</Badge>
+                          )}
+                        </div>
                         <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
                       </div>
+
                       {course.averageRating && (
                         <div className="flex items-center text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-xs font-bold shrink-0">
                           <Star className="w-3 h-3 fill-current mr-1" />
