@@ -2,10 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles, Target, Award, Book, Dumbbell, FileText, Check, XCircle } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles, Target, Award, Book, Dumbbell, FileText, Check, XCircle, Quote } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { TutorAiLogo } from "./TutorAiLogo";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+
 
 interface CourseDetailsProps {
   course: any;
@@ -49,6 +52,14 @@ export default function CourseDetails({
   const [isCertificateLoading, setIsCertificateLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizTimerRef = useRef<any>(null);
+  const inactivityTimerRef = useRef<any>(null);
+  const triggeredMilestonesRef = useRef<number[]>([]);
+  const [motivationalMessage, setMotivationalMessage] = useState<string | null>(null);
+  const [isMotivationalLoading, setIsMotivationalLoading] = useState(false);
+  const [showMotivational, setShowMotivational] = useState(false);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+
+
 
   // Calcula progresso do curso
   const totalLessons = lessonsGallery.length || course?.lessonCount || 0;
@@ -90,12 +101,22 @@ export default function CourseDetails({
         const progress = (video.currentTime / video.duration) * 100;
         setVideoProgress(progress);
 
+        // Gatilhos de 25%, 50%, 75%
+        const milestones = [25, 50, 75];
+        milestones.forEach(milestone => {
+          if (progress >= milestone && progress < milestone + 2 && !triggeredMilestonesRef.current.includes(milestone)) {
+            triggeredMilestonesRef.current.push(milestone);
+            fetchMotivationalMessage(`O aluno atingiu ${milestone}% da aula.`);
+          }
+        });
+
         // Se atingir 80% e ainda não estiver completa
         if (progress >= 80 && !isLessonCompleted(course.id, lesson.id)) {
           console.log("Atingiu 80% do vídeo, marcando como concluída automaticamente.");
           onCompleteLesson(course.id, lesson.id);
         }
       }
+      setLastActivity(Date.now());
     };
 
     video.addEventListener('ended', handleEnded);
@@ -114,10 +135,47 @@ export default function CourseDetails({
 
   useEffect(() => {
     // Forçar recarga da tag video quando a aula muda
-    if (lesson?.id && videoRef.current) {
-      videoRef.current.load();
+    if (lesson?.id) {
+      triggeredMilestonesRef.current = [];
+      if (videoRef.current) {
+        videoRef.current.load();
+      }
     }
   }, [lesson?.id]);
+
+  const fetchMotivationalMessage = async (context: string) => {
+    setIsMotivationalLoading(true);
+    setShowMotivational(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('tutor-duvidas', {
+        body: { 
+          pergunta: `Gere uma mensagem motivacional estoica personalizada curta (máximo 2 parágrafos). Contexto: ${context}. O aluno está estudando o curso "${course?.title}" e a aula "${lesson?.title}".`, 
+          perfil: userProfile, 
+          userKey 
+        }
+      });
+      if (error) throw error;
+      setMotivationalMessage(data?.resposta || "Mantenha o foco. A disciplina é a ponte entre metas e conquistas.");
+    } catch (err) {
+      console.error("Erro ao buscar mensagem motivacional:", err);
+      setMotivationalMessage("A persistência é o caminho do êxito.");
+    } finally {
+      setIsMotivationalLoading(false);
+    }
+  };
+
+  // Timer de inatividade (10 minutos)
+  useEffect(() => {
+    const checkInactivity = () => {
+      const now = Date.now();
+      if (now - lastActivity > 10 * 60 * 1000 && !showMotivational) {
+        fetchMotivationalMessage("O aluno está inativo há 10 minutos.");
+      }
+    };
+
+    const interval = setInterval(checkInactivity, 60000); // Checa a cada minuto
+    return () => clearInterval(interval);
+  }, [lastActivity, showMotivational]);
 
   const handleViewCertificate = async () => {
     setIsCertificateLoading(true);
@@ -875,7 +933,53 @@ export default function CourseDetails({
           </div>
         </section>
       )}
+
+      {/* POPUP MOTIVACIONAL */}
+      <Dialog open={showMotivational} onOpenChange={setShowMotivational}>
+        <DialogContent className="sm:max-w-md bg-card border-accent/20">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-serif text-accent">
+              <Quote className="w-5 h-5" /> 
+              Momento de Reflexão
+            </DialogTitle>
+            <DialogDescription className="text-secondary italic">
+              Uma mensagem personalizada do seu tutor para impulsionar sua jornada.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6 flex flex-col items-center gap-6">
+            {isMotivationalLoading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 text-accent animate-spin" />
+                <p className="text-xs text-muted-foreground animate-pulse">O tutor está preparando algo para você...</p>
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500 w-full">
+                <div className="p-5 rounded-2xl bg-accent/5 border border-accent/10 relative">
+                  <Quote className="absolute -top-2 -left-2 w-8 h-8 text-accent/20" />
+                  <p className="text-lg font-serif italic leading-relaxed text-foreground text-center">
+                    "{motivationalMessage}"
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <TutorAiLogo className="scale-90" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button 
+              onClick={() => setShowMotivational(false)}
+              className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold px-8 rounded-full"
+            >
+              Continuar Estudando
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </div>
   );
 }
+

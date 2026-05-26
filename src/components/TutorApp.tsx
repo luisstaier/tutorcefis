@@ -4,12 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Toaster, toast } from "sonner";
+import { TutorAiLogo } from "./TutorAiLogo";
 import CourseDetails from "./CourseDetails";
 
 const MarkdownRenderer = ({ 
@@ -656,12 +657,22 @@ export default function TutorApp() {
                               {item.titulo}
                               {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />}
                             </h4>
-                            <Badge className={item.origem === 'catalogo_cefis' ? 'bg-accent text-primary-foreground font-bold' : 'bg-success text-white font-bold'}>
-                              {item.origem === 'catalogo_cefis' ? "CEFIS" : "tutor.ai"}
-                            </Badge>
+                            {item.origem === 'catalogo_cefis' ? (
+                              <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
+                            ) : (
+                              <TutorAiLogo showText={false} className="scale-90" />
+                            )}
+
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
-                          <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.origem === 'catalogo_cefis' ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <p className="text-[10px] text-muted-foreground italic">Informação gerada por:</p>
+                            {item.origem === 'catalogo_cefis' ? (
+                              <span className="text-[10px] font-bold text-accent">Conteúdo Original CEFIS</span>
+                            ) : (
+                              <TutorAiLogo className="scale-75 origin-left" />
+                            )}
+                          </div>
                           
                           {item.curso_id && lessons.length > 0 && (
                             <div className="pt-1 space-y-1">
@@ -776,7 +787,14 @@ export default function TutorApp() {
                         <span className="text-xs">{item.tempo_min} min</span>
                       </div>
                       <p className="text-sm text-secondary">{item.resumo}</p>
-                      <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.curso_id ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por:</p>
+                        {item.curso_id ? (
+                          <span className="text-[10px] font-bold text-accent">Conteúdo Original CEFIS</span>
+                        ) : (
+                          <TutorAiLogo className="scale-75 origin-left" />
+                        )}
+                      </div>
                       {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Acessar Conteúdo</Button>}
                     </div>
                   ))}
@@ -827,9 +845,9 @@ export default function TutorApp() {
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
                         {chat.fonte ? (
                           <div className="text-[10px] text-secondary flex items-center gap-2">
-                            <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
-                            {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
-                          </div>
+                             <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
+                             {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Acessar Conteúdo</Button>}
+                           </div>
                         ) : <span></span>}
                         
                         <Button 
