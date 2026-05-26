@@ -92,6 +92,7 @@ export default function TutorApp() {
     fonte?: { curso: string; aula: string; curso_id?: number };
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   
 
   useEffect(() => {
@@ -105,6 +106,35 @@ export default function TutorApp() {
       setCompletedLessons(JSON.parse(savedProgress));
     }
   }, []);
+
+  useEffect(() => {
+    const fetchCefisUser = async () => {
+      if (isProfileLoaded) return;
+      
+      try {
+        const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
+          body: { type: 'user' }
+        });
+        
+        if (!functionError && data && !data.error) {
+          setFormData(prev => ({
+            ...prev,
+            nome: data.name || prev.nome,
+            experiencia: data.occupation || prev.experiencia,
+            nivel: data.nivel || prev.nivel
+          }));
+          setIsProfileLoaded(true);
+          toast.success("Perfil CEFIS carregado!");
+        }
+      } catch (err) {
+        console.error("Error fetching CEFIS user:", err);
+      }
+    };
+
+    if (step === 0) {
+      fetchCefisUser();
+    }
+  }, [step, isProfileLoaded]);
 
   useEffect(() => {
     console.log("TutorApp Step mudou para:", step, "Course selecionado:", selectedCourse?.id);
@@ -411,7 +441,15 @@ export default function TutorApp() {
             <Card className="max-w-md mx-auto border-border shadow-sm overflow-hidden">
               <div className="h-2 bg-accent w-full" />
               <CardHeader>
-                <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
+                  {isProfileLoaded && (
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Perfil CEFIS carregado
+                    </Badge>
+                  )}
+                </div>
                 <CardDescription className="text-secondary text-lg">
                   Vamos personalizar sua jornada de aprendizado para que você alcance seus objetivos mais rápido.
                 </CardDescription>
