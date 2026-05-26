@@ -99,6 +99,7 @@ export default function TutorApp() {
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem("tutor_cefs_profile", JSON.stringify(formData));
+    addXp(50, "Onboarding concluído!");
     setStep(1); // Mudar para tela de diagnóstico
     
     setIsLoading(true);
@@ -110,6 +111,7 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setDiagnosis(data.lacunas || []);
+      addXp(100, "Diagnóstico gerado com sucesso!");
     } catch (err: any) {
       console.error('Diagnosis error:', err);
       setError(err.message || 'Erro ao gerar diagnóstico.');
@@ -131,8 +133,19 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setStudyPlan(data.plano || []);
+      addXp(150, "Plano de estudos personalizado criado!");
       setStep(2); // Mudar para tela de plano
+      
+      // Preparar dados para o modal de Sessão Rápida
+      if (data.plano && data.plano.length > 0) {
+        setModoData(prev => ({
+          ...prev,
+          topico: data.plano[0].titulo
+        }));
+        setTimeout(() => setShowStartSessionModal(true), 1000);
+      }
     } catch (err: any) {
+
       console.error('Plan generation error:', err);
       setError(err.message || 'Erro ao gerar plano de estudos.');
     } finally {
