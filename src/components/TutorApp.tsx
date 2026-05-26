@@ -337,20 +337,30 @@ export default function TutorApp() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-                    <Button 
-                      onClick={handleGeneratePlan} 
-                      disabled={isGeneratingPlan}
-                      className="bg-accent hover:bg-accent/90 text-white font-bold"
-                    >
-                      {isGeneratingPlan ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Montando plano...
-                        </>
-                      ) : (
-                        "Gerar Meu Plano Completo"
-                      )}
-                    </Button>
+                    {studyPlan.length > 0 ? (
+                      <Button 
+                        onClick={() => setStep(2)} 
+                        variant="outline" 
+                        className="border-accent text-accent hover:bg-accent/5 font-bold"
+                      >
+                        Voltar ao Plano
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={handleGeneratePlan} 
+                        disabled={isGeneratingPlan}
+                        className="bg-accent hover:bg-accent/90 text-white font-bold"
+                      >
+                        {isGeneratingPlan ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Montando plano...
+                          </>
+                        ) : (
+                          "Gerar Meu Plano Completo"
+                        )}
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       onClick={() => setStep(4)}
