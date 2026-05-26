@@ -845,9 +845,9 @@ export default function TutorApp() {
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
                         {chat.fonte ? (
                           <div className="text-[10px] text-secondary flex items-center gap-2">
-                            <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
-                            {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
-                          </div>
+                             <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
+                             {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Acessar Conteúdo</Button>}
+                           </div>
                         ) : <span></span>}
                         
                         <Button 
