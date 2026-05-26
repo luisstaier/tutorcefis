@@ -335,7 +335,10 @@ export default function TutorApp() {
         setStep(6);
       } else {
         setCourses(finalCourses);
-        if (!autoOpen) setStep(5);
+        setStep(5);
+        if (autoOpen && finalCourses.length === 0) {
+          toast.info("Não encontramos o curso exato, mas você pode explorar o catálogo.");
+        }
       }
     } catch (err: any) {
       console.error('Search error:', err);
