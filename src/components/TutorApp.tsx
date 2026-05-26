@@ -526,12 +526,13 @@ export default function TutorApp() {
                               } text-primary-foreground border-none shrink-0`}
                             >
                               {stepItem.origem === 'catalogo_cefis' ? (
-                                <span className="flex items-center gap-1">
-                                  <CefisLogo className="w-12 text-primary-foreground" />
+                                <span className="flex items-center gap-1 bg-white/90 px-1 py-0.5 rounded">
+                                  <CefisLogo className="w-12 text-[#051124]" />
                                 </span>
                               ) : (
                                 <span className="flex items-center gap-1">✨ Tutor</span>
                               )}
+
 
                             </Badge>
                           </div>
