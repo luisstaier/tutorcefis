@@ -105,6 +105,10 @@ export default function TutorApp() {
     }
   }, []);
 
+  useEffect(() => {
+    console.log("TutorApp Step mudou para:", step, "Course selecionado:", selectedCourse?.id);
+  }, [step, selectedCourse]);
+
   const handleCompleteLesson = (courseId: number, lessonId: number) => {
     setCompletedLessons(prev => {
       const courseLessons = prev[courseId] || [];
