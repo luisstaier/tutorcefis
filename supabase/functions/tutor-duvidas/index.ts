@@ -105,12 +105,26 @@ serve(async (req) => {
     }
 
     const claudeResult = await claudeResponse.json();
-    let answer = claudeResult.content[0].text;
+    let rawContent = claudeResult.content[0].text.trim();
     
-    // Limpeza de cercas markdown se a IA retornar a resposta dentro de blocos
-    answer = answer.replace(/^```[a-z]*\n/i, "").replace(/\n```$/i, "").trim();
+    // JSON parsing with cleanup
+    if (rawContent.startsWith("```")) {
+      rawContent = rawContent.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    }
+    
+    const firstBrace = rawContent.indexOf("{");
+    const lastBrace = rawContent.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      rawContent = rawContent.substring(firstBrace, lastBrace + 1);
+    }
 
-    return new Response(JSON.stringify({ resposta: answer }), {
+    const data = JSON.parse(rawContent);
+
+    return new Response(JSON.stringify({ 
+      resposta: data.resposta,
+      curso_id: data.curso_id,
+      curso_titulo: data.curso_titulo
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
