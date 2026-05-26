@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { useGamification } from "@/hooks/useGamification";
+import { Toaster } from "@/components/ui/sonner";
+
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
   <div className={cn("text-sm", className)}>
@@ -50,7 +55,104 @@ const CefisLogo = ({ className = "" }: { className?: string }) => (
 );
 
 
+const LevelBadge = ({ xp, currentLevel, nextLevel, progress }: any) => {
+  return (
+    <div className="flex flex-col items-center gap-2 mb-6 w-full max-w-xs animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="flex items-center justify-between w-full px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{currentLevel.icon}</span>
+          <span className="font-bold text-sm text-accent">{currentLevel.name}</span>
+        </div>
+        <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">{xp} XP TOTAL</span>
+      </div>
+      <Progress value={progress} className="h-2 bg-muted border border-border overflow-hidden rounded-full [&>div]:bg-accent" />
+      {nextLevel && (
+        <p className="text-[10px] text-secondary/60 font-medium">
+          Faltam {nextLevel.minXP - xp} XP para o nível {nextLevel.name}
+        </p>
+      )}
+    </div>
+  );
+};
+
+const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
+  const [minutes, setMinutes] = useState("10");
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Zap className="text-accent" /> Pronto para começar agora?
+          </DialogTitle>
+          <DialogDescription className="text-secondary text-base pt-2">
+            Quanto tempo você tem disponível para estudar este tópico hoje?
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6 py-4">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {["5", "10", "30"].map((m) => (
+                <Button 
+                  key={m} 
+                  variant={minutes === m ? "default" : "outline"}
+                  onClick={() => setMinutes(m)}
+                  className={cn(
+                    "h-10 px-4 font-bold transition-all",
+                    minutes === m ? "bg-accent text-primary-foreground" : "border-border text-secondary hover:border-accent/50"
+                  )}
+                >
+                  {m} min
+                </Button>
+              ))}
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-secondary">Minutos personalizados</Label>
+              <Input 
+                type="number" 
+                value={minutes} 
+                onChange={(e) => setMinutes(e.target.value)}
+                className="focus-visible:ring-accent bg-muted/30"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-secondary">Tópico</Label>
+              <Input 
+                value={topico} 
+                readOnly
+                className="bg-muted/50 border-border text-secondary cursor-not-allowed"
+              />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => onOpenChange(false)}
+            className="text-secondary font-bold hover:bg-muted"
+          >
+            Agora não
+          </Button>
+          <Button 
+            onClick={() => onStart(minutes, topico)}
+            className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20"
+          >
+            Iniciar Sessão Rápida
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+
 export default function TutorApp() {
+  const { xp, addXp, currentLevel, nextLevel, progress } = useGamification();
   const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo
   const [formData, setFormData] = useState({
     nome: "",
@@ -80,10 +182,20 @@ export default function TutorApp() {
     fonte?: { curso: string; aula: string; curso_id?: number };
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
+
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("tutor_cefs_profile");
+    if (savedProfile) {
+      setFormData(JSON.parse(savedProfile));
+    }
+  }, []);
+
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem("tutor_cefs_profile", JSON.stringify(formData));
+    addXp(50, "Onboarding concluído!");
     setStep(1); // Mudar para tela de diagnóstico
     
     setIsLoading(true);
@@ -95,6 +207,7 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setDiagnosis(data.lacunas || []);
+      addXp(100, "Diagnóstico gerado com sucesso!");
     } catch (err: any) {
       console.error('Diagnosis error:', err);
       setError(err.message || 'Erro ao gerar diagnóstico.');
@@ -116,8 +229,19 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setStudyPlan(data.plano || []);
+      addXp(150, "Plano de estudos personalizado criado!");
       setStep(2); // Mudar para tela de plano
+      
+      // Preparar dados para o modal de Sessão Rápida
+      if (data.plano && data.plano.length > 0) {
+        setModoData(prev => ({
+          ...prev,
+          topico: data.plano[0].titulo
+        }));
+        setTimeout(() => setShowStartSessionModal(true), 1000);
+      }
     } catch (err: any) {
+
       console.error('Plan generation error:', err);
       setError(err.message || 'Erro ao gerar plano de estudos.');
     } finally {
@@ -125,23 +249,29 @@ export default function TutorApp() {
     }
   };
 
-  const handleGenerateSession = async () => {
-    if (!modoData.minutos || !modoData.topico) return;
+  const handleGenerateSession = async (manualMinutos?: string, manualTopico?: string) => {
+    const mins = manualMinutos || modoData.minutos;
+    const top = manualTopico || modoData.topico;
+    
+    if (!mins || !top) return;
     
     setIsGeneratingSession(true);
     setError(null);
     try {
       const { data, error: functionError } = await supabase.functions.invoke('tutor-tempo', {
         body: {
-          minutos: parseInt(modoData.minutos),
-          topico: modoData.topico,
+          minutos: parseInt(mins),
+          topico: top,
           perfil: formData
         }
       });
 
+
       if (functionError) throw functionError;
       setQuickSession(data);
+      addXp(100, "Sessão rápida iniciada!");
     } catch (err: any) {
+
       console.error('Session generation error:', err);
       setError(err.message || 'Erro ao gerar sessão rápida.');
     } finally {
@@ -196,7 +326,9 @@ export default function TutorApp() {
           fonte: transData.fonte
         }]);
       }
+      addXp(75, "Dúvida enviada e respondida!");
     } catch (err: any) {
+
       console.error('Duvida error:', err);
       setError(err.message || 'Erro ao enviar dúvida.');
     } finally {
@@ -639,7 +771,7 @@ export default function TutorApp() {
                 </div>
               </div>
               <Button 
-                onClick={handleGenerateSession} 
+                onClick={() => handleGenerateSession()} 
                 disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
                 className="w-full bg-accent hover:bg-accent/90 text-primary-foreground h-12 font-bold shadow-lg shadow-accent/20"
               >
@@ -933,6 +1065,21 @@ export default function TutorApp() {
 
   return (
     <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
+      <Toaster position="top-center" richColors />
+      
+      <StartSessionModal 
+        open={showStartSessionModal} 
+        onOpenChange={setShowStartSessionModal}
+        topico={modoData.topico}
+        onStart={(minutos: string, topico: string) => {
+          setModoData({ minutos, topico });
+          setShowStartSessionModal(false);
+          setStep(3);
+          handleGenerateSession(minutos, topico);
+        }}
+      />
+
+
       <div className="max-w-4xl mx-auto px-4">
         <header className="py-8 flex flex-col items-center">
           <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
@@ -945,6 +1092,12 @@ export default function TutorApp() {
             <p className="text-secondary font-medium italic mt-2">Seu aprendizado, no seu tempo.</p>
           </div>
 
+          <LevelBadge 
+            xp={xp} 
+            currentLevel={currentLevel} 
+            nextLevel={nextLevel} 
+            progress={progress} 
+          />
           
           {renderNavigation()}
         </header>
@@ -961,3 +1114,4 @@ export default function TutorApp() {
     </main>
   );
 }
+
