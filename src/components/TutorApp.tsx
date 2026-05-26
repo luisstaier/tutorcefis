@@ -751,7 +751,21 @@ export default function TutorApp() {
 
               {quickSession && (
                 <div className="pt-6 space-y-4">
-                  <h3 className="font-bold text-lg">Sua trilha para hoje ({quickSession.total_min} min):</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg">Sua trilha para hoje ({quickSession.total_min} min):</h3>
+                    <Button 
+                      size="sm"
+                      onClick={() => {
+                        const firstCourse = quickSession.itens.find((item: any) => item.curso_id);
+                        if (firstCourse) {
+                          handleSearchCourses(undefined, firstCourse.curso_id, false, { source: 'sessao', trail: quickSession.itens });
+                        }
+                      }}
+                      className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
+                    >
+                      <PlayCircle className="w-4 h-4 mr-2" /> Iniciar Sessão
+                    </Button>
+                  </div>
                   {quickSession.itens.map((item: any, i: number) => (
                     <div key={i} className="p-4 rounded-xl border border-border bg-muted/10 space-y-2">
                       <div className="flex justify-between font-bold text-accent">
