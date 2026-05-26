@@ -82,11 +82,28 @@ serve(async (req) => {
         model: "claude-sonnet-4-6",
         max_tokens: 2500,
         system: `Você é o Tutor CEFIS. Monte um plano de estudos sequencial e realista que leve o aluno do nível atual ao objetivo, resolvendo as lacunas na ordem certa. 
-        PRIORIZE usar os cursos reais da CEFIS da lista fornecida (origem 'catalogo_cefis', fonte = título exato). 
-        Só use 'gerado_pelo_tutor' para uma lacuna que NENHUM curso da lista cobrir. 
-        A maioria dos passos deve referenciar cursos reais da CEFIS. 
-        Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste formato: { "plano": [ { "passo": number, "titulo": string, "descricao": string, "origem": "catalogo_cefis"|"gerado_pelo_tutor", "fonte": string, "tempo_estimado_min": number } ] }. 
-        Em fonte, use o título exato do curso CEFIS da lista, ou '' se for material gerado.`,
+        
+        REGRA MANDATÓRIA: Use APENAS cursos reais da CEFIS da lista fornecida. 
+        - Origem: 'catalogo_cefis'.
+        - Fonte: Título exato do curso da lista.
+        - Descrição: Um breve resumo de por que este curso é importante para o aluno.
+        - Tempo: Use a duração real (duration) convertida para minutos ou estime o tempo de estudo.
+        
+        NÃO gere conteúdo próprio ('gerado_pelo_tutor') a menos que seja um passo introdutório ou de conclusão muito curto (máximo 1 item do plano). O coração do plano deve ser o catálogo da CEFIS.
+        
+        Responda ESTRITAMENTE em JSON válido, neste formato: 
+        { 
+          "plano": [ 
+            { 
+              "passo": number, 
+              "titulo": string, 
+              "descricao": string, 
+              "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
+              "fonte": string, 
+              "tempo_estimado_min": number 
+            } 
+          ] 
+        }.`,
         messages: [
           {
             role: "user",
