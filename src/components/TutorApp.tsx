@@ -5,12 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
 export default function TutorApp() {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(0); // 0: Onboarding, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas
   const [formData, setFormData] = useState({
     nome: "",
     objetivo: "",
@@ -32,6 +32,9 @@ export default function TutorApp() {
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [isGeneratingSession, setIsGeneratingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duvida, setDuvida] = useState("");
+  const [chatHistory, setChatHistory] = useState<{pergunta: string, resposta: string}[]>([]);
+  const [isAsking, setIsAsking] = useState(false);
 
   const nextStep = () => setStep((s) => s + 1);
   const prevStep = () => setStep((s) => s - 1);
@@ -104,6 +107,37 @@ export default function TutorApp() {
     }
   };
 
+  const handleAskDuvida = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!duvida.trim()) return;
+
+    const perguntaAtual = duvida;
+    setDuvida("");
+    setIsAsking(true);
+    setError(null);
+    
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('tutor-duvidas', {
+        body: {
+          pergunta: perguntaAtual,
+          perfil: formData
+        }
+      });
+
+      if (functionError) throw functionError;
+      
+      setChatHistory(prev => [...prev, {
+        pergunta: perguntaAtual,
+        resposta: data.resposta || "Desculpe, não consegui processar sua dúvida."
+      }]);
+    } catch (err: any) {
+      console.error('Duvida error:', err);
+      setError(err.message || 'Erro ao enviar dúvida.');
+    } finally {
+      setIsAsking(false);
+    }
+  };
+
 
 
   const handleSearchCourses = async (e: React.FormEvent) => {
@@ -130,6 +164,61 @@ export default function TutorApp() {
 
   const renderStep = () => {
     switch (step) {
+      case 4:
+        return (
+          <Card className="max-w-2xl mx-auto border-border shadow-sm flex flex-col h-[600px]">
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <MessageCircle className="text-accent" /> Tire suas dúvidas
+              </CardTitle>
+              <CardDescription>Pergunte qualquer coisa sobre o conteúdo ou sua carreira.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
+              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                {chatHistory.length === 0 && !isAsking && (
+                  <div className="text-center py-12 text-secondary italic">
+                    Nenhuma dúvida enviada ainda. Pergunte sobre impostos, contabilidade ou cursos!
+                  </div>
+                )}
+                {chatHistory.map((chat, i) => (
+                  <div key={i} className="space-y-3">
+                    <div className="flex justify-end">
+                      <div className="bg-accent text-white p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm shadow-sm">
+                        {chat.pergunta}
+                      </div>
+                    </div>
+                    <div className="flex justify-start">
+                      <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border whitespace-pre-wrap">
+                        {chat.resposta}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {isAsking && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted p-4 rounded-2xl rounded-tl-none border border-border flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                      <span className="text-xs text-secondary">Tutor está pensando...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <form onSubmit={handleAskDuvida} className="flex gap-2 pt-4 border-t border-border">
+                <Input 
+                  placeholder="Sua dúvida aqui..." 
+                  value={duvida}
+                  onChange={e => setDuvida(e.target.value)}
+                  disabled={isAsking}
+                  className="flex-1"
+                />
+                <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="bg-accent hover:bg-accent/90 text-white shrink-0">
+                  <Send className="w-4 h-4" />
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        );
       case 0:
         return (
           <Card className="max-w-md mx-auto border-border shadow-sm">
@@ -320,6 +409,7 @@ export default function TutorApp() {
                   <div className="flex justify-between mt-8 pt-6 border-t border-border">
                     <Button variant="ghost" onClick={() => setStep(1)} className="text-secondary">Voltar ao Diagnóstico</Button>
                     <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-white">Configurar Sessão Rápida</Button>
+                    <Button variant="outline" onClick={() => setStep(4)} className="border-accent text-accent hover:bg-accent/5">Tirar Dúvidas</Button>
                   </div>
                 </div>
               )}
