@@ -66,28 +66,33 @@ export default function CourseDetails({
     };
   }, [course?.id]);
 
-  const fetchLesson = async () => {
+  const fetchLesson = async (lessonId?: number) => {
     if (!course?.id) return;
-    setIsLoadingLesson(true);
+    if (lessonId) {
+      setIsSwitchingLesson(true);
+      setShowQuiz(false);
+      setQuiz(null);
+      setQuizAnswers([]);
+      setCurrentQuestionIndex(0);
+      setIsQuizFinished(false);
+      setQuizError(null);
+    } else {
+      setIsLoadingLesson(true);
+    }
     setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
-        body: { courseId: course.id }
+        body: { courseId: course.id, lessonId }
       });
       if (error) throw error;
-      setLesson(data);
-      
-      // Timer for quiz (10 seconds)
-      quizTimerRef.current = setTimeout(() => {
-        if (!showQuiz && !isQuizFinished) {
-          handleStartQuiz(data?.id);
-        }
-      }, 10000);
+      setLesson(data?.current || data);
+      if (data?.lessons) setLessonsGallery(data.lessons);
     } catch (err) {
       console.error("Error fetching lesson:", err);
       setHasError(true);
     } finally {
       setIsLoadingLesson(false);
+      setIsSwitchingLesson(false);
     }
   };
 
