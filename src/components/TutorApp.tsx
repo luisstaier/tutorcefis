@@ -315,33 +315,33 @@ export default function TutorApp() {
     
     if (step === -1) {
       return (
-        <Card className="max-w-md mx-auto mt-20 border-border shadow-xl overflow-hidden">
-          <div className="h-2 bg-accent w-full" />
-          <CardHeader className="text-center pb-2">
-            <CefisLogo className="w-48 mx-auto mb-6 text-primary" />
-            <CardTitle className="text-2xl font-serif">Conectar Conta CEFIS</CardTitle>
-            <CardDescription>Acesse o Tutor IA com suas credenciais da plataforma.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" required className="h-12" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pass">Senha</Label>
-                <Input id="pass" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" required className="h-12" />
-              </div>
-              {error && <div className="p-3 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">{error}</div>}
-              <Button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg shadow-lg shadow-accent/20">
-                {isLoggingIn ? <><Loader2 className="animate-spin mr-2" /> Conectando...</> : "Entrar com minha conta CEFIS"}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter className="bg-muted/30 border-t border-border p-4 text-center">
-            <p className="text-[10px] text-secondary">Seus dados são processados de forma segura via API oficial da CEFIS.</p>
-          </CardFooter>
-        </Card>
+        <div className="flex flex-col items-center justify-center min-h-[80vh]">
+          <Card className="w-full max-w-md border-border shadow-2xl overflow-hidden bg-card/80 backdrop-blur-sm">
+            <div className="h-1.5 bg-accent w-full" />
+            <CardHeader className="text-center pt-8 pb-4">
+              <CefisLogo className="w-48 mx-auto text-primary" />
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-secondary">Email</Label>
+                  <Input id="email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" required className="h-12 bg-muted/20 border-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pass" className="text-secondary">Senha</Label>
+                  <Input id="pass" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" required className="h-12 bg-muted/20 border-border" />
+                </div>
+                {error && <div className="p-3 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">{error}</div>}
+                <Button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg mt-4 shadow-lg shadow-accent/10">
+                  {isLoggingIn ? <><Loader2 className="animate-spin mr-2" /> Conectando...</> : "Conectar Conta CEFIS"}
+                </Button>
+              </form>
+            </CardContent>
+            <CardFooter className="pb-8 text-center justify-center">
+              <p className="text-[10px] text-secondary/60">Acesso via API oficial da CEFIS</p>
+            </CardFooter>
+          </Card>
+        </div>
       );
     }
 
@@ -601,16 +601,25 @@ export default function TutorApp() {
     <main className="min-h-screen bg-background text-foreground pb-20">
       <Toaster position="top-center" richColors />
       <div className="max-w-4xl mx-auto px-4">
-        <header className="py-8 flex flex-col items-center">
-          <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => step >= 0 && setStep(0)}>
-            <CefisLogo className="w-48 sm:w-64 text-primary mb-2 transition-transform group-hover:scale-105" />
-            <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-              <span className="text-xs font-black uppercase tracking-widest text-primary">TUTOR IA</span>
+        {step >= 0 && (
+          <header className="py-8 flex flex-col items-center">
+            <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
+              <div className="flex flex-col items-center">
+                <h1 className="text-4xl sm:text-5xl font-serif font-black tracking-tighter text-accent transition-transform group-hover:scale-105">
+                  TUTOR<span className="text-foreground/50">.</span>IA
+                </h1>
+                <div className="flex items-center gap-2 mt-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                  <div className="h-[1px] w-4 bg-secondary/30" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Powered by</span>
+                  <CefisLogo className="h-3 text-secondary" />
+                  <div className="h-[1px] w-4 bg-secondary/30" />
+                </div>
+              </div>
             </div>
-          </div>
-          {renderNavigation()}
-        </header>
-        <div className="transition-all duration-300">
+            {renderNavigation()}
+          </header>
+        )}
+        <div className={cn("transition-all duration-300", step === -1 ? "pt-0" : "pt-0")}>
           {renderContent()}
         </div>
       </div>
