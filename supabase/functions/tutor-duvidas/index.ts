@@ -95,7 +95,8 @@ serve(async (req) => {
         (apenas o número do id do curso mais relevante, ou a palavra null)
         ###CURSO_TITULO###
         (apenas o título do curso mais relevante, ou a palavra null)
-        ###FIM###`,
+        ###FIM###
+        PROIBIDO usar emojis (emoticons, símbolos gráficos) na sua resposta.`,
         messages: [
           {
             role: "user",

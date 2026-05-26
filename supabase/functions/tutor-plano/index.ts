@@ -122,7 +122,8 @@ serve(async (req) => {
               "tempo_estimado_min": number 
             } 
           ] 
-        }.`,
+        }.
+        PROIBIDO usar emojis (emoticons, símbolos gráficos) em qualquer campo da resposta.`,
         messages: [
           {
             role: "user",

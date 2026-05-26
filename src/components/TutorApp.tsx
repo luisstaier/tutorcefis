@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
@@ -776,10 +776,10 @@ export default function TutorApp() {
                 )}
                 disabled={isAsking}
               >
-                {isRecording ? <div className="flex items-center gap-1 font-bold text-[10px]"><div className="w-2 h-2 bg-white rounded-full animate-ping" /> ⏹️</div> : <Mic className="w-5 h-5" />}
+                {isRecording ? <div className="flex items-center gap-1 font-bold text-[10px]"><div className="w-2 h-2 bg-white rounded-full animate-ping" /> <Square className="w-3 h-3 fill-white" /></div> : <Mic className="w-5 h-5" />}
               </Button>
               <Input 
-                placeholder={isRecording ? "Gravando... 🔴" : "Sua dúvida..."} 
+                placeholder={isRecording ? "Gravando..." : "Sua dúvida..."} 
                 value={duvida} 
                 onChange={e => setDuvida(e.target.value)} 
                 disabled={isAsking || isRecording} 

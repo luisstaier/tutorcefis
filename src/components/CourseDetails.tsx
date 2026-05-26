@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2, Menu, X, ChevronLeft, ChevronRight, GraduationCap, BookOpen, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -459,7 +459,7 @@ export default function CourseDetails({
                     <div key={i} className="w-full text-left p-2 rounded-lg bg-muted/20 border border-transparent">
                       <div className="flex gap-2 items-start">
                         <div className="mt-1 shrink-0">
-                          <span className="text-xs">✨</span>
+                          <Sparkles className="w-3 h-3 text-accent" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-medium leading-tight text-secondary">
@@ -589,7 +589,7 @@ export default function CourseDetails({
         </div>
         {isCourseCompleted && (
           <Badge className="bg-[#b3e51d] text-[#051124] border-none font-black px-3 py-1 animate-bounce">
-            CURSO CONCLUÍDO! ✅
+            CURSO CONCLUÍDO!
           </Badge>
         )}
       </section>
@@ -599,7 +599,7 @@ export default function CourseDetails({
         <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30 shadow-lg overflow-hidden animate-in zoom-in-95 duration-500">
           <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
             <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
-              <span className="text-3xl">🎓</span>
+              <GraduationCap className="w-8 h-8 text-accent" />
             </div>
             <div className="flex-1 text-center md:text-left space-y-1">
               <h3 className="text-xl font-bold">Parabéns! Você concluiu o curso</h3>
@@ -627,7 +627,7 @@ export default function CourseDetails({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 text-white">
             <Badge className="bg-[#b3e51d] text-[#051124] hover:bg-[#b3e51d] border-none mb-3 font-bold">
-              📚 Conteúdo CEFIS
+              <BookOpen className="w-3 h-3 inline mr-1" /> Conteúdo CEFIS
             </Badge>
             <h1 className="text-2xl sm:text-4xl font-bold font-serif leading-tight">{course?.title || "Curso"}</h1>
           </div>
