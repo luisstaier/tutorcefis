@@ -534,7 +534,7 @@ export default function CourseDetails({
         <h2 className="text-2xl font-bold font-serif">{lesson?.title || "Aula em destaque"}</h2>
         <Card className="overflow-hidden border-border shadow-sm">
           <CardContent className="p-0 bg-black aspect-video flex items-center justify-center relative">
-            {isLoadingLesson ? (
+            {isLoadingLesson || isSwitchingLesson ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="w-10 h-10 text-[#b3e51d] animate-spin" />
                 <p className="text-white/60 text-sm font-medium">Preparando seu ambiente de aprendizado...</p>
