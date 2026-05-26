@@ -55,7 +55,11 @@ export default function TutorApp() {
   const [isGeneratingSession, setIsGeneratingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duvida, setDuvida] = useState("");
-  const [chatHistory, setChatHistory] = useState<{pergunta: string, resposta: string}[]>([]);
+  const [chatHistory, setChatHistory] = useState<{
+    pergunta: string;
+    resposta: string;
+    fonte?: { curso: string; aula: string };
+  }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
@@ -136,19 +140,38 @@ export default function TutorApp() {
     setError(null);
     
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-duvidas', {
+      // 1. Tentar primeiro tutor-transcricao
+      const { data: transData, error: transError } = await supabase.functions.invoke('tutor-transcricao', {
         body: {
           pergunta: perguntaAtual,
           perfil: formData
         }
       });
 
-      if (functionError) throw functionError;
-      
-      setChatHistory(prev => [...prev, {
-        pergunta: perguntaAtual,
-        resposta: data.resposta || "Desculpe, não consegui processar sua dúvida."
-      }]);
+      // Se falhar ou não tiver transcrição, tenta tutor-duvidas
+      if (transError || !transData || transData.error) {
+        console.log("Fallback para tutor-duvidas (transcrição indisponível)");
+        const { data: duvData, error: duvError } = await supabase.functions.invoke('tutor-duvidas', {
+          body: {
+            pergunta: perguntaAtual,
+            perfil: formData
+          }
+        });
+
+        if (duvError) throw duvError;
+        
+        setChatHistory(prev => [...prev, {
+          pergunta: perguntaAtual,
+          resposta: duvData.resposta || "Desculpe, não consegui processar sua dúvida."
+        }]);
+      } else {
+        // Sucesso com transcrição
+        setChatHistory(prev => [...prev, {
+          pergunta: perguntaAtual,
+          resposta: transData.resposta,
+          fonte: transData.fonte
+        }]);
+      }
     } catch (err: any) {
       console.error('Duvida error:', err);
       setError(err.message || 'Erro ao enviar dúvida.');
@@ -568,11 +591,23 @@ export default function TutorApp() {
                               >
                                 {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
                               </Badge>
-                              {item?.fonte && (
-                                <span className="text-xs text-secondary italic truncate max-w-[200px]">
-                                  {item.fonte}
-                                </span>
-                              )}
+                              <div className="flex items-center gap-4 overflow-hidden">
+                                {item?.fonte && (
+                                  <span className="text-xs text-secondary italic truncate max-w-[150px]">
+                                    {item.fonte}
+                                  </span>
+                                )}
+                                {item?.origem === 'catalogo_cefis' && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1 px-1"
+                                    onClick={() => handleSearchCourses(item.fonte || item.titulo)}
+                                  >
+                                    <Search className="w-2 h-2" /> Ver no catálogo
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -625,6 +660,12 @@ export default function TutorApp() {
                     </div>
                     <div className="flex justify-start">
                       <div className="bg-white p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
+                        {chat.fonte && (
+                          <Badge variant="outline" className="mb-2 bg-success/5 text-success border-success/20 flex items-center gap-1 w-fit text-[10px] py-0 px-2 h-6">
+                            <BookOpen className="w-3 h-3" />
+                            📖 Baseado na aula: {chat.fonte.aula} — curso {chat.fonte.curso}
+                          </Badge>
+                        )}
                         <MarkdownRenderer content={chat.resposta} />
                         <div className="pt-2 flex justify-end">
                           <Button 
@@ -632,13 +673,10 @@ export default function TutorApp() {
                             size="sm" 
                             className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
                             onClick={() => {
-                              // Tentar extrair o nome do curso da resposta se for possível,
-                              // ou apenas abrir o catálogo para explorar.
-                              // Como regra geral, buscaremos pelo contexto da dúvida se não houver curso óbvio.
-                              handleSearchCourses(chat.pergunta);
+                              handleSearchCourses(chat.fonte?.curso || chat.pergunta);
                             }}
                           >
-                            <Library className="w-3 h-3" /> Explorar cursos relacionados
+                            <Library className="w-3 h-3" /> {chat.fonte ? "Explorar este curso" : "Explorar cursos relacionados"}
                           </Button>
                         </div>
                       </div>
