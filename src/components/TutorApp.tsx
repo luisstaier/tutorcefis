@@ -265,7 +265,7 @@ export default function TutorApp() {
                     
                     <div className="flex flex-wrap gap-2">
                       {course.categories?.slice(0, 3).map((cat: any) => (
-                        <Badge key={cat.id} variant="secondary" className="bg-muted/50 text-xs">
+                        <Badge key={cat.id} variant="secondary" className="bg-muted/50 text-[10px] px-1.5 py-0">
                           {cat.name}
                         </Badge>
                       ))}
@@ -274,7 +274,7 @@ export default function TutorApp() {
                     <div className="flex items-center justify-between pt-2 border-t border-border">
                       <div className="flex items-center gap-3 text-xs text-secondary font-medium">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {course.duration}h
+                          <Clock className="w-3 h-3" /> {Math.floor(course.duration / 3600)}h {Math.floor((course.duration % 3600) / 60)}min
                         </span>
                         <span className="flex items-center gap-1">
                           <PlayCircle className="w-3 h-3" /> {course.lessonCount} aulas
@@ -308,8 +308,20 @@ export default function TutorApp() {
   return (
     <main className="min-h-screen pb-12">
       <div className="max-w-4xl mx-auto px-4">
-        <header className="py-8 flex flex-col items-center">
-          <h1 className="text-4xl font-black text-foreground tracking-tight mb-2">Tutor <span className="text-accent">CEFIS</span></h1>
+        <header className="py-8 flex flex-col items-center relative">
+          <div className="absolute right-0 top-8 hidden md:block">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs border-accent text-accent hover:bg-accent/5"
+              onClick={() => setStep(4)}
+            >
+              Testar Catálogo
+            </Button>
+          </div>
+          <h1 className="text-4xl font-black text-foreground tracking-tight mb-2 cursor-pointer" onClick={() => setStep(0)}>
+            Tutor <span className="text-accent">CEFIS</span>
+          </h1>
           <p className="text-secondary font-medium italic">Seu aprendizado, no seu tempo.</p>
         </header>
         
