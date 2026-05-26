@@ -55,6 +55,7 @@ export default function CourseDetails({
       : [];
   const preferredStreamSource = currentVideoUrl;
 
+  // Carregar aula inicial somente quando o curso muda
   useEffect(() => {
     console.log("CourseDetails montado com courseId:", course?.id);
     if (!course?.id) {
@@ -62,25 +63,29 @@ export default function CourseDetails({
       return;
     }
     fetchLesson();
-    
-    // Configurar listener para o vídeo
+  }, [course?.id]);
+
+  // Listener "vídeo finalizado" — re-anexa quando a aula muda (sem refetch)
+  useEffect(() => {
     const video = videoRef.current;
+    if (!video || !lesson?.id) return;
+
     const handleEnded = () => {
-      if (lesson?.id) {
-        console.log("Vídeo finalizado, marcando conclusão:", lesson.id);
-        onCompleteLesson(course.id, lesson.id);
-      }
+      console.log("Vídeo finalizado, marcando conclusão:", lesson.id);
+      onCompleteLesson(course.id, lesson.id);
     };
 
-    if (video) {
-      video.addEventListener('ended', handleEnded);
-    }
+    video.addEventListener('ended', handleEnded);
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, [lesson?.id, course?.id]);
 
+  useEffect(() => {
     return () => {
       if (quizTimerRef.current) clearTimeout(quizTimerRef.current);
-      if (video) video.removeEventListener('ended', handleEnded);
     };
-  }, [course?.id, lesson?.id]);
+  }, []);
 
   useEffect(() => {
     // Forçar recarga da tag video quando a aula muda
