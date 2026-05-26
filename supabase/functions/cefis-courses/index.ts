@@ -101,6 +101,9 @@ serve(async (req) => {
       lessonCount: course.lessonCount,
       averageRating: course.averageRating,
       categories: course.categories,
+      banner: course.banner,
+      teacher: course.teacher,
+      goals: course.goals,
     }));
 
     return new Response(
