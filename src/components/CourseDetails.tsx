@@ -104,8 +104,8 @@ export default function CourseDetails({
         // Gatilhos de 25%, 50%, 75%
         const milestones = [25, 50, 75];
         milestones.forEach(milestone => {
-          if (progress >= milestone && progress < milestone + 1 && !triggeredMilestones.includes(milestone)) {
-            setTriggeredMilestones(prev => [...prev, milestone]);
+          if (progress >= milestone && progress < milestone + 2 && !triggeredMilestonesRef.current.includes(milestone)) {
+            triggeredMilestonesRef.current.push(milestone);
             fetchMotivationalMessage(`O aluno atingiu ${milestone}% da aula.`);
           }
         });
