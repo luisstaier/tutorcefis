@@ -268,13 +268,20 @@ export default function TutorApp() {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setStep(item.id)}
+            onClick={() => {
+              if (item.id === 5 && courses.length === 0) {
+                handleSearchCourses(searchQuery);
+              } else {
+                setStep(item.id);
+              }
+            }}
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
               step === item.id 
                 ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" 
                 : "text-secondary hover:bg-accent/10 hover:text-accent"
             )}
+
           >
             <item.icon className="w-4 h-4" />
             <span className="hidden sm:inline">{item.label}</span>
