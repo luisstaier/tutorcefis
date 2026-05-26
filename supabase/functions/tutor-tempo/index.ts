@@ -90,6 +90,7 @@ serve(async (req) => {
               "resumo": string, 
               "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
               "fonte": string, 
+              "curso_id": number,
               "tempo_min": number 
             } 
           ] 
