@@ -639,30 +639,37 @@ export default function TutorApp() {
                 <div className="space-y-6">
                   {studyPlan.map((item, i) => {
                     const lessons = completedLessons[item.curso_id] || [];
-                    // Como não temos o total de aulas aqui facilmente sem fetch, vamos estimar se está concluído
-                    // ou mostrar progresso se o curso estiver no localStorage
-                    const isCompleted = lessons.length > 0 && lessons.length >= 5; // Heurística simples ou check de existências
                     
                     return (
-                      <div key={i} className="relative pl-8 before:absolute before:left-3 before:top-2 before:bottom-0 before:w-0.5 before:bg-muted">
+                      <div key={i} className="relative pl-8 before:absolute before:left-3 before:top-2 before:bottom-0 before:w-0.5 before:bg-muted last:before:hidden">
                         <div className={cn(
-                          "absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors",
+                          "absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors z-10",
                           lessons.length > 0 ? "bg-[#b3e51d] text-[#051124]" : "bg-accent text-white"
                         )}>
                           {lessons.length > 0 ? "✓" : i+1}
                         </div>
                         <div className="p-4 rounded-xl border border-border bg-card space-y-2">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-bold flex items-center gap-2">
+                          <div className="flex justify-between items-start gap-4">
+                            <h4 className="font-bold flex items-center gap-2 truncate">
                               {item.titulo}
-                              {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />}
+                              {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d] shrink-0" />}
                             </h4>
-                            {item.origem === 'catalogo_cefis' ? (
-                              <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
-                            ) : (
-                              <TutorAiLogo showText={false} className="scale-90" />
-                            )}
-
+                            <div className="flex items-center gap-2 shrink-0">
+                              {item.origem === 'catalogo_cefis' ? (
+                                <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
+                              ) : (
+                                <TutorAiLogo showText={false} className="scale-90" />
+                              )}
+                              {item.curso_id && (
+                                <Button 
+                                  size="sm"
+                                  onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}
+                                  className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-8"
+                                >
+                                  <PlayCircle className="w-4 h-4 mr-1.5" /> Iniciar Trilha
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
                           <div className="flex items-center gap-1.5 pt-1">
@@ -688,7 +695,7 @@ export default function TutorApp() {
 
                           <div className="flex justify-between items-center pt-2 border-t border-border/30 text-xs text-secondary">
                             <span><Clock className="inline w-3 h-3 mr-1" />{item.tempo_estimado_min} min</span>
-                            {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Acessar Conteúdo</Button>}
+                            {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Ver o curso</Button>}
                           </div>
                         </div>
                       </div>
