@@ -1075,13 +1075,10 @@ export default function TutorApp() {
           setModoData({ minutos, topico });
           setShowStartSessionModal(false);
           setStep(3);
-          // Trigger a small delay to allow state to settle before calling generator
-          setTimeout(() => {
-            const startBtn = document.querySelector('button[class*="bg-accent"][class*="w-full"]') as HTMLButtonElement;
-            if (startBtn) startBtn.click();
-          }, 100);
+          handleGenerateSession(minutos, topico);
         }}
       />
+
 
       <div className="max-w-4xl mx-auto px-4">
         <header className="py-8 flex flex-col items-center">
