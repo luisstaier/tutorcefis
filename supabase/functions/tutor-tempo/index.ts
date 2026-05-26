@@ -14,7 +14,8 @@ serve(async (req) => {
     const body = await req.json();
     const { minutos, topico, perfil, userKey } = body;
     
-    const cefisApiKey = userKey || Deno.env.get("CEFIS_API_KEY");
+    const validUserKey = userKey && userKey !== "undefined" && userKey !== "null" ? userKey : null;
+    const cefisApiKey = validUserKey || Deno.env.get("CEFIS_API_KEY");
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!cefisApiKey || !anthropicApiKey) {
