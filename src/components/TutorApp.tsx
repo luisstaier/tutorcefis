@@ -54,6 +54,8 @@ export default function TutorApp() {
     } finally {
       setIsLoading(false);
     }
+  };
+
   const handleGeneratePlan = async () => {
     setIsGeneratingPlan(true);
     setError(null);
