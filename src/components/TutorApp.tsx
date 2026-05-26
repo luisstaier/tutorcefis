@@ -155,6 +155,7 @@ export default function TutorApp() {
   const [isRecording, setIsRecording] = useState(false);
   const [currentlyPlayingId, setCurrentlyPlayingId] = useState<number | null>(null);
   const [isPreparingAudio, setIsPreparingAudio] = useState<number | null>(null);
+  const [selectedAiContent, setSelectedAiContent] = useState<{ titulo: string; conteudo: string } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
