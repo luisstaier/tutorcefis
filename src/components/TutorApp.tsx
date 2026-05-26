@@ -642,14 +642,34 @@ export default function TutorApp() {
                 <div key={i} className="space-y-4">
                   <div className="flex justify-end"><div className="bg-accent text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm">{chat.pergunta}</div></div>
                   <div className="flex justify-start">
-                    <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3">
+                    <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3 relative group">
                       <MarkdownRenderer content={chat.resposta} />
-                      {chat.fonte && (
-                        <div className="pt-2 border-t border-border/50 text-[10px] text-secondary flex items-center justify-between">
-                          <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
-                          {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
-                        </div>
-                      )}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                        {chat.fonte ? (
+                          <div className="text-[10px] text-secondary flex items-center gap-2">
+                            <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
+                            {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
+                          </div>
+                        ) : <span></span>}
+                        
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          onClick={() => handleListenResponse(i, chat.resposta)}
+                          className={cn(
+                            "h-7 text-[10px] gap-1 px-2 font-bold transition-all",
+                            currentlyPlayingId === i ? "text-accent bg-accent/10" : "text-secondary hover:text-accent"
+                          )}
+                        >
+                          {isPreparingAudio === i ? (
+                            <><Loader2 className="w-3 h-3 animate-spin" /> Preparando...</>
+                          ) : currentlyPlayingId === i ? (
+                            <><Pause className="w-3 h-3" /> Pausar</>
+                          ) : (
+                            <><Volume2 className="w-3 h-3 text-[#b3e51d]" /> Ouvir resposta</>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
