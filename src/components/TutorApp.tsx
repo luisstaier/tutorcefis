@@ -109,32 +109,12 @@ export default function TutorApp() {
 
   useEffect(() => {
     const fetchCefisUser = async () => {
-      // Only fetch if name is empty (first time) or if not already loaded this session
       if (isProfileLoaded) return;
       
       try {
         const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ type: 'user' }), // Using body since cefis-courses expects search params from body in POST or URL search params in GET
-          method: 'POST'
+          body: { type: 'user' }
         });
-        
-        // Let's also try GET if POST is not what it expects for type=user
-        // Actually, my implementation in cefis-courses handles both.
-        // Let's use URL search params for GET
-        const { data: userData, error: userError } = await supabase.functions.invoke('cefis-courses', {
-          method: 'GET',
-          headers: {
-            "Content-Type": "application/json",
-          },
-          // We can't pass query params easily in invoke without appending to URL
-        });
-        
-        // Wait, supabase.functions.invoke doesn't support query params directly in the options object.
-        // I should have used POST or updated the invoke call.
-        // Let's use the POST body approach as I updated cefis-courses to handle body.
         
         if (!functionError && data && !data.error) {
           setFormData(prev => ({
