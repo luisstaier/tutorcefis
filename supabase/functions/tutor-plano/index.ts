@@ -11,9 +11,10 @@ serve(async (req) => {
   }
 
   try {
-    const { perfil, lacunas } = await req.json();
+    const body = await req.json();
+    const { perfil, lacunas, userKey } = body;
     
-    const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
+    const cefisApiKey = userKey || Deno.env.get("CEFIS_API_KEY");
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!cefisApiKey || !anthropicApiKey) {

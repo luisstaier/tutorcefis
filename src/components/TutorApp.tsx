@@ -4,14 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2 } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Toaster, toast } from "sonner";
 import CourseDetails from "./CourseDetails";
-
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
   <div className={cn("text-sm", className)}>
@@ -33,6 +32,7 @@ const MarkdownRenderer = ({ content, className = "" }: { content: string; classN
     </ReactMarkdown>
   </div>
 );
+
 const CefisLogo = ({ className = "" }: { className?: string }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -52,14 +52,14 @@ const CefisLogo = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
-
-
-
-
-
-
 export default function TutorApp() {
-  const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo, 6: Detalhes
+  const [step, setStep] = useState(-2); // -2: Checking Auth, -1: Login, 0: Onboarding, ...
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userKey, setUserKey] = useState<string | undefined>();
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  
   const [previousStep, setPreviousStep] = useState(0);
   const [formData, setFormData] = useState({
     nome: "",
@@ -76,7 +76,7 @@ export default function TutorApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [completedLessons, setCompletedLessons] = useState<Record<number, number[]>>({}); // courseId -> lessonIds[]
+  const [completedLessons, setCompletedLessons] = useState<Record<number, number[]>>({}); 
   const [diagnosis, setDiagnosis] = useState<any[]>([]);
   const [studyPlan, setStudyPlan] = useState<any[]>([]);
   const [quickSession, setQuickSession] = useState<any>(null);
@@ -93,12 +93,18 @@ export default function TutorApp() {
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
-  
 
   useEffect(() => {
-    const savedProfile = localStorage.getItem("tutor_cefs_profile");
-    if (savedProfile) {
+    const savedKey = sessionStorage.getItem("cefis_user_key");
+    const savedProfile = localStorage.getItem("tutor_cefis_profile");
+    
+    if (savedKey && savedProfile) {
+      setUserKey(savedKey);
       setFormData(JSON.parse(savedProfile));
+      setIsAuthenticated(true);
+      setStep(0);
+    } else {
+      setStep(-1);
     }
 
     const savedProgress = localStorage.getItem("tutor_cefis_progress");
@@ -107,38 +113,47 @@ export default function TutorApp() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchCefisUser = async () => {
-      if (isProfileLoaded) return;
-      
-      try {
-        const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
-          body: { type: 'user' }
-        });
-        
-        if (!functionError && data && !data.error) {
-          setFormData(prev => ({
-            ...prev,
-            nome: data.name || prev.nome,
-            experiencia: data.occupation || prev.experiencia,
-            nivel: data.nivel || prev.nivel
-          }));
-          setIsProfileLoaded(true);
-          toast.success("Perfil CEFIS carregado!");
-        }
-      } catch (err) {
-        console.error("Error fetching CEFIS user:", err);
-      }
-    };
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setError(null);
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('cefis-login', {
+        body: { email: loginEmail, pass: loginPass }
+      });
 
-    if (step === 0) {
-      fetchCefisUser();
+      if (functionError) throw functionError;
+      if (data.error) throw new Error(data.error);
+
+      sessionStorage.setItem("cefis_user_key", data.key);
+      const profile = {
+        nome: data.userName || "",
+        experiencia: data.occupation || "",
+        nivel: data.nivel === 1 ? "iniciante" : data.nivel === 2 ? "intermediário" : data.nivel === 3 ? "avançado" : "iniciante",
+        objetivo: ""
+      };
+      localStorage.setItem("tutor_cefis_profile", JSON.stringify(profile));
+
+      setUserKey(data.key);
+      setFormData(profile);
+      setIsAuthenticated(true);
+      setStep(0);
+      setIsProfileLoaded(true);
+      toast.success("Conectado com sucesso!");
+    } catch (err: any) {
+      setError(err.message || "Erro ao fazer login");
+    } finally {
+      setIsLoggingIn(false);
     }
-  }, [step, isProfileLoaded]);
+  };
 
-  useEffect(() => {
-    console.log("TutorApp Step mudou para:", step, "Course selecionado:", selectedCourse?.id);
-  }, [step, selectedCourse]);
+  const handleLogout = () => {
+    sessionStorage.removeItem("cefis_user_key");
+    localStorage.removeItem("tutor_cefis_profile");
+    setUserKey(undefined);
+    setIsAuthenticated(false);
+    setStep(-1);
+  };
 
   const handleCompleteLesson = (courseId: number, lessonId: number) => {
     setCompletedLessons(prev => {
@@ -159,24 +174,19 @@ export default function TutorApp() {
     return completedLessons[courseId]?.includes(lessonId) || false;
   };
 
-
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("tutor_cefs_profile", JSON.stringify(formData));
-    
-    setStep(1); // Mudar para tela de diagnóstico
-    
+    localStorage.setItem("tutor_cefis_profile", JSON.stringify(formData));
+    setStep(1);
     setIsLoading(true);
     setError(null);
     try {
       const { data, error: functionError } = await supabase.functions.invoke('tutor-diagnostico', {
-        body: formData
+        body: { ...formData, userKey }
       });
-
       if (functionError) throw functionError;
       setDiagnosis(data.lacunas || []);
     } catch (err: any) {
-      console.error('Diagnosis error:', err);
       setError(err.message || 'Erro ao gerar diagnóstico.');
     } finally {
       setIsLoading(false);
@@ -188,29 +198,16 @@ export default function TutorApp() {
     setError(null);
     try {
       const { data, error: functionError } = await supabase.functions.invoke('tutor-plano', {
-        body: {
-          perfil: formData,
-          lacunas: diagnosis
-        }
+        body: { perfil: formData, lacunas: diagnosis, userKey }
       });
-
       if (functionError) throw functionError;
       setStudyPlan(data.plano || []);
-      
-      setStep(2); // Mudar para tela de plano
-      
-      // Preparar dados para o modal de Sessão Rápida
-      if (data.plano && data.plano.length > 0) {
-        setModoData(prev => ({
-          ...prev,
-          topico: data.plano[0].titulo
-        }));
-        
+      setStep(2);
+      if (data.plano?.length > 0) {
+        setModoData(prev => ({ ...prev, topico: data.plano[0].titulo }));
       }
     } catch (err: any) {
-
-      console.error('Plan generation error:', err);
-      setError(err.message || 'Erro ao gerar plano de estudos.');
+      setError(err.message || 'Erro ao gerar plano.');
     } finally {
       setIsGeneratingPlan(false);
     }
@@ -219,28 +216,14 @@ export default function TutorApp() {
   const handleGenerateSession = async (manualMinutos?: string, manualTopico?: string) => {
     const mins = manualMinutos || modoData.minutos;
     const top = manualTopico || modoData.topico;
-    
     if (!mins || !top) return;
-    
     setIsGeneratingSession(true);
-    setError(null);
     try {
       const { data, error: functionError } = await supabase.functions.invoke('tutor-tempo', {
-        body: {
-          minutos: parseInt(mins),
-          topico: top,
-          perfil: formData
-        }
+        body: { minutos: parseInt(mins), topico: top, perfil: formData, userKey }
       });
-
-
       if (functionError) throw functionError;
       setQuickSession(data);
-      
-    } catch (err: any) {
-
-      console.error('Session generation error:', err);
-      setError(err.message || 'Erro ao gerar sessão rápida.');
     } finally {
       setIsGeneratingSession(false);
     }
@@ -249,421 +232,198 @@ export default function TutorApp() {
   const handleAskDuvida = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!duvida.trim()) return;
-
-    const perguntaAtual = duvida;
+    const q = duvida;
     setDuvida("");
     setIsAsking(true);
-    setError(null);
-    
     try {
-      // 1. Tentar primeiro tutor-transcricao
-      const { data: transData, error: transError } = await supabase.functions.invoke('tutor-transcricao', {
-        body: {
-          pergunta: perguntaAtual,
-          perfil: formData
-        }
+      const { data, error } = await supabase.functions.invoke('tutor-transcricao', {
+        body: { pergunta: q, perfil: formData, userKey }
       });
-
-      // Se falhar ou não tiver transcrição, tenta tutor-duvidas
-      if (transError || !transData || transData.error) {
-        console.log("Fallback para tutor-duvidas (transcrição indisponível)");
-        const { data: duvData, error: duvError } = await supabase.functions.invoke('tutor-duvidas', {
-          body: {
-            pergunta: perguntaAtual,
-            perfil: formData
-          }
-        });
-
-        if (duvError) throw duvError;
-        
-        setChatHistory(prev => [...prev, {
-          pergunta: perguntaAtual,
-          resposta: duvData.resposta || "Desculpe, não consegui processar sua dúvida.",
-          fonte: duvData.curso_id ? {
-            curso: duvData.curso_titulo || "Curso relacionado",
-            aula: "Geral",
-            curso_id: duvData.curso_id
-          } : undefined
-        }]);
-      } else {
-        // Sucesso com transcrição
-        setChatHistory(prev => [...prev, {
-          pergunta: perguntaAtual,
-          resposta: transData.resposta,
-          fonte: transData.fonte
-        }]);
-      }
       
-    } catch (err: any) {
-
-      console.error('Duvida error:', err);
-      setError(err.message || 'Erro ao enviar dúvida.');
+      if (error || !data || data.error) {
+        const { data: duvData } = await supabase.functions.invoke('tutor-duvidas', {
+          body: { pergunta: q, perfil: formData, userKey }
+        });
+        setChatHistory(prev => [...prev, { pergunta: q, resposta: duvData.resposta, fonte: duvData.curso_id ? { curso: duvData.curso_titulo, aula: "Geral", curso_id: duvData.curso_id } : undefined }]);
+      } else {
+        setChatHistory(prev => [...prev, { pergunta: q, resposta: data.resposta, fonte: data.fonte }]);
+      }
     } finally {
       setIsAsking(false);
     }
   };
 
-  const handleSearchCourses = async (query?: string, courseId?: number, autoOpen = false, context?: { source: string; trail?: any[] }) => {
+  const handleSearchCourses = async (query?: string, courseId?: number, autoOpen = false, context?: any) => {
     let q = query ?? searchQuery;
-    if (query) setSearchQuery(query);
-    
     setIsLoading(true);
-    setError(null);
-    
-    // Only change step if not auto-opening (which is used for background fetch)
-    if (!autoOpen && !courseId) {
-      setStep(5);
-      setNavigationContext({ source: 'catalogo' });
-    }
-    
-    if (context) {
-      setNavigationContext(context);
-    }
-    
+    if (!autoOpen && !courseId) setStep(5);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
-        body: (courseId !== undefined && courseId !== null) ? { id: courseId } : { search: q }
+      const { data, error } = await supabase.functions.invoke('cefis-courses', {
+        body: { id: courseId, search: q, userKey }
       });
-
-
-      if (functionError) throw functionError;
-      
-      let finalCourses = data.data || [];
-      
-      // Retry logic if no results and we have a query (and not searching by ID)
-      if (finalCourses.length === 0 && q && !courseId) {
-        // Fallback 1: Try first 3 significant words
-        const keywords3 = q.split(' ')
-          .filter(word => word.length > 3) 
-          .slice(0, 3)
-          .join(' ');
-          
-        if (keywords3 && keywords3 !== q) {
-          const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
-            body: { search: keywords3 }
-          });
-          if (!retryError && retryData.data && retryData.data.length > 0) {
-            finalCourses = retryData.data;
-            setSearchQuery(keywords3);
-          }
-        }
-
-        // Fallback 2: If still empty, try just the first 2 significant words
-        if (finalCourses.length === 0) {
-          const keywords2 = q.split(' ')
-            .filter(word => word.length > 3)
-            .slice(0, 2)
-            .join(' ');
-            
-          if (keywords2 && keywords2 !== keywords3) {
-            const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
-              body: { search: keywords2 }
-            });
-            if (!retryError && retryData.data && retryData.data.length > 0) {
-              finalCourses = retryData.data;
-              setSearchQuery(keywords2);
-            }
-          }
-        }
-      }
-
-      if (courseId !== undefined && courseId !== null && finalCourses.length > 0) {
-        setSelectedCourse(finalCourses[0]);
-        setCourses(finalCourses);
+      if (error) throw error;
+      const results = data.data || [];
+      setCourses(results);
+      if (courseId && results.length > 0) {
+        setSelectedCourse(results[0]);
         setPreviousStep(step);
         setStep(6);
-      } else if (autoOpen && finalCourses.length > 0) {
-        setSelectedCourse(finalCourses[0]);
-        setCourses(finalCourses);
-        setPreviousStep(step);
-        setStep(6);
-      } else {
-        setCourses(finalCourses);
-        setStep(5);
-        if (autoOpen && finalCourses.length === 0) {
-          toast.info("Não encontramos o curso exato, mas você pode explorar o catálogo.");
-        }
       }
-    } catch (err: any) {
-      console.error('Search error:', err);
-      setError(err.message || 'Erro ao carregar cursos.');
     } finally {
       setIsLoading(false);
     }
   };
 
-
-  const navItems = [
-    { id: 0, label: "Início", icon: Home },
-    { id: 1, label: "Diagnóstico", icon: ClipboardCheck },
-    { id: 2, label: "Plano", icon: LayoutDashboard },
-    { id: 3, label: "Sessão Rápida", icon: Zap },
-    { id: 4, label: "Dúvidas", icon: MessageCircle },
-    { id: 5, label: "Explorar Catálogo", icon: Library },
-  ];
-
   const renderNavigation = () => {
+    if (step < 0) return null;
+    const navItems = [
+      { id: 0, label: "Início", icon: Home },
+      { id: 1, label: "Diagnóstico", icon: ClipboardCheck },
+      { id: 2, label: "Plano", icon: LayoutDashboard },
+      { id: 3, label: "Sessão Rápida", icon: Zap },
+      { id: 4, label: "Dúvidas", icon: MessageCircle },
+      { id: 5, label: "Catálogo", icon: Library },
+    ];
     return (
       <nav className="flex flex-wrap justify-center gap-1 md:gap-4 mb-8 bg-card/50 backdrop-blur-sm p-2 rounded-2xl border border-border sticky top-4 z-50">
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => {
-              if (item.id === 5 && courses.length === 0) {
-                handleSearchCourses(searchQuery);
-              } else {
-                setPreviousStep(step);
-                setStep(item.id);
-              }
-            }}
-
+            onClick={() => { setPreviousStep(step); setStep(item.id); }}
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
-              step === item.id 
-                ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" 
-                : "text-secondary hover:bg-accent/10 hover:text-accent"
+              step === item.id ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" : "text-secondary hover:bg-accent/10 hover:text-accent"
             )}
-
           >
             <item.icon className="w-4 h-4" />
             <span className="hidden sm:inline">{item.label}</span>
           </button>
         ))}
+        <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all">
+          <LogOut className="w-4 h-4" />
+          <span className="hidden sm:inline">Sair</span>
+        </button>
       </nav>
     );
   };
 
   const renderContent = () => {
+    if (step === -2) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin" /></div>;
+    
+    if (step === -1) {
+      return (
+        <Card className="max-w-md mx-auto mt-20 border-border shadow-xl overflow-hidden">
+          <div className="h-2 bg-accent w-full" />
+          <CardHeader className="text-center pb-2">
+            <CefisLogo className="w-48 mx-auto mb-6 text-primary" />
+            <CardTitle className="text-2xl font-serif">Conectar Conta CEFIS</CardTitle>
+            <CardDescription>Acesse o Tutor IA com suas credenciais da plataforma.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="seu@email.com" required className="h-12" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pass">Senha</Label>
+                <Input id="pass" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" required className="h-12" />
+              </div>
+              {error && <div className="p-3 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">{error}</div>}
+              <Button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg shadow-lg shadow-accent/20">
+                {isLoggingIn ? <><Loader2 className="animate-spin mr-2" /> Conectando...</> : "Entrar com minha conta CEFIS"}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="bg-muted/30 border-t border-border p-4 text-center">
+            <p className="text-[10px] text-secondary">Seus dados são processados de forma segura via API oficial da CEFIS.</p>
+          </CardFooter>
+        </Card>
+      );
+    }
+
     switch (step) {
       case 0:
         return (
-          <div className="max-w-4xl mx-auto space-y-6">
-            <Card className="max-w-md mx-auto border-border shadow-sm overflow-hidden">
-              <div className="h-2 bg-accent w-full" />
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-3xl font-bold">Bem-vindo ao Tutor CEFIS</CardTitle>
-                  {isProfileLoaded && (
-                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Perfil CEFIS carregado
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription className="text-secondary text-lg">
-                  Vamos personalizar sua jornada de aprendizado para que você alcance seus objetivos mais rápido.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleOnboardingSubmit} className="space-y-4">
+          <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden">
+             <div className="bg-accent/5 p-4 border-b border-accent/10 flex items-center justify-between">
+              <Badge variant="outline" className="bg-success/10 text-success border-success/30 gap-1 font-bold">
+                ✓ Perfil CEFIS carregado
+              </Badge>
+              <span className="text-xs text-secondary italic">Conectado como {formData.nome}</span>
+            </div>
+            <CardHeader>
+              <CardTitle className="text-2xl font-serif">Bem-vindo ao seu Tutor IA</CardTitle>
+              <CardDescription>Vamos alinhar seu objetivo para criar um plano de estudos sob medida.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleOnboardingSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nome">Nome completo</Label>
-                    <Input 
-                      id="nome" 
-                      value={formData.nome} 
-                      onChange={e => setFormData({...formData, nome: e.target.value})} 
-                      required 
-                      placeholder="Como prefere ser chamado?"
-                      className="focus-visible:ring-accent"
-                    />
+                    <Label>Seu Nome</Label>
+                    <Input value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})} placeholder="Como quer ser chamado?" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="objetivo">Objetivo de aprendizado</Label>
-                    <Input 
-                      id="objetivo" 
-                      value={formData.objetivo} 
-                      onChange={e => setFormData({...formData, objetivo: e.target.value})} 
-                      required 
-                      placeholder="O que você quer dominar?"
-                      className="focus-visible:ring-accent"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="experiencia">Experiência profissional</Label>
-                    <Input 
-                      id="experiencia" 
-                      value={formData.experiencia} 
-                      onChange={e => setFormData({...formData, experiencia: e.target.value})} 
-                      required 
-                      placeholder="Área de atuação e cargo"
-                      className="focus-visible:ring-accent"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nivel">Nível de conhecimento</Label>
-                    <Select 
-                      value={formData.nivel} 
-                      onValueChange={val => setFormData({...formData, nivel: val})} 
-                      required
-                    >
-                      <SelectTrigger className="focus:ring-accent">
-                        <SelectValue placeholder="Selecione seu nível" />
-                      </SelectTrigger>
+                    <Label>Nível de Conhecimento</Label>
+                    <Select value={formData.nivel} onValueChange={val => setFormData({...formData, nivel: val})}>
+                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="iniciante">Iniciante</SelectItem>
                         <SelectItem value="intermediário">Intermediário</SelectItem>
                         <SelectItem value="avançado">Avançado</SelectItem>
-                        <SelectItem value="embed_test">TESTE DE EMBED</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {formData.nivel === "embed_test" && (
-                    <div className="p-4 border border-accent rounded-lg bg-accent/5 space-y-4">
-                      <h3 className="font-bold">Teste de Embed CEFIS</h3>
-                      <p className="text-xs break-all text-secondary">URL: https://cdn2.cefis.com.br/vod/09fc72a6-f97b-4cff-8d23-e91cd279aacb/360.mp4</p>
-                      <video 
-                        controls 
-                        className="w-full rounded border border-border"
-                        onPlay={() => console.log("Video playing: https://cdn2.cefis.com.br/vod/09fc72a6-f97b-4cff-8d23-e91cd279aacb/360.mp4")}
-                        onError={(e) => console.error("Video error:", e)}
-                      >
-                        <source src="https://cdn2.cefis.com.br/vod/09fc72a6-f97b-4cff-8d23-e91cd279aacb/360.mp4" type="video/mp4" />
-                        Seu navegador não suporta vídeos.
-                      </video>
-                    </div>
-                  )}
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    Começar Jornada
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <div className="max-w-2xl mx-auto">
-              <Card 
-                className="border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors cursor-pointer"
-                onClick={() => handleSearchCourses("")}
-              >
-
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center shadow-sm text-accent">
-                    <Library className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-accent">Explorar todo o catálogo da CEFIS</h3>
-                    <p className="text-sm text-secondary">Acesse milhares de cursos reais e certificados.</p>
-                  </div>
-                  <Search className="text-accent w-5 h-5 opacity-50" />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>O que você deseja aprender agora? (Objetivo)</Label>
+                  <Input value={formData.objetivo} onChange={e => setFormData({...formData, objetivo: e.target.value})} placeholder="Ex: Dominar o IRPF 2024, entender auditoria contábil..." required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sua experiência profissional</Label>
+                  <Input value={formData.experiencia} onChange={e => setFormData({...formData, experiencia: e.target.value})} placeholder="Ex: Analista Fiscal há 3 anos" required />
+                </div>
+                <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-12">Começar Diagnóstico</Button>
+              </form>
+            </CardContent>
+          </Card>
         );
       case 1:
         return (
-          <Card className="max-w-2xl mx-auto border-border shadow-sm text-center py-8">
-            <CardContent className="space-y-6">
+          <Card className="max-w-2xl mx-auto border-border shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl font-serif">Diagnóstico de Aprendizado</CardTitle>
+              <CardDescription>Análise baseada no seu objetivo: {formData.objetivo}</CardDescription>
+            </CardHeader>
+            <CardContent>
               {isLoading ? (
                 <div className="flex flex-col items-center py-12">
                   <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
-                  <h2 className="text-2xl font-bold">Analisando seu perfil...</h2>
-                  <p className="text-secondary mt-2">
-                    Identificando lacunas de aprendizado com base no catálogo da CEFIS.
-                  </p>
-                </div>
-              ) : error ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
-                    {error}
-                  </div>
-                  <Button onClick={() => setStep(0)} variant="outline">Tentar novamente</Button>
+                  <h3 className="text-xl font-bold">Analisando lacunas...</h3>
+                  <p className="text-secondary mt-2">O Tutor está consultando o catálogo da CEFIS para você.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <User className="text-success w-8 h-8" />
-                  </div>
-                  <h2 className="text-2xl font-bold">Diagnóstico Concluído!</h2>
-                  <p className="text-secondary">Encontramos algumas áreas-chave para focar sua evolução.</p>
-                  
-                  <div className="space-y-4 text-left">
-                    {diagnosis.length > 0 ? (
-                      diagnosis.map((gap, i) => (
-                        <Card key={i} className="border-border hover:border-accent/30 transition-colors">
-                          <CardContent className="pt-6 space-y-3">
-                            <div className="flex justify-between items-start gap-4">
-                              <h4 className="font-bold text-lg leading-tight">{gap.topico}</h4>
-                              <Badge 
-                                className={`${
-                                  gap.prioridade === 'alta' ? 'bg-accent hover:bg-accent' : 
-                                  gap.prioridade === 'media' ? 'bg-secondary hover:bg-secondary' : 
-                                  'bg-success hover:bg-success'
-                                } text-primary-foreground border-none`}
-                              >
-                                {gap.prioridade.toUpperCase()}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-secondary">
-                              <MarkdownRenderer content={gap.por_que_importa} />
-                            </div>
-                            {gap.curso_cefis_relacionado && (
-                              <div className="text-xs bg-muted/30 p-2 rounded border border-border flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2">
-                                  <div className="bg-white/90 p-1 rounded">
-                                    <CefisLogo className="w-10 text-[#051124]" />
-                                  </div>
-
-                                  <span className="font-bold text-accent">Curso:</span> {gap.curso_cefis_relacionado}
-                                </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="h-6 text-[10px] text-accent hover:bg-accent/5 font-bold gap-1"
-                                  onClick={() => {
-                                    console.log("navegando para curso (diagnóstico):", gap.curso_cefis_relacionado);
-                                    handleSearchCourses(gap.curso_cefis_relacionado, undefined, true, { source: 'plano', trail: studyPlan });
-                                  }}
-                                >
-                                  <Search className="w-2.5 h-2.5" /> Explorar
-                                </Button>
-                              </div>
-                            )}
-
-
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-secondary italic">
-                        Não foi possível gerar um diagnóstico automático. Tente novamente ou explore o catálogo.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4">
-                    {studyPlan.length > 0 ? (
-                      <Button 
-                        onClick={() => setStep(2)} 
-                        variant="outline" 
-                        className="border-accent text-accent hover:bg-accent/5 font-bold"
-                      >
-                        Voltar ao Plano
-                      </Button>
-                    ) : (
-                      <Button 
-                        onClick={handleGeneratePlan} 
-                        disabled={isGeneratingPlan}
-                        className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
-                      >
-                        {isGeneratingPlan ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Montando plano...
-                          </>
-                        ) : (
-                          "Gerar Meu Plano Completo"
+                <div className="space-y-4">
+                  {diagnosis.map((gap, i) => (
+                    <Card key={i} className="border-border/50 bg-muted/20">
+                      <CardContent className="pt-4 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold text-accent">{gap.topico}</h4>
+                          <Badge variant="outline" className="capitalize">{gap.prioridade}</Badge>
+                        </div>
+                        <p className="text-sm text-secondary">{gap.por_que_importa}</p>
+                        {gap.curso_cefis_relacionado && (
+                           <div className="text-xs bg-card p-2 rounded border border-border flex items-center justify-between">
+                            <span className="font-bold text-accent">Curso Relacionado:</span> {gap.curso_cefis_relacionado}
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] text-accent" onClick={() => handleSearchCourses(gap.curso_cefis_relacionado)}>Explorar</Button>
+                          </div>
                         )}
-                      </Button>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setStep(4)}
-                      className="border-accent text-accent hover:bg-accent/5 font-bold"
-                    >
-                      Tirar uma dúvida
-                    </Button>
-                  </div>
-                  <Button variant="ghost" onClick={() => setStep(0)} className="text-secondary text-xs">Recomeçar diagnóstico</Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button onClick={handleGeneratePlan} disabled={isGeneratingPlan} className="w-full bg-accent mt-4">
+                    {isGeneratingPlan ? <Loader2 className="animate-spin mr-2" /> : "Gerar Meu Plano de Estudos"}
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -673,96 +433,34 @@ export default function TutorApp() {
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-2xl">Seu Plano de Estudos Personalizado</CardTitle>
-              <CardDescription className="text-lg">Estrutura recomendada para {formData.objetivo || "seu objetivo"}.</CardDescription>
+              <CardTitle className="text-2xl font-serif">Seu Plano de Estudos</CardTitle>
+              <CardDescription>Rota recomendada para atingir seu objetivo.</CardDescription>
             </CardHeader>
             <CardContent>
               {isGeneratingPlan ? (
-                <div className="flex flex-col items-center py-12">
-                  <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
-                  <h3 className="text-xl font-bold">Montando seu plano...</h3>
-                  <p className="text-secondary mt-2 text-center">Cruzando o catálogo da CEFIS com seu perfil para criar a melhor rota.</p>
-                </div>
-              ) : studyPlan.length > 0 ? (
+                <div className="flex flex-col items-center py-12"><Loader2 className="animate-spin w-12 h-12 text-accent mb-4" /><h3>Montando plano...</h3></div>
+              ) : (
                 <div className="space-y-6">
-                  <div className="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
-                    {studyPlan.map((stepItem, i) => (
-                      <div key={i} className="relative">
-                        <div className="absolute -left-10 top-0 w-8 h-8 flex items-center justify-center z-10">
-                          <div className="w-2 h-2 rounded-full bg-accent/40" />
+                  {studyPlan.map((item, i) => (
+                    <div key={i} className="relative pl-8 before:absolute before:left-3 before:top-2 before:bottom-0 before:w-0.5 before:bg-muted">
+                      <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-accent flex items-center justify-center text-[10px] text-white font-bold">{i+1}</div>
+                      <div className="p-4 rounded-xl border border-border bg-card space-y-2">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-bold">{item.titulo}</h4>
+                          <Badge className={item.origem === 'catalogo_cefis' ? 'bg-success' : 'bg-accent'}>{item.origem === 'catalogo_cefis' ? "CEFIS" : "IA"}</Badge>
                         </div>
-                        <div className={cn(
-                          "p-4 rounded-lg border border-border space-y-3 transition-colors",
-                          stepItem.origem === 'catalogo_cefis' ? "bg-card hover:bg-muted/30" : "bg-muted/30"
-                        )}>
-                          <div className="flex justify-between items-start gap-4">
-                            <h4 className="font-bold text-lg leading-tight flex items-center gap-2">
-                              {stepItem.titulo}
-                              {stepItem.curso_id && completedLessons[stepItem.curso_id]?.length > 0 && (
-                                <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />
-                              )}
-                            </h4>
-                            <Badge 
-                              className={`${
-                                stepItem.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
-                              } text-primary-foreground border-none shrink-0`}
-                            >
-                              {stepItem.origem === 'catalogo_cefis' ? (
-                                <span className="flex items-center gap-1 bg-white/90 px-1 py-0.5 rounded">
-                                  <CefisLogo className="w-12 text-[#051124]" />
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-1">✨ Tutor</span>
-                              )}
-
-
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-secondary">
-                            <MarkdownRenderer content={stepItem.descricao} />
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border/50">
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center gap-1 text-xs text-secondary font-medium">
-                                <Clock className="w-3 h-3" /> {stepItem.tempo_estimado_min} min
-                              </div>
-                              {stepItem.fonte && (
-                                <div className="text-xs text-secondary font-medium italic truncate max-w-[250px]">
-                                  Fonte: {stepItem.fonte}
-                                </div>
-                              )}
-                            </div>
-                            {(stepItem.origem === 'catalogo_cefis' || stepItem.fonte || stepItem.curso_id) && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
-                                onClick={() => {
-                                  const searchTitle = stepItem.fonte || stepItem.titulo;
-                                  console.log("navegando para curso (plano):", stepItem.curso_id, "Título:", searchTitle);
-                                  handleSearchCourses(searchTitle, stepItem.curso_id, true, { source: 'plano', trail: studyPlan });
-                                }}
-                              >
-                                <Search className="w-3 h-3" /> Explorar este curso
-                              </Button>
-                            )}
-                          </div>
+                        <MarkdownRenderer content={item.descricao} className="text-secondary" />
+                        <div className="flex justify-between items-center pt-2 border-t border-border/30 text-xs text-secondary">
+                          <span><Clock className="inline w-3 h-3 mr-1" />{item.tempo_estimado_min} min</span>
+                          {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id)}>Ver Curso</Button>}
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <Button onClick={() => setStep(3)} className="flex-1 bg-accent">Sessão Rápida</Button>
+                    <Button onClick={() => setStep(4)} variant="outline" className="flex-1">Dúvidas</Button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                    <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Ir para Sessão Rápida</Button>
-                    <Button variant="outline" onClick={() => setStep(4)} className="border-accent text-accent hover:bg-accent/5 font-bold">Tirar Dúvida Agora</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="p-4 bg-muted/50 rounded-lg border border-dashed border-border mb-6">
-                    <p className="text-secondary italic">Nenhum plano gerado ainda.</p>
-                  </div>
-                  <Button onClick={handleGeneratePlan} className="bg-accent text-primary-foreground">Gerar Plano de Estudos</Button>
                 </div>
               )}
             </CardContent>
@@ -770,369 +468,111 @@ export default function TutorApp() {
         );
       case 3:
         return (
-          <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden min-h-[400px]">
-            <div className="h-2 bg-accent w-full" />
+          <Card className="max-w-2xl mx-auto border-border shadow-sm">
             <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Zap className="text-accent" /> Sessão Rápida Personalizada
-              </CardTitle>
-              <CardDescription>Conteúdo otimizado com IA baseado no seu tempo disponível.</CardDescription>
+              <CardTitle className="text-2xl font-serif">Sessão de Estudo Rápida</CardTitle>
+              <CardDescription>Quanto tempo você tem agora?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="pt-6">
-                {isGeneratingSession ? (
-                  <div className="flex flex-col items-center py-12">
-                    <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
-                    <p className="text-lg font-medium">Otimizando conteúdo para {modoData.minutos} minutos...</p>
-                    <p className="text-sm text-secondary">Selecionando o melhor do catálogo CEFIS para você.</p>
-                  </div>
-                ) : error ? (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
-                      {error}
-                    </div>
-                    <Button onClick={() => setQuickSession(null)} className="bg-accent text-primary-foreground font-bold">Tentar Novamente</Button>
-                  </div>
-                ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <div className="space-y-1">
-                        <h3 className="font-bold text-xl">{modoData.topico}</h3>
-                        <p className="text-xs text-secondary">Sua micro-trilha exclusiva</p>
-                      </div>
-                      <Badge className="bg-accent/10 text-accent border-none">{quickSession?.total_min ?? 0} min total</Badge>
-                    </div>
-                    <div className="space-y-4">
-                      {quickSession.itens.map((item: any, i: number) => (
-                        <Card key={i} className="border-border hover:border-accent/30 transition-all">
-
-                          <CardContent className="pt-6 space-y-3">
-                            <div className="flex justify-between items-start gap-4">
-                              <h4 className="font-bold text-lg leading-tight">{item?.titulo ?? "Sem título"}</h4>
-                              <Badge variant="secondary" className="bg-muted text-secondary shrink-0">
-                                {item?.tempo_min ?? 0} min
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-secondary">
-                              <MarkdownRenderer content={item?.resumo ?? ""} />
-                            </div>
-                            <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                              <Badge 
-                                className={`${
-                                  item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
-                                } text-primary-foreground border-none`}
-                              >
-                                {item?.origem === 'catalogo_cefis' ? (
-                                  <div className="bg-white/90 px-1 py-0.5 rounded">
-                                    <CefisLogo className="w-12 text-[#051124]" />
-                                  </div>
-                                ) : '✨ Tutor'}
-
-                              </Badge>
-                              <div className="flex items-center gap-4 overflow-hidden">
-                                {item?.fonte && (
-                                  <span className="text-xs text-secondary italic truncate max-w-[150px]">
-                                    {item.fonte}
-                                  </span>
-                                )}
-                                {item?.origem === 'catalogo_cefis' && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1 px-1"
-                                    onClick={() => {
-                                      console.log("navegando para curso (sessão):", item.curso_id, item.fonte || item.titulo);
-                                      handleSearchCourses(item.fonte || item.titulo, item.curso_id, true, { 
-                                        source: 'sessao_rapida', 
-                                        trail: quickSession.itens 
-                                      });
-                                    }}
-                                  >
-                                    <Search className="w-2 h-2" /> Ver no catálogo
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
-                  <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
-                  <Button onClick={() => setQuickSession(null)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Nova Sessão Rápida</Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Minutos disponíveis</Label>
+                  <Input type="number" value={modoData.minutos} onChange={e => setModoData({...modoData, minutos: e.target.value})} placeholder="Ex: 20" />
                 </div>
-
-                  </div>
-                ) : (
-                  <div className="space-y-8 animate-in fade-in duration-500">
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-wider text-secondary">Tópico para revisar</Label>
-                        <Select 
-                          value={modoData.topico} 
-                          onValueChange={(v) => setModoData(prev => ({ ...prev, topico: v }))}
-                        >
-                          <SelectTrigger className="focus:ring-accent bg-muted/30 border-border h-12">
-                            <SelectValue placeholder="Selecione um tópico" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {studyPlan.length > 0 ? (
-                              studyPlan.map((item: any, i: number) => (
-                                <SelectItem key={i} value={item.titulo}>
-                                  {item.titulo}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="Geral">Assunto Geral</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-3">
-                        <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
-                        <div className="flex flex-wrap gap-2">
-                          {["5", "10", "30", "45", "60", "90"].map((m) => (
-                            <Button 
-                              key={m} 
-                              variant={modoData.minutos === m ? "default" : "outline"}
-                              onClick={() => setModoData(prev => ({ ...prev, minutos: m }))}
-                              className={cn(
-                                "h-11 px-6 font-bold transition-all",
-                                modoData.minutos === m ? "bg-accent text-primary-foreground scale-105 shadow-md shadow-accent/20" : "border-border text-secondary hover:border-accent/50"
-                              )}
-                            >
-                              {m} min
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex flex-col gap-3">
-                      <Button 
-                        onClick={() => handleGenerateSession()}
-                        disabled={!modoData.topico || !modoData.minutos || isGeneratingSession}
-                        className="h-14 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg shadow-lg shadow-accent/20"
-                      >
-                        Começar Aula com IA
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => setStep(2)}
-                        className="text-secondary font-medium"
-                      >
-                        Voltar ao Plano Completo
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label>Tópico de interesse</Label>
+                  <Input value={modoData.topico} onChange={e => setModoData({...modoData, topico: e.target.value})} placeholder="Ex: ICMS" />
+                </div>
               </div>
+              <Button onClick={() => handleGenerateSession()} disabled={isGeneratingSession} className="w-full bg-accent h-12">
+                {isGeneratingSession ? <Loader2 className="animate-spin mr-2" /> : "Gerar Sessão Personalizada"}
+              </Button>
+
+              {quickSession && (
+                <div className="pt-6 space-y-4">
+                  <h3 className="font-bold text-lg">Sua trilha para hoje ({quickSession.total_min} min):</h3>
+                  {quickSession.itens.map((item: any, i: number) => (
+                    <div key={i} className="p-4 rounded-xl border border-border bg-muted/10 space-y-2">
+                      <div className="flex justify-between font-bold text-accent">
+                        <span>{item.titulo}</span>
+                        <span className="text-xs">{item.tempo_min} min</span>
+                      </div>
+                      <p className="text-sm text-secondary">{item.resumo}</p>
+                      {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => handleSearchCourses(undefined, item.curso_id)}>Acessar Conteúdo</Button>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         );
       case 4:
         return (
-          <Card className="max-w-2xl mx-auto border-border shadow-sm flex flex-col h-[650px] overflow-hidden">
-            <div className="h-2 bg-accent w-full" />
-            <CardHeader className="bg-card/80 backdrop-blur-sm z-10 border-b border-border">
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <MessageCircle className="text-accent" /> Tire suas dúvidas
-              </CardTitle>
-              <CardDescription>Pergunte sobre impostos, contabilidade ou sua carreira profissional.</CardDescription>
+          <Card className="max-w-3xl mx-auto border-border shadow-sm flex flex-col h-[600px]">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2 font-serif"><MessageCircle className="text-accent" /> Chat com o Tutor</CardTitle>
+              <CardDescription>Tire dúvidas técnicas baseadas no catálogo real da CEFIS.</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden p-0">
-              <div className="flex-1 overflow-y-auto space-y-6 p-4 md:p-6 bg-muted/5">
-                {chatHistory.length === 0 && !isAsking && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
-                    <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center">
-                      <MessageCircle className="text-accent w-8 h-8" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-lg">Olá! Sou seu Tutor CEFIS.</h4>
-                      <p className="text-secondary max-w-sm">Mande sua primeira dúvida para começarmos a conversar!</p>
-                    </div>
-                  </div>
-                )}
-                {chatHistory.map((chat, i) => (
-                  <div key={i} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="flex justify-end">
-                      <div className="bg-accent text-primary-foreground p-4 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md shadow-accent/10">
-                        {chat.pergunta}
-                      </div>
-                    </div>
-                    <div className="flex justify-start">
-                      <div className="bg-card p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
-                        {chat.fonte && (
-                          <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20 flex items-center gap-2 w-fit text-[10px] py-1 px-2 h-7">
-                            <div className="bg-white/90 px-1 py-0.5 rounded">
-                              <CefisLogo className="w-10 text-[#051124]" />
-                            </div>
-
-                            <span className="text-foreground/80 font-medium">Baseado na aula: {chat.fonte.aula} — curso {chat.fonte.curso}</span>
-                          </Badge>
-                        )}
-
-                        <MarkdownRenderer content={chat.resposta} />
-                        <div className="pt-2 flex justify-end">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="text-[10px] h-7 border-accent/20 text-accent hover:bg-accent/5 gap-1 font-bold"
-                            onClick={() => {
-                              console.log("Abrindo curso da dúvida:", chat.fonte?.curso_id, chat.fonte?.curso || chat.pergunta);
-                              handleSearchCourses(chat.fonte?.curso || chat.pergunta, chat.fonte?.curso_id, true);
-                            }}
-                          >
-                            <Library className="w-3 h-3" /> {chat.fonte ? "Explorar este curso" : "Explorar cursos relacionados"}
-                          </Button>
+            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+              {chatHistory.length === 0 && <div className="text-center py-20 text-secondary italic">Como posso te ajudar hoje? Pergunte algo sobre contabilidade ou impostos.</div>}
+              {chatHistory.map((chat, i) => (
+                <div key={i} className="space-y-4">
+                  <div className="flex justify-end"><div className="bg-accent text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm">{chat.pergunta}</div></div>
+                  <div className="flex justify-start">
+                    <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3">
+                      <MarkdownRenderer content={chat.resposta} />
+                      {chat.fonte && (
+                        <div className="pt-2 border-t border-border/50 text-[10px] text-secondary flex items-center justify-between">
+                          <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
+                          {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Ir para curso</Button>}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                ))}
-                {isAsking && (
-                  <div className="flex justify-start animate-pulse">
-                    <div className="bg-card p-4 rounded-2xl rounded-tl-none border border-border flex items-center gap-3 shadow-sm">
-                      <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                      <span className="text-sm text-secondary font-medium">Tutor está consultando o catálogo...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <form onSubmit={handleAskDuvida} className="p-4 bg-card border-t border-border flex gap-2">
-                <Input 
-                  placeholder="Ex: Como funciona a tributação do Simples Nacional?" 
-                  value={duvida}
-                  onChange={e => setDuvida(e.target.value)}
-                  disabled={isAsking}
-                  className="flex-1 h-12 focus-visible:ring-accent bg-muted/30 border-none"
-                />
-                <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent hover:bg-accent/90 text-primary-foreground shrink-0 rounded-xl shadow-lg shadow-accent/20">
-                  <Send className="w-5 h-5" />
-                </Button>
-              </form>
+                </div>
+              ))}
+              {isAsking && <div className="flex justify-start"><div className="bg-muted p-4 rounded-2xl animate-pulse"><Loader2 className="animate-spin w-4 h-4" /></div></div>}
             </CardContent>
+            <form onSubmit={handleAskDuvida} className="p-4 border-t bg-card flex gap-2">
+              <Input placeholder="Sua dúvida..." value={duvida} onChange={e => setDuvida(e.target.value)} disabled={isAsking} className="h-12 border-none bg-muted/30" />
+              <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent shrink-0 rounded-xl"><Send className="w-5 h-5" /></Button>
+            </form>
           </Card>
         );
       case 5:
         return (
           <div className="space-y-6">
             <Card className="max-w-4xl mx-auto border-border shadow-sm overflow-hidden">
-              <div className="h-2 bg-accent w-full" />
               <CardHeader>
-                <CardTitle className="text-2xl flex items-center gap-2 font-serif">
-                  <Search className="text-accent" /> Explorar Catálogo da CEFIS
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  Busque por cursos reais diretamente na plataforma CEFIS para aprofundar seu conhecimento.
-                </CardDescription>
+                <CardTitle className="text-2xl flex items-center gap-2 font-serif"><Search className="text-accent" /> Explorar Catálogo</CardTitle>
+                <CardDescription>Busque por cursos reais da plataforma CEFIS.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={(e) => { e.preventDefault(); handleSearchCourses(); }} className="flex flex-col sm:flex-row gap-2">
-                  <Input 
-                    placeholder="Contabilidade, Impostos, Auditoria, Carreira..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 h-12 focus-visible:ring-accent"
-                  />
-                  <Button type="submit" disabled={isLoading} className="h-12 px-8 bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20">
-                    {isLoading ? <Loader2 className="animate-spin mr-2" /> : <Search className="w-4 h-4 mr-2" />}
-                    Buscar Cursos
-                  </Button>
+                <form onSubmit={e => { e.preventDefault(); handleSearchCourses(); }} className="flex gap-2">
+                  <Input placeholder="Contabilidade, Impostos..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="h-12" />
+                  <Button type="submit" disabled={isLoading} className="h-12 bg-accent">{isLoading ? <Loader2 className="animate-spin" /> : <Search />}</Button>
                 </form>
               </CardContent>
             </Card>
-
-            {error && (
-              <div className="max-w-4xl mx-auto p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
-                {error}
-              </div>
-            )}
-
             <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-              {courses.map((course) => (
-                <Card key={course.id} className={cn(
-                  "border-border shadow-sm hover:shadow-md transition-all hover:border-accent/20 group",
-                  courses.length === 1 && "border-accent ring-1 ring-accent/20"
-                )}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="bg-white/90 px-1 py-0.5 rounded">
-                            <CefisLogo className="w-14 text-[#051124]" />
-                          </div>
-
-                          {courses.length === 1 && (
-                            <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5">CURSO ENCONTRADO</Badge>
-                          )}
-                        </div>
-                        <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
-                      </div>
-
-                      {course.averageRating && (
-                        <div className="flex items-center text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-xs font-bold shrink-0">
-                          <Star className="w-3 h-3 fill-current mr-1" />
-                          {course.averageRating}
-                        </div>
-                      )}
+              {courses.map(course => (
+                <Card key={course.id} className="border-border hover:shadow-md transition-all group">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-bold text-lg group-hover:text-accent transition-colors">{course.title}</h4>
+                      {course.averageRating && <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200">{course.averageRating} ★</Badge>}
                     </div>
-                    <CardDescription className="text-sm italic line-clamp-1">{course.subtitle}</CardDescription>
+                    <CardDescription className="line-clamp-1 italic">{course.subtitle}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-secondary line-clamp-3">{course.summary || 'Sem resumo disponível.'}</p>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {course.categories?.slice(0, 3).map((cat: any) => (
-                        <Badge key={cat.id} variant="secondary" className="bg-muted/50 text-[10px] px-2 py-0.5 rounded-full">
-                          {cat.name}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <div className="flex items-center gap-3 text-xs text-white/80 font-medium">
-                        <span className="flex items-center gap-1 bg-[#132442] px-2 py-1 rounded-md border border-white/10">
-                          <Clock className="w-3 h-3 text-primary" /> {Math.floor(course.duration / 3600)}h {Math.floor((course.duration % 3600) / 60)}min
-                        </span>
-                        <span className="flex items-center gap-1 bg-[#132442] px-2 py-1 rounded-md border border-white/10">
-                          <PlayCircle className="w-3 h-3 text-primary" /> {course.lessonCount} aulas
-                        </span>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="bg-accent hover:bg-accent/90 text-primary-foreground border-none font-bold shadow-sm"
-                        onClick={() => {
-                          console.log("navegando para curso (catálogo):", course.id, "Título:", course.title);
-                          setSelectedCourse(course);
-                          setNavigationContext({ source: 'catalogo' });
-                          setPreviousStep(step);
-                          setStep(6);
-                        }}
-                      >
-                        Ver detalhes
-                      </Button>
-
+                    <p className="text-sm text-secondary line-clamp-3">{course.summary || 'Sem resumo.'}</p>
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <span className="text-xs text-secondary"><Clock className="inline w-3 h-3 mr-1" />{Math.floor(course.duration / 3600)}h</span>
+                      <Button variant="outline" size="sm" className="bg-accent text-white border-none" onClick={() => { setSelectedCourse(course); setNavigationContext({ source: 'catalogo' }); setStep(6); }}>Ver Detalhes</Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
-
-              {!isLoading && courses.length === 0 && !error && (
-                <div className="col-span-full py-20 text-center space-y-4">
-                  <Library className="mx-auto w-16 h-16 text-muted-foreground/30" />
-                  <p className="text-secondary italic text-lg">
-                    Use a barra acima para pesquisar milhares de cursos reais da CEFIS.
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            <div className="max-w-4xl mx-auto flex justify-center pb-8">
-              <Button variant="outline" className="text-secondary border-border" onClick={() => setStep(0)}>Voltar ao Início</Button>
             </div>
           </div>
         );
@@ -1144,52 +584,33 @@ export default function TutorApp() {
             onNavigate={(id, title, ctx) => handleSearchCourses(title, id, true, ctx)}
             userProfile={formData}
             onBack={() => setStep(previousStep)}
-            onQuestion={(title: string) => {
-              setDuvida(`Tenho uma dúvida sobre o curso: ${title}\n`);
-              setStep(4);
-            }}
+            onQuestion={t => { setDuvida(`Sobre o curso: ${t}\n`); setStep(4); }}
             onCompleteLesson={handleCompleteLesson}
             isLessonCompleted={isLessonCompleted}
+            userKey={userKey}
           />
         );
-      default:
-        return null;
+      default: return null;
     }
   };
 
   return (
-    <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
+    <main className="min-h-screen bg-background text-foreground pb-20">
       <Toaster position="top-center" richColors />
-      
-
-
-
       <div className="max-w-4xl mx-auto px-4">
         <header className="py-8 flex flex-col items-center">
-          <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
-            <div className="flex flex-col items-center gap-4 mb-1 transition-transform duration-300 group-hover:scale-105">
-              <CefisLogo className="w-48 sm:w-64 text-primary" />
-              <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">TUTOR IA</span>
-              </div>
+          <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => step >= 0 && setStep(0)}>
+            <CefisLogo className="w-48 sm:w-64 text-primary mb-2 transition-transform group-hover:scale-105" />
+            <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+              <span className="text-xs font-black uppercase tracking-widest text-primary">TUTOR IA</span>
             </div>
-            <p className="text-secondary font-medium italic mt-2">Seu aprendizado, no seu tempo.</p>
           </div>
-
-          
           {renderNavigation()}
         </header>
-        
         <div className="transition-all duration-300">
           {renderContent()}
         </div>
-        
-        <footer className="mt-20 text-center border-t border-border pt-8 text-white/40 text-xs">
-          © 2026 Tutor CEFIS - Inteligência Artificial integrada ao melhor conteúdo contábil.
-        </footer>
-
       </div>
     </main>
   );
 }
-

@@ -12,7 +12,16 @@ serve(async (req) => {
   }
 
   try {
-    const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
+    const { userKey } = await (async () => {
+      try {
+        const cloned = req.clone();
+        return await cloned.json();
+      } catch {
+        return {};
+      }
+    })();
+
+    const cefisApiKey = userKey || Deno.env.get("CEFIS_API_KEY");
 
     if (!cefisApiKey) {
       console.error("CEFIS_API_KEY not set");

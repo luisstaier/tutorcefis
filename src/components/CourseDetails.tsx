@@ -15,6 +15,7 @@ interface CourseDetailsProps {
   onQuestion: (courseTitle: string) => void;
   onCompleteLesson: (courseId: number, lessonId: number) => void;
   isLessonCompleted: (courseId: number, lessonId: number) => boolean;
+  userKey?: string;
 }
 
 export default function CourseDetails({ 
@@ -25,7 +26,8 @@ export default function CourseDetails({
   userProfile, 
   onQuestion, 
   onCompleteLesson,
-  isLessonCompleted
+  isLessonCompleted,
+  userKey
 }: CourseDetailsProps) {
   console.log("CourseDetail montou com courseId:", course?.id);
   const [lesson, setLesson] = useState<any>(null);
@@ -124,7 +126,7 @@ export default function CourseDetails({
     setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
-        body: { courseId: course.id, lessonId: selectedLessonId }
+        body: { courseId: course.id, lessonId: selectedLessonId, userKey }
       });
       if (error) throw error;
       
@@ -166,7 +168,8 @@ export default function CourseDetails({
           lessonTitle: lesson?.title || "",
           courseSummary: course?.summary || "",
           courseGoals: normalizedGoals,
-          nivel: userProfile?.nivel || "Iniciante" 
+          nivel: userProfile?.nivel || "Iniciante",
+          userKey 
         }
       });
       if (error) throw error;
