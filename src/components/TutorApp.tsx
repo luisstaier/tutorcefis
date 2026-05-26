@@ -75,8 +75,15 @@ const LevelBadge = ({ xp, currentLevel, nextLevel, progress }: any) => {
   );
 };
 
-const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
+const StartSessionModal = ({ open, onOpenChange, onStart, studyPlan }: any) => {
   const [minutes, setMinutes] = useState("10");
+  const [selectedTopico, setSelectedTopico] = useState("");
+
+  useEffect(() => {
+    if (studyPlan && studyPlan.length > 0 && !selectedTopico) {
+      setSelectedTopico(studyPlan[0].titulo);
+    }
+  }, [studyPlan]);
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,26 +93,45 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
             <Zap className="text-accent" /> Pronto para começar agora?
           </DialogTitle>
           <DialogDescription className="text-secondary text-base pt-2">
-            Quanto tempo você tem disponível para estudar este tópico hoje?
+            Escolha um tópico do seu plano e quanto tempo você tem disponível.
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-6 py-4">
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {["5", "10", "30"].map((m) => (
-                <Button 
-                  key={m} 
-                  variant={minutes === m ? "default" : "outline"}
-                  onClick={() => setMinutes(m)}
-                  className={cn(
-                    "h-10 px-4 font-bold transition-all",
-                    minutes === m ? "bg-accent text-primary-foreground" : "border-border text-secondary hover:border-accent/50"
-                  )}
-                >
-                  {m} min
-                </Button>
-              ))}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-secondary">Tópico do seu plano</Label>
+              <Select value={selectedTopico} onValueChange={setSelectedTopico}>
+                <SelectTrigger className="focus:ring-accent bg-muted/30 border-border">
+                  <SelectValue placeholder="Selecione um tópico" />
+                </SelectTrigger>
+                <SelectContent>
+                  {studyPlan.map((item: any, i: number) => (
+                    <SelectItem key={i} value={item.titulo}>
+                      {item.titulo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
+              <div className="flex flex-wrap gap-2">
+                {["5", "10", "30"].map((m) => (
+                  <Button 
+                    key={m} 
+                    variant={minutes === m ? "default" : "outline"}
+                    onClick={() => setMinutes(m)}
+                    className={cn(
+                      "h-10 px-4 font-bold transition-all",
+                      minutes === m ? "bg-accent text-primary-foreground" : "border-border text-secondary hover:border-accent/50"
+                    )}
+                  >
+                    {m} min
+                  </Button>
+                ))}
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -114,16 +140,7 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
                 type="number" 
                 value={minutes} 
                 onChange={(e) => setMinutes(e.target.value)}
-                className="focus-visible:ring-accent bg-muted/30"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-secondary">Tópico</Label>
-              <Input 
-                value={topico} 
-                readOnly
-                className="bg-muted/50 border-border text-secondary cursor-not-allowed"
+                className="focus-visible:ring-accent bg-muted/30 border-border"
               />
             </div>
           </div>
@@ -138,7 +155,8 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
             Agora não
           </Button>
           <Button 
-            onClick={() => onStart(minutes, topico)}
+            onClick={() => onStart(minutes, selectedTopico)}
+            disabled={!selectedTopico || !minutes}
             className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20"
           >
             Iniciar Sessão Rápida
@@ -148,6 +166,7 @@ const StartSessionModal = ({ open, onOpenChange, onStart, topico }: any) => {
     </Dialog>
   );
 };
+
 
 
 
@@ -420,10 +439,13 @@ export default function TutorApp() {
             onClick={() => {
               if (item.id === 5 && courses.length === 0) {
                 handleSearchCourses(searchQuery);
+              } else if (item.id === 3 && studyPlan.length > 0) {
+                setShowStartSessionModal(true);
               } else {
                 setStep(item.id);
               }
             }}
+
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
               step === item.id 
@@ -738,54 +760,16 @@ export default function TutorApp() {
         );
       case 3:
         return (
-          <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden">
+          <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden min-h-[400px]">
             <div className="h-2 bg-accent w-full" />
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
-                <Zap className="text-accent" /> Modo "Tenho X minutos"
+                <Zap className="text-accent" /> Sessão Rápida Personalizada
               </CardTitle>
-              <CardDescription>Otimize seu tempo com uma micro-aula focada gerada pelo tutor.</CardDescription>
+              <CardDescription>Conteúdo otimizado com IA baseado no seu tempo disponível.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="minutos">Quantos minutos você tem?</Label>
-                  <Input 
-                    id="minutos" 
-                    type="number" 
-                    placeholder="Ex: 15"
-                    value={modoData.minutos}
-                    onChange={e => setModoData({...modoData, minutos: e.target.value})}
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="topico">Qual tópico deseja revisar?</Label>
-                  <Input 
-                    id="topico" 
-                    placeholder="Ex: Impostos corporativos"
-                    value={modoData.topico}
-                    onChange={e => setModoData({...modoData, topico: e.target.value})}
-                    className="focus-visible:ring-accent"
-                  />
-                </div>
-              </div>
-              <Button 
-                onClick={() => handleGenerateSession()} 
-                disabled={isGeneratingSession || !modoData.minutos || !modoData.topico}
-                className="w-full bg-accent hover:bg-accent/90 text-primary-foreground h-12 font-bold shadow-lg shadow-accent/20"
-              >
-                {isGeneratingSession ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Otimizando conteúdo...
-                  </>
-                ) : (
-                  `Gerar Sessão de ${modoData.minutos || 'X'} min`
-                )}
-              </Button>
-              
-              <div className="pt-6 border-t border-border">
+              <div className="pt-6">
                 {isGeneratingSession ? (
                   <div className="flex flex-col items-center py-12">
                     <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
@@ -793,18 +777,25 @@ export default function TutorApp() {
                     <p className="text-sm text-secondary">Selecionando o melhor do catálogo CEFIS para você.</p>
                   </div>
                 ) : error ? (
-                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
-                    {error}
+                  <div className="space-y-4">
+                    <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
+                      {error}
+                    </div>
+                    <Button onClick={() => setShowStartSessionModal(true)} className="bg-accent text-primary-foreground font-bold">Tentar Novamente</Button>
                   </div>
                 ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-bold text-xl">Sua Micro-Trilha</h3>
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-xl">{modoData.topico}</h3>
+                        <p className="text-xs text-secondary">Sua micro-trilha exclusiva</p>
+                      </div>
                       <Badge className="bg-accent/10 text-accent border-none">{quickSession?.total_min ?? 0} min total</Badge>
                     </div>
                     <div className="space-y-4">
                       {quickSession.itens.map((item: any, i: number) => (
                         <Card key={i} className="border-border hover:border-accent/30 transition-all">
+
                           <CardContent className="pt-6 space-y-3">
                             <div className="flex justify-between items-start gap-4">
                               <h4 className="font-bold text-lg leading-tight">{item?.titulo ?? "Sem título"}</h4>
@@ -850,10 +841,11 @@ export default function TutorApp() {
                         </Card>
                       ))}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
-                      <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
-                      <Button onClick={() => setStep(4)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Tirar uma dúvida</Button>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
+                  <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
+                  <Button onClick={() => setShowStartSessionModal(true)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Nova Sessão Rápida</Button>
+                </div>
+
                   </div>
                 ) : (
                   <div className="p-12 bg-muted/20 rounded-2xl border border-dashed border-secondary/30 text-center">
@@ -1070,7 +1062,7 @@ export default function TutorApp() {
       <StartSessionModal 
         open={showStartSessionModal} 
         onOpenChange={setShowStartSessionModal}
-        topico={modoData.topico}
+        studyPlan={studyPlan}
         onStart={(minutos: string, topico: string) => {
           setModoData({ minutos, topico });
           setShowStartSessionModal(false);
@@ -1078,6 +1070,7 @@ export default function TutorApp() {
           handleGenerateSession(minutos, topico);
         }}
       />
+
 
 
       <div className="max-w-4xl mx-auto px-4">
