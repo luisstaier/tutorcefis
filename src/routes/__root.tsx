@@ -75,9 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Tutor CEFIS | Aprendizado Personalizado com IA" },
       { name: "description", content: "Domine novos conhecimentos com um tutor de IA humano e confiável." },
       { name: "author", content: "CEFIS" },
-      { property: "og:title", content: "Tutor CEFIS" },
-      { property: "og:description", content: "Seu tutor de aprendizado personalizado." },
+      { property: "og:title", content: "Tutor CEFIS | Aprendizado Personalizado com IA" },
+      { property: "og:description", content: "Domine novos conhecimentos com um tutor de IA humano e confiável." },
       { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Tutor CEFIS | Aprendizado Personalizado com IA" },
+      { name: "twitter:description", content: "Domine novos conhecimentos com um tutor de IA humano e confiável." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3ee597e7-de40-476c-8759-90bd16a3ebce/id-preview-361098fd--00f38a9f-beda-46b3-9a32-f49484211591.lovable.app-1779802491448.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3ee597e7-de40-476c-8759-90bd16a3ebce/id-preview-361098fd--00f38a9f-beda-46b3-9a32-f49484211591.lovable.app-1779802491448.png" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       {
