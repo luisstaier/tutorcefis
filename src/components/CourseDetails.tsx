@@ -531,7 +531,7 @@ export default function CourseDetails({
 
       {/* SEÇÃO 2 — PLAYER DA AULA */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold font-serif">Aula 01 — Introdução e Primeiros Passos</h2>
+        <h2 className="text-2xl font-bold font-serif">{lesson?.title || "Aula em destaque"}</h2>
         <Card className="overflow-hidden border-border shadow-sm">
           <CardContent className="p-0 bg-black aspect-video flex items-center justify-center relative">
             {isLoadingLesson ? (
