@@ -52,6 +52,13 @@ export default function CourseDetails({
   const [isCertificateLoading, setIsCertificateLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizTimerRef = useRef<any>(null);
+  const inactivityTimerRef = useRef<any>(null);
+  const [motivationalMessage, setMotivationalMessage] = useState<string | null>(null);
+  const [isMotivationalLoading, setIsMotivationalLoading] = useState(false);
+  const [showMotivational, setShowMotivational] = useState(false);
+  const [triggeredMilestones, setTriggeredMilestones] = useState<number[]>([]);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+
 
   // Calcula progresso do curso
   const totalLessons = lessonsGallery.length || course?.lessonCount || 0;
