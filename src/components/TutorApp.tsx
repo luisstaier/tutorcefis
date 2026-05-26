@@ -707,7 +707,7 @@ export default function TutorApp() {
 
                           <div className="flex justify-between items-center pt-2 border-t border-border/30 text-xs text-secondary">
                             <span><Clock className="inline w-3 h-3 mr-1" />{item.tempo_estimado_min} min</span>
-                            {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Ver o curso</Button>}
+                            {item.curso_id ? <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Ver o curso</Button> : null}
                           </div>
                         </div>
                       </div>
@@ -814,7 +814,7 @@ export default function TutorApp() {
                           <TutorAiLogo className="scale-75 origin-left" />
                         )}
                       </div>
-                      {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Ver o curso</Button>}
+                      {item.curso_id ? <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Ver o curso</Button> : null}
                     </div>
                   ))}
                   
@@ -827,9 +827,12 @@ export default function TutorApp() {
                         variant="outline" 
                         className="w-full border-accent text-accent hover:bg-accent hover:text-white font-bold transition-all"
                         onClick={() => {
-                          const newMinutes = (parseInt(modoData.minutos) + 20).toString();
-                          setModoData({...modoData, minutos: newMinutes});
-                          handleGenerateSession();
+                          const firstCourse = studyPlan.find(item => item.curso_id);
+                          if (firstCourse) {
+                            handleSearchCourses(undefined, firstCourse.curso_id, false, { source: 'plano', trail: studyPlan });
+                          } else {
+                            setStep(1);
+                          }
                         }}
                       >
                         <PlayCircle className="w-4 h-4 mr-2" /> Sugerir Trilha Completa
