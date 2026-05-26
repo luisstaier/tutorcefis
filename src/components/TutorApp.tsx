@@ -11,23 +11,24 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
-  <ReactMarkdown 
-    className={cn("text-sm", className)}
-    components={{
-      h1: ({ ...props }) => <h1 className="font-serif text-xl font-bold mb-3 text-foreground" {...props} />,
-      h2: ({ ...props }) => <h2 className="font-serif text-lg font-bold mb-2 text-foreground" {...props} />,
-      h3: ({ ...props }) => <h3 className="font-serif text-md font-bold mb-2 text-foreground" {...props} />,
-      p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
-      ul: ({ ...props }) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
-      ol: ({ ...props }) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
-      li: ({ ...props }) => <li className="mb-1" {...props} />,
-      blockquote: ({ ...props }) => <blockquote className="border-l-4 border-accent pl-4 italic my-4 text-secondary bg-accent/5 py-2 rounded-r" {...props} />,
-      strong: ({ ...props }) => <strong className="font-bold text-accent" {...props} />,
-      a: ({ ...props }) => <a className="text-accent underline hover:text-accent/80 transition-colors" {...props} />,
-    }}
-  >
-    {content}
-  </ReactMarkdown>
+  <div className={cn("text-sm", className)}>
+    <ReactMarkdown 
+      components={{
+        h1: (props) => <h1 className="font-serif text-xl font-bold mb-3 text-foreground" {...props} />,
+        h2: (props) => <h2 className="font-serif text-lg font-bold mb-2 text-foreground" {...props} />,
+        h3: (props) => <h3 className="font-serif text-md font-bold mb-2 text-foreground" {...props} />,
+        p: (props) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
+        ul: (props) => <ul className="list-disc pl-5 mb-3 space-y-1" {...props} />,
+        ol: (props) => <ol className="list-decimal pl-5 mb-3 space-y-1" {...props} />,
+        li: (props) => <li className="mb-1" {...props} />,
+        blockquote: (props) => <blockquote className="border-l-4 border-accent pl-4 italic my-4 text-secondary bg-accent/5 py-2 rounded-r" {...props} />,
+        strong: (props) => <strong className="font-bold text-accent" {...props} />,
+        a: (props) => <a className="text-accent underline hover:text-accent/80 transition-colors" target="_blank" rel="noopener noreferrer" {...props} />,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  </div>
 );
 
 export default function TutorApp() {
