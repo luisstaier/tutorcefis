@@ -78,6 +78,8 @@ serve(async (req) => {
         - Origem: "catalogo_cefis", Fonte: [Título Exato do Curso].
         - Use a duração real (duration) convertida para minutos se possível, ou estime uma parte do curso que caiba.
         
+        SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
+
         - Só use "gerado_pelo_tutor" se o catálogo REAL não cobrir NADA do tópico ou se sobrar tempo após incluir os cursos principais.
         - Quando gerar conteúdo próprio, crie um resumo enxuto calibrado pelo tempo (~140 palavras por minuto).
         
