@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { nome, objetivo, experiencia, nivel, userKey } = body;
+    const { nome, objetivo, experiencia, nivel, estiloAprendizagem, userKey } = body;
 
     const validUserKey = userKey && userKey !== "undefined" && userKey !== "null" ? userKey : null;
     const cefisApiKey = validUserKey || Deno.env.get("CEFIS_API_KEY");
@@ -47,6 +47,16 @@ serve(async (req) => {
     }));
 
     // 2. Chamar Claude API para diagnóstico
+    const stylePrompt = estiloAprendizagem === "exemplos práticos" 
+      ? "Sempre inclua 1-2 exemplos concretos e situações reais do dia a dia do aluno. Ex: se o aluno é dono de empresa, use exemplos da empresa dele."
+      : estiloAprendizagem === "explicação teórica"
+      ? "Explique o conceito completo antes de dar exemplos. Seja preciso tecnicamente."
+      : estiloAprendizagem === "direto ao ponto"
+      ? "Seja objetivo e conciso. Vá direto ao que importa, sem enrolação."
+      : estiloAprendizagem === "analogias"
+      ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
+      : "Sempre inclua pelo menos um exemplo prático e concreto na resposta.";
+
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -58,6 +68,8 @@ serve(async (req) => {
         model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: `Você é o Tutor CEFIS, um tutor de aprendizado pessoal. Analise o perfil do aluno e identifique as lacunas entre onde ele está e o objetivo dele. Use APENAS os cursos reais da CEFIS fornecidos como referência do que a plataforma oferece. Adapte a linguagem ao nível do aluno. NUNCA invente cursos que não estão na lista.
+        
+        ESTILO DE APRENDIZAGEM: ${stylePrompt}
         
         SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
 

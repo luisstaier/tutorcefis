@@ -74,6 +74,17 @@ serve(async (req) => {
     console.log(`Total de cursos reais enviados ao Tutor: ${formattedCourses.length}`);
 
     // 2. Chamar Claude API para montagem do plano
+    const estilo = perfil.estiloAprendizagem;
+    const stylePrompt = estilo === "exemplos práticos" 
+      ? "Sempre inclua 1-2 exemplos concretos e situações reais do dia a dia do aluno. Ex: se o aluno é dono de empresa, use exemplos da empresa dele."
+      : estilo === "explicação teórica"
+      ? "Explique o conceito completo antes de dar exemplos. Seja preciso tecnicamente."
+      : estilo === "direto ao ponto"
+      ? "Seja objetivo e conciso. Vá direto ao que importa, sem enrolação."
+      : estilo === "analogias"
+      ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
+      : "Sempre inclua pelo menos um exemplo prático e concreto na resposta.";
+
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -85,6 +96,8 @@ serve(async (req) => {
         model: "claude-sonnet-4-6",
         max_tokens: 2500,
         system: `Você é o Tutor CEFIS. Monte um plano de estudos sequencial e realista que leve o aluno do nível atual ao objetivo, resolvendo as lacunas na ordem certa. 
+        
+        ESTILO DE APRENDIZAGEM: ${stylePrompt}
         
         REGRA MANDATÓRIA: Use APENAS cursos reais da CEFIS da lista fornecida. 
         - Origem: 'catalogo_cefis'.

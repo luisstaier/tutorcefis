@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { lessonId, courseTitle, lessonTitle, courseSummary, courseGoals, nivel } = await req.json();
+    const { lessonId, courseTitle, lessonTitle, courseSummary, courseGoals, nivel, estiloAprendizagem } = await req.json();
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!anthropicApiKey) throw new Error("ANTHROPIC_API_KEY ausente");
@@ -62,7 +62,17 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         max_tokens: 1500,
-        system: `Você é um professor que cria avaliações de múltipla escolha. Responda ESTRITAMENTE em JSON válido, sem markdown ou comentários. Formato exato: { "questoes": [ { "pergunta": "...", "alternativas": {"a": "...", "b": "...", "c": "...", "d": "..."}, "correta": "a", "explicacao": "..." } ] }. Sempre 4 questões com 4 alternativas cada. Nível ${nivel || 'intermediário'}.`,
+        system: `Você é um professor que cria avaliações de múltipla escolha. 
+        ESTILO DE ENSINO: ${estiloAprendizagem === "exemplos práticos" 
+          ? "Sempre inclua 1-2 exemplos concretos e situações reais do dia a dia do aluno. Ex: se o aluno é dono de empresa, use exemplos da empresa dele."
+          : estiloAprendizagem === "explicação teórica"
+          ? "Explique o conceito completo antes de dar exemplos. Seja preciso tecnicamente."
+          : estiloAprendizagem === "direto ao ponto"
+          ? "Seja objetivo e conciso. Vá direto ao que importa, sem enrolação."
+          : estiloAprendizagem === "analogias"
+          ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
+          : "Sempre inclua pelo menos um exemplo prático e concreto na resposta."}
+        Responda ESTRITAMENTE em JSON válido, sem markdown ou comentários. Formato exato: { "questoes": [ { "pergunta": "...", "alternativas": {"a": "...", "b": "...", "c": "...", "d": "..."}, "correta": "a", "explicacao": "..." } ] }. Sempre 4 questões com 4 alternativas cada. Nível ${nivel || 'intermediário'}.`,
         messages: [{ role: "user", content: contextBlock }],
       }),
     });

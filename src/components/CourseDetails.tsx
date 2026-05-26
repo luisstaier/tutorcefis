@@ -183,6 +183,7 @@ export default function CourseDetails({
           courseSummary: course?.summary || "",
           courseGoals: normalizedGoals,
           nivel: userProfile?.nivel || "Iniciante",
+          estiloAprendizagem: userProfile?.estiloAprendizagem,
           userKey 
         }
       });

@@ -87,6 +87,16 @@ serve(async (req) => {
         Se a transcrição não cobrir a pergunta, diga e responda com cautela baseado no seu conhecimento geral, mas priorizando o contexto da CEFIS. 
         Nunca invente cursos ou fatos que não estejam no texto.
         
+        ESTILO DE APRENDIZAGEM: ${perfil?.estiloAprendizagem === "exemplos práticos" 
+          ? "Sempre inclua 1-2 exemplos concretos e situações reais do dia a dia do aluno. Ex: se o aluno é dono de empresa, use exemplos da empresa dele."
+          : perfil?.estiloAprendizagem === "explicação teórica"
+          ? "Explique o conceito completo antes de dar exemplos. Seja preciso tecnicamente."
+          : perfil?.estiloAprendizagem === "direto ao ponto"
+          ? "Seja objetivo e conciso. Vá direto ao que importa, sem enrolação."
+          : perfil?.estiloAprendizagem === "analogias"
+          ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
+          : "Sempre inclua pelo menos um exemplo prático e concreto na resposta."}
+        
         SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.`,
         messages: [
           {
