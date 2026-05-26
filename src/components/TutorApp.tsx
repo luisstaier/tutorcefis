@@ -676,9 +676,28 @@ export default function TutorApp() {
               ))}
               {isAsking && <div className="flex justify-start"><div className="bg-muted p-4 rounded-2xl animate-pulse"><Loader2 className="animate-spin w-4 h-4" /></div></div>}
             </CardContent>
-            <form onSubmit={handleAskDuvida} className="p-4 border-t bg-card flex gap-2">
-              <Input placeholder="Sua dúvida..." value={duvida} onChange={e => setDuvida(e.target.value)} disabled={isAsking} className="h-12 border-none bg-muted/30" />
-              <Button type="submit" disabled={isAsking || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent shrink-0 rounded-xl"><Send className="w-5 h-5" /></Button>
+            <form onSubmit={handleAskDuvida} className="p-4 border-t bg-card flex gap-2 items-center">
+              <Button 
+                type="button"
+                onClick={isRecording ? handleStopRecording : handleStartRecording}
+                className={cn(
+                  "h-12 w-12 shrink-0 rounded-xl transition-all duration-300",
+                  isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-muted/50 hover:bg-muted text-secondary hover:text-accent"
+                )}
+                disabled={isAsking}
+              >
+                {isRecording ? <div className="flex items-center gap-1 font-bold text-[10px]"><div className="w-2 h-2 bg-white rounded-full animate-ping" /> ⏹️</div> : <Mic className="w-5 h-5" />}
+              </Button>
+              <Input 
+                placeholder={isRecording ? "Gravando... 🔴" : "Sua dúvida..."} 
+                value={duvida} 
+                onChange={e => setDuvida(e.target.value)} 
+                disabled={isAsking || isRecording} 
+                className="h-12 border-none bg-muted/30" 
+              />
+              <Button type="submit" disabled={isAsking || isRecording || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent shrink-0 rounded-xl">
+                <Send className="w-5 h-5" />
+              </Button>
             </form>
           </Card>
         );
