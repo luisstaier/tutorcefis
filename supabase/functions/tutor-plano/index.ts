@@ -90,6 +90,8 @@ serve(async (req) => {
         - Descrição: Um breve resumo de por que este curso é importante para o aluno.
         - Tempo: Use a duração real (duration) convertida para minutos ou estime o tempo de estudo.
         
+        SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
+
         NÃO gere conteúdo próprio ('gerado_pelo_tutor') a menos que seja um passo introdutório ou de conclusão muito curto (máximo 1 item do plano). O coração do plano deve ser o catálogo da CEFIS.
         
         Responda ESTRITAMENTE em JSON válido, neste formato: 
