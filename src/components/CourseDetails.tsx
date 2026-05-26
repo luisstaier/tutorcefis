@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, PlayCircle, Star, ArrowLeft, Loader2, MessageCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ export default function CourseDetails({
   onCompleteLesson,
   isLessonCompleted
 }: CourseDetailsProps) {
+  console.log("CourseDetail montou com courseId:", course?.id);
   const [lesson, setLesson] = useState<any>(null);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [quiz, setQuiz] = useState<any>(null);
@@ -31,19 +32,26 @@ export default function CourseDetails({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<any[]>([]);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizTimerRef = useRef<any>(null);
 
   useEffect(() => {
-    console.log("CourseDetails montado com courseId:", course.id);
+    console.log("CourseDetails montado com courseId:", course?.id);
+    if (!course?.id) {
+      console.error("CourseDetails: course.id is missing");
+      return;
+    }
     fetchLesson();
     return () => {
       if (quizTimerRef.current) clearTimeout(quizTimerRef.current);
     };
-  }, [course.id]);
+  }, [course?.id]);
 
   const fetchLesson = async () => {
+    if (!course?.id) return;
     setIsLoadingLesson(true);
+    setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
         body: { courseId: course.id }
@@ -59,6 +67,7 @@ export default function CourseDetails({
       }, 10000);
     } catch (err) {
       console.error("Error fetching lesson:", err);
+      setHasError(true);
     } finally {
       setIsLoadingLesson(false);
     }
@@ -75,8 +84,8 @@ export default function CourseDetails({
       const { data, error } = await supabase.functions.invoke('tutor-quiz', {
         body: { 
           lessonId, 
-          courseTitle: course.title, 
-          nivel: userProfile.nivel 
+          courseTitle: course?.title || "Curso", 
+          nivel: userProfile?.nivel || "Iniciante" 
         }
       });
       if (error) throw error;
@@ -90,7 +99,8 @@ export default function CourseDetails({
   };
 
   const handleAnswer = (answer: string) => {
-    const currentQuestion = quiz.questoes[currentQuestionIndex];
+    const currentQuestion = quiz?.questoes?.[currentQuestionIndex];
+    if (!currentQuestion) return;
     const isCorrect = answer === currentQuestion.correta;
     
     setQuizAnswers([...quizAnswers, { 
@@ -103,7 +113,7 @@ export default function CourseDetails({
   };
 
   const nextQuestion = () => {
-    if (currentQuestionIndex < quiz.questoes.length - 1) {
+    if (currentQuestionIndex < (quiz?.questoes?.length || 0) - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       setIsQuizFinished(true);
@@ -127,7 +137,7 @@ export default function CourseDetails({
           <Button 
             variant="outline" 
             className="border-accent text-accent hover:bg-accent/5 font-bold"
-            onClick={() => onQuestion(course.title)}
+            onClick={() => onQuestion(course?.title || "Curso")}
           >
             <MessageCircle className="w-4 h-4 mr-2" /> Tirar uma dúvida
           </Button>
@@ -136,7 +146,7 @@ export default function CourseDetails({
     }
 
     if (isQuizFinished) {
-      const correctCount = quizAnswers.filter(a => a.isCorrect).length;
+      const correctCount = (quizAnswers || []).filter(a => a.isCorrect).length;
       let message = "";
       if (correctCount === 4) message = "Excelente! Você dominou o conteúdo desta aula. 🎯";
       else if (correctCount === 3) message = "Muito bom! Você está no caminho certo. ⭐";
@@ -152,15 +162,15 @@ export default function CourseDetails({
           <div className="grid gap-3 pt-4">
             <Button 
               className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
-              onClick={() => onCompleteLesson(course.id, lesson.id)}
+              onClick={() => onCompleteLesson(course?.id, lesson?.id)}
             >
               <CheckCircle2 className="w-4 h-4 mr-2" /> 
-              {isLessonCompleted(course.id, lesson.id) ? "Aula Concluída" : "Marcar aula como concluída"}
+              {isLessonCompleted(course?.id, lesson?.id) ? "Aula Concluída" : "Marcar aula como concluída"}
             </Button>
             <Button 
               variant="outline" 
               className="border-accent text-accent hover:bg-accent/5 font-bold"
-              onClick={() => onQuestion(course.title)}
+              onClick={() => onQuestion(course?.title || "Curso")}
             >
               <MessageCircle className="w-4 h-4 mr-2" /> Tirar uma dúvida sobre esta aula
             </Button>
@@ -169,20 +179,21 @@ export default function CourseDetails({
       );
     }
 
-    const currentQuestion = quiz.questoes[currentQuestionIndex];
+    const currentQuestion = quiz?.questoes?.[currentQuestionIndex];
+    if (!currentQuestion) return null;
     const currentAnswer = quizAnswers.find(a => a.questionIndex === currentQuestionIndex);
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
         <div className="flex justify-between items-center">
           <Badge variant="outline" className="text-[#b3e51d] border-[#b3e51d]/30">Questão {currentQuestionIndex + 1} de 4</Badge>
-          <div className="text-xs text-secondary font-medium">Nível: {userProfile.nivel}</div>
+          <div className="text-xs text-secondary font-medium">Nível: {userProfile?.nivel || "Geral"}</div>
         </div>
 
         <h3 className="text-xl font-bold">{currentQuestion.pergunta}</h3>
 
         <div className="grid gap-3">
-          {Object.entries(currentQuestion.alternativas).map(([key, value]) => {
+          {currentQuestion?.alternativas && Object.entries(currentQuestion.alternativas).map(([key, value]) => {
             const isSelected = currentAnswer?.selected === key;
             const isCorrect = key === currentQuestion.correta;
             const showFeedback = !!currentAnswer;
@@ -225,6 +236,39 @@ export default function CourseDetails({
     );
   };
 
+  if (!course || !course.id) {
+    return (
+      <div className="p-8 text-center space-y-6 max-w-md mx-auto">
+        <div className="bg-muted/30 p-8 rounded-3xl border border-border">
+          <Loader2 className="w-10 h-10 text-accent animate-spin mx-auto mb-4" />
+          <p className="text-secondary font-medium">Carregando informações do curso...</p>
+        </div>
+        <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao Catálogo
+        </Button>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="p-8 text-center space-y-6 max-w-md mx-auto">
+        <div className="bg-red-50 border border-red-100 p-6 rounded-2xl">
+          <h3 className="text-red-800 font-bold mb-2">Ops! Algo deu errado</h3>
+          <p className="text-red-600 text-sm">Não conseguimos carregar os detalhes desta aula no momento. Por favor, tente novamente.</p>
+        </div>
+        <div className="flex gap-4 justify-center">
+          <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+          </Button>
+          <Button onClick={fetchLesson} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
       <Button 
@@ -239,8 +283,8 @@ export default function CourseDetails({
       <section className="relative rounded-3xl overflow-hidden border border-border bg-card shadow-sm">
         <div className="h-48 sm:h-64 overflow-hidden relative">
           <img 
-            src={course.banner || "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=1000"} 
-            alt={course.title}
+            src={course?.banner || "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=1000"} 
+            alt={course?.title || "Banner do curso"}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -248,7 +292,7 @@ export default function CourseDetails({
             <Badge className="bg-[#b3e51d] text-[#051124] hover:bg-[#b3e51d] border-none mb-3 font-bold">
               📚 Conteúdo CEFIS
             </Badge>
-            <h1 className="text-2xl sm:text-4xl font-bold font-serif leading-tight">{course.title}</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold font-serif leading-tight">{course?.title || "Curso"}</h1>
           </div>
         </div>
 
@@ -257,28 +301,28 @@ export default function CourseDetails({
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                 <img 
-                  src={course.teacher?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${course.teacher?.name || 'CEFIS'}`} 
-                  alt={course.teacher?.name} 
+                  src={course?.teacher?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${course?.teacher?.name || 'CEFIS'}`} 
+                  alt={course?.teacher?.name || "Professor"} 
                 />
               </div>
               <div>
                 <p className="text-xs text-secondary font-medium">Professor</p>
-                <p className="text-sm font-bold">{course.teacher?.name || "Especialista CEFIS"}</p>
+                <p className="text-sm font-bold">{course?.teacher?.name || "Especialista CEFIS"}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-4 py-2 px-4 bg-muted/30 rounded-2xl border border-border/50">
               <div className="flex items-center text-yellow-500 font-bold gap-1 text-sm border-r border-border pr-4">
                 <Star className="w-4 h-4 fill-current" />
-                {course.averageRating || "4.8"}
+                {course?.averageRating || "4.8"}
               </div>
               <div className="flex items-center gap-1 text-sm text-secondary font-medium border-r border-border pr-4">
                 <Clock className="w-4 h-4" /> 
-                {course.duration ? `${Math.floor(course.duration / 3600)}h ${Math.floor((course.duration % 3600) / 60)}min` : "--"}
+                {course?.duration ? `${Math.floor(course.duration / 3600)}h ${Math.floor((course.duration % 3600) / 60)}min` : "--"}
               </div>
               <div className="flex items-center gap-1 text-sm text-secondary font-medium">
                 <PlayCircle className="w-4 h-4" /> 
-                {course.lessonCount || "0"} aulas
+                {course?.lessonCount || "0"} aulas
               </div>
             </div>
           </div>
@@ -286,17 +330,17 @@ export default function CourseDetails({
           <div className="grid md:grid-cols-3 gap-8 pt-4 border-t border-border">
             <div className="md:col-span-2 space-y-4">
               <h2 className="text-xl font-bold">Sobre o curso</h2>
-              <p className="text-secondary leading-relaxed">{course.summary}</p>
-              <p className="text-sm italic text-secondary/80">{course.subtitle}</p>
+              <p className="text-secondary leading-relaxed">{course?.summary || "Sem resumo disponível."}</p>
+              <p className="text-sm italic text-secondary/80">{course?.subtitle}</p>
             </div>
             <div className="space-y-4">
               <h2 className="text-xl font-bold">O que você vai aprender</h2>
               <ul className="space-y-3">
-                {course.goals ? (
+                {course?.goals ? (
                   course.goals.split('\n').filter((g:string) => g.trim()).map((goal: string, i: number) => (
                     <li key={i} className="flex gap-2 text-sm text-secondary">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#b3e51d] mt-1.5 shrink-0" />
-                      {goal.replace(/^\d+\.\s*/, '').replace(/^[•-]\s*/, '')}
+                      {goal?.replace(/^\d+\.\s*/, '').replace(/^[•-]\s*/, '')}
                     </li>
                   ))
                 ) : (
@@ -318,16 +362,16 @@ export default function CourseDetails({
                 <Loader2 className="w-10 h-10 text-[#b3e51d] animate-spin" />
                 <p className="text-white/60 text-sm font-medium">Preparando seu ambiente de aprendizado...</p>
               </div>
-            ) : lesson?.stream_sources ? (
+            ) : (lesson?.stream_sources && lesson.stream_sources.length > 0) ? (
               <video 
                 ref={videoRef}
                 controls 
                 className="w-full h-full"
-                poster={course.banner}
+                poster={course?.banner}
               >
                 {/* Procura pela fonte 'sd' como solicitado, senão pega a primeira */}
                 <source 
-                  src={lesson.stream_sources.find((s: any) => s.quality === "sd")?.link_secure || lesson.stream_sources[0].link_secure} 
+                  src={lesson.stream_sources.find((s: any) => s.quality === "sd")?.link_secure || lesson.stream_sources[0]?.link_secure} 
                   type="video/mp4" 
                 />
                 Seu navegador não suporta vídeos.
@@ -374,9 +418,3 @@ export default function CourseDetails({
   );
 }
 
-// Para evitar erro se o CardFooter não for importado
-const CardFooter = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("flex items-center p-6 pt-0", className)}>
-    {children}
-  </div>
-);
