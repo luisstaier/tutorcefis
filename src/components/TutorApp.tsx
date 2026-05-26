@@ -407,9 +407,25 @@ export default function TutorApp() {
                         <SelectItem value="iniciante">Iniciante</SelectItem>
                         <SelectItem value="intermediário">Intermediário</SelectItem>
                         <SelectItem value="avançado">Avançado</SelectItem>
+                        <SelectItem value="embed_test">TESTE DE EMBED</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                  {formData.nivel === "embed_test" && (
+                    <div className="p-4 border border-accent rounded-lg bg-accent/5 space-y-4">
+                      <h3 className="font-bold">Teste de Embed CEFIS</h3>
+                      <p className="text-xs break-all text-secondary">URL: https://cdn2.cefis.com.br/vod/09fc72a6-f97b-4cff-8d23-e91cd279aacb/360.mp4</p>
+                      <video 
+                        controls 
+                        className="w-full rounded border border-border"
+                        onPlay={() => console.log("Video playing: https://cdn2.cefis.com.br/vod/09fc72a6-f97b-4cff-8d23-e91cd279aacb/360.mp4")}
+                        onError={(e) => console.error("Video error:", e)}
+                      >
+                        <source src="https://cdn2.cefis.com.br/vod/09fc72a6-f97b-4cff-8d23-e91cd279aacb/360.mp4" type="video/mp4" />
+                        Seu navegador não suporta vídeos.
+                      </video>
+                    </div>
+                  )}
                   <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-12 text-lg shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
                     Começar Jornada
                   </Button>
