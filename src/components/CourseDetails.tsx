@@ -61,10 +61,32 @@ export default function CourseDetails({
       return;
     }
     fetchLesson();
+    
+    // Configurar listener para o vídeo
+    const video = videoRef.current;
+    const handleEnded = () => {
+      if (lesson?.id) {
+        console.log("Vídeo finalizado, marcando conclusão:", lesson.id);
+        onCompleteLesson(course.id, lesson.id);
+      }
+    };
+
+    if (video) {
+      video.addEventListener('ended', handleEnded);
+    }
+
     return () => {
       if (quizTimerRef.current) clearTimeout(quizTimerRef.current);
+      if (video) video.removeEventListener('ended', handleEnded);
     };
-  }, [course?.id]);
+  }, [course?.id, lesson?.id]);
+
+  useEffect(() => {
+    // Forçar recarga da tag video quando a aula muda
+    if (lesson?.id && videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [lesson?.id]);
 
   const fetchLesson = async (lessonId?: number) => {
     if (!course?.id) return;
@@ -540,6 +562,12 @@ export default function CourseDetails({
                 <p className="text-white/60 text-sm font-medium">Preparando seu ambiente de aprendizado...</p>
               </div>
             ) : preferredStreamSource ? (
+              <div className="w-full h-full">
+                {isSwitchingLesson && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <Loader2 className="w-12 h-12 text-[#b3e51d] animate-spin" />
+                  </div>
+                )}
               <video 
                 key={lesson?.id}
                 ref={videoRef}
@@ -554,6 +582,7 @@ export default function CourseDetails({
                 />
                 Seu navegador não suporta vídeos.
               </video>
+              </div>
             ) : (
               <div className="p-12 text-center space-y-4">
                 <p className="text-white/60">Não foi possível carregar o vídeo desta aula.</p>
