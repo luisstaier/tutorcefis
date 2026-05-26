@@ -50,7 +50,15 @@ serve(async (req) => {
         : truncated;
     };
 
-    const cleanText = truncateForAudio(cleanForAudio(text));
+    const addNaturalPauses = (text: string) => {
+      return text
+        .replace(/\. /g, '.  ')        // pausa após ponto
+        .replace(/: /g, ':  ')         // pausa após dois pontos
+        .replace(/\n\n/g, '\n\n  ')    // pausa entre parágrafos
+        .replace(/([!?]) /g, '$1  ');  // pausa após exclamação/interrogação
+    };
+
+    const cleanText = addNaturalPauses(truncateForAudio(cleanForAudio(text)));
 
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
       method: "POST",
@@ -62,8 +70,10 @@ serve(async (req) => {
         text: cleanText,
         model_id: "eleven_multilingual_v2",
         voice_settings: {
-          stability: 0.5,
+          stability: 0.75,
           similarity_boost: 0.75,
+          style: 0.35,
+          use_speaker_boost: true
         },
       }),
     });
