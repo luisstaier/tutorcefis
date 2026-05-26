@@ -205,7 +205,7 @@ export default function TutorApp() {
   };
 
   const handleSearchCourses = async (query?: string, courseId?: number) => {
-    const q = query ?? searchQuery;
+    let q = query ?? searchQuery;
     if (query) setSearchQuery(query);
     
     setIsLoading(true);
@@ -228,14 +228,20 @@ export default function TutorApp() {
       
       // Retry logic if no results and we have a query (and not searching by ID)
       if (finalCourses.length === 0 && q && !courseId) {
-        const keywords = q.split(' ').slice(0, 3).join(' ');
+        // Try fallback with just keywords if the full title doesn't work
+        const keywords = q.split(' ')
+          .filter(word => word.length > 2) // Filter out small words like "de", "da", "o"
+          .slice(0, 3)
+          .join(' ');
+          
         if (keywords && keywords !== q) {
-          console.log(`Retrying search with keywords: ${keywords}`);
+          console.log(`Fallback: Nenhuma correspondência exata para "${q}". Tentando palavras-chave: "${keywords}"`);
           const { data: retryData, error: retryError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(keywords)}`, {
             method: 'GET'
           });
-          if (!retryError && retryData.data) {
+          if (!retryError && retryData.data && retryData.data.length > 0) {
             finalCourses = retryData.data;
+            setSearchQuery(keywords); // Update the input field to reflect what actually worked
           }
         }
       }
@@ -248,6 +254,7 @@ export default function TutorApp() {
       setIsLoading(false);
     }
   };
+
 
   const navItems = [
     { id: 0, label: "Início", icon: Home },
