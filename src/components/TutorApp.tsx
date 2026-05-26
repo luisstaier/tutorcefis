@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+
 import { Progress } from "@/components/ui/progress";
 import { useGamification } from "@/hooks/useGamification";
 import { Toaster } from "@/components/ui/sonner";
@@ -75,97 +75,6 @@ const LevelBadge = ({ xp, currentLevel, nextLevel, progress }: any) => {
   );
 };
 
-const StartSessionModal = ({ open, onOpenChange, onStart, studyPlan }: any) => {
-  const [minutes, setMinutes] = useState("10");
-  const [selectedTopico, setSelectedTopico] = useState("");
-
-  useEffect(() => {
-    if (studyPlan && studyPlan.length > 0 && !selectedTopico) {
-      setSelectedTopico(studyPlan[0].titulo);
-    }
-  }, [studyPlan]);
-  
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <Zap className="text-accent" /> Pronto para começar agora?
-          </DialogTitle>
-          <DialogDescription className="text-secondary text-base pt-2">
-            Escolha um tópico do seu plano e quanto tempo você tem disponível.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-6 py-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-secondary">Tópico do seu plano</Label>
-              <Select value={selectedTopico} onValueChange={setSelectedTopico}>
-                <SelectTrigger className="focus:ring-accent bg-muted/30 border-border">
-                  <SelectValue placeholder="Selecione um tópico" />
-                </SelectTrigger>
-                <SelectContent>
-                  {studyPlan.map((item: any, i: number) => (
-                    <SelectItem key={i} value={item.titulo}>
-                      {item.titulo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
-              <div className="flex flex-wrap gap-2">
-                {["5", "10", "30"].map((m) => (
-                  <Button 
-                    key={m} 
-                    variant={minutes === m ? "default" : "outline"}
-                    onClick={() => setMinutes(m)}
-                    className={cn(
-                      "h-10 px-4 font-bold transition-all",
-                      minutes === m ? "bg-accent text-primary-foreground" : "border-border text-secondary hover:border-accent/50"
-                    )}
-                  >
-                    {m} min
-                  </Button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-secondary">Minutos personalizados</Label>
-              <Input 
-                type="number" 
-                value={minutes} 
-                onChange={(e) => setMinutes(e.target.value)}
-                className="focus-visible:ring-accent bg-muted/30 border-border"
-              />
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => onOpenChange(false)}
-            className="text-secondary font-bold hover:bg-muted"
-          >
-            Agora não
-          </Button>
-          <Button 
-            onClick={() => onStart(minutes, selectedTopico)}
-            disabled={!selectedTopico || !minutes}
-            className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20"
-          >
-            Iniciar Sessão Rápida
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 
 
@@ -201,7 +110,7 @@ export default function TutorApp() {
     fonte?: { curso: string; aula: string; curso_id?: number };
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
-  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
+  
 
   useEffect(() => {
     const savedProfile = localStorage.getItem("tutor_cefs_profile");
@@ -257,7 +166,7 @@ export default function TutorApp() {
           ...prev,
           topico: data.plano[0].titulo
         }));
-        setTimeout(() => setShowStartSessionModal(true), 1000);
+        
       }
     } catch (err: any) {
 
@@ -439,8 +348,6 @@ export default function TutorApp() {
             onClick={() => {
               if (item.id === 5 && courses.length === 0) {
                 handleSearchCourses(searchQuery);
-              } else if (item.id === 3 && studyPlan.length > 0) {
-                setShowStartSessionModal(true);
               } else {
                 setStep(item.id);
               }
@@ -781,7 +688,7 @@ export default function TutorApp() {
                     <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
                       {error}
                     </div>
-                    <Button onClick={() => setShowStartSessionModal(true)} className="bg-accent text-primary-foreground font-bold">Tentar Novamente</Button>
+                    <Button onClick={() => setQuickSession(null)} className="bg-accent text-primary-foreground font-bold">Tentar Novamente</Button>
                   </div>
                 ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
                   <div className="space-y-6">
@@ -843,14 +750,83 @@ export default function TutorApp() {
                     </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-border">
                   <Button onClick={() => setStep(2)} variant="outline" className="border-accent text-accent hover:bg-accent/5 font-bold">Voltar ao Plano</Button>
-                  <Button onClick={() => setShowStartSessionModal(true)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Nova Sessão Rápida</Button>
+                  <Button onClick={() => setQuickSession(null)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Nova Sessão Rápida</Button>
                 </div>
 
                   </div>
                 ) : (
-                  <div className="p-12 bg-muted/20 rounded-2xl border border-dashed border-secondary/30 text-center">
-                    <BookOpen className="mx-auto text-secondary/40 w-16 h-16 mb-4" />
-                    <p className="text-secondary font-medium italic">Preencha os campos acima para gerar sua micro-trilha personalizada.</p>
+                  <div className="space-y-8 animate-in fade-in duration-500">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label className="text-xs uppercase tracking-wider text-secondary">Tópico para revisar</Label>
+                        <Select 
+                          value={modoData.topico} 
+                          onValueChange={(v) => setModoData(prev => ({ ...prev, topico: v }))}
+                        >
+                          <SelectTrigger className="focus:ring-accent bg-muted/30 border-border h-12">
+                            <SelectValue placeholder="Selecione um tópico" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {studyPlan.length > 0 ? (
+                              studyPlan.map((item: any, i: number) => (
+                                <SelectItem key={i} value={item.titulo}>
+                                  {item.titulo}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="Geral">Assunto Geral</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label className="text-xs uppercase tracking-wider text-secondary">Quanto tempo você tem?</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {["5", "10", "30"].map((m) => (
+                            <Button 
+                              key={m} 
+                              variant={modoData.minutos === m ? "default" : "outline"}
+                              onClick={() => setModoData(prev => ({ ...prev, minutos: m }))}
+                              className={cn(
+                                "h-11 px-6 font-bold transition-all",
+                                modoData.minutos === m ? "bg-accent text-primary-foreground scale-105 shadow-md shadow-accent/20" : "border-border text-secondary hover:border-accent/50"
+                              )}
+                            >
+                              {m} min
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label className="text-xs uppercase tracking-wider text-secondary">Ou digite os minutos</Label>
+                        <Input 
+                          type="number" 
+                          value={modoData.minutos} 
+                          onChange={(e) => setModoData(prev => ({ ...prev, minutos: e.target.value }))}
+                          placeholder="Ex: 15"
+                          className="focus-visible:ring-accent h-12 bg-muted/30 border-border"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex flex-col gap-3">
+                      <Button 
+                        onClick={() => handleGenerateSession()}
+                        disabled={!modoData.topico || !modoData.minutos || isGeneratingSession}
+                        className="h-14 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg shadow-lg shadow-accent/20"
+                      >
+                        Começar Aula com IA
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => setStep(2)}
+                        className="text-secondary font-medium"
+                      >
+                        Voltar ao Plano Completo
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1059,17 +1035,6 @@ export default function TutorApp() {
     <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
       <Toaster position="top-center" richColors />
       
-      <StartSessionModal 
-        open={showStartSessionModal} 
-        onOpenChange={setShowStartSessionModal}
-        studyPlan={studyPlan}
-        onStart={(minutos: string, topico: string) => {
-          setModoData({ minutos, topico });
-          setShowStartSessionModal(false);
-          setStep(3);
-          handleGenerateSession(minutos, topico);
-        }}
-      />
 
 
 
