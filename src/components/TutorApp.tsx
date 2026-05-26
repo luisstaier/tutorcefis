@@ -284,7 +284,7 @@ export default function TutorApp() {
     
     try {
       const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
-        body: courseId ? { id: courseId } : { search: q }
+        body: (courseId !== undefined && courseId !== null) ? { id: courseId } : { search: q }
       });
 
 
