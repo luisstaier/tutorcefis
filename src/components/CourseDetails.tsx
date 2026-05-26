@@ -117,7 +117,10 @@ export default function CourseDetails({
       const { data, error } = await supabase.functions.invoke('tutor-quiz', {
         body: { 
           lessonId: finalLessonId, 
-          courseTitle: course?.title || "Curso", 
+          courseTitle: course?.title || "Curso",
+          lessonTitle: lesson?.title || "",
+          courseSummary: course?.summary || "",
+          courseGoals: normalizedGoals,
           nivel: userProfile?.nivel || "Iniciante" 
         }
       });
