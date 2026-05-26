@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square, Sparkles } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square, Sparkles, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
@@ -155,6 +155,7 @@ export default function TutorApp() {
   const [isRecording, setIsRecording] = useState(false);
   const [currentlyPlayingId, setCurrentlyPlayingId] = useState<number | null>(null);
   const [isPreparingAudio, setIsPreparingAudio] = useState<number | null>(null);
+  const [selectedAiContent, setSelectedAiContent] = useState<{ titulo: string; conteudo: string } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -672,15 +673,30 @@ export default function TutorApp() {
                               ) : (
                                 <TutorAiLogo showText={false} className="scale-90" />
                               )}
-                              {item.curso_id ? (
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleSearchCourses(undefined, item.curso_id, false)}
-                                  className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold h-8"
-                                >
-                                  <PlayCircle className="w-4 h-4 mr-1.5" /> Iniciar Curso
-                                </Button>
-                              ) : null}
+                              <Button 
+                                size="sm"
+                                onClick={() => {
+                                  if (item.curso_id) {
+                                    handleSearchCourses(undefined, item.curso_id, false);
+                                  } else {
+                                    setSelectedAiContent({
+                                      titulo: item.titulo,
+                                      conteudo: item.conteudo || item.descricao
+                                    });
+                                    setPreviousStep(2);
+                                    setStep(7);
+                                  }
+                                }}
+                                className={cn(
+                                  "font-bold h-8",
+                                  item.curso_id 
+                                    ? "bg-accent hover:bg-accent/90 text-primary-foreground" 
+                                    : "bg-[#b3e51d] hover:bg-[#b3e51d]/90 text-[#051124]"
+                                )}
+                              >
+                                <PlayCircle className="w-4 h-4 mr-1.5" /> 
+                                {item.curso_id ? 'Iniciar Curso' : 'Iniciar'}
+                              </Button>
                             </div>
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
@@ -802,9 +818,32 @@ export default function TutorApp() {
                       </div>
                       <p className="text-sm text-secondary">{item.resumo}</p>
                       <div className="flex items-center gap-1.5 pt-1">
-                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.curso_id ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
+                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por:</p>
+                        {item.curso_id ? (
+                          <CefisLogo className="w-12 text-primary" />
+                        ) : (
+                          <TutorAiLogo className="scale-75 origin-left" />
+                        )}
                       </div>
-                      {item.curso_id ? <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false)}>Iniciar Curso</Button> : null}
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-[10px] font-bold" 
+                        onClick={() => {
+                          if (item.curso_id) {
+                            handleSearchCourses(undefined, item.curso_id, false);
+                          } else {
+                            setSelectedAiContent({
+                              titulo: item.titulo,
+                              conteudo: item.conteudo || item.resumo
+                            });
+                            setPreviousStep(3);
+                            setStep(7);
+                          }
+                        }}
+                      >
+                        {item.curso_id ? 'Iniciar Curso' : 'Iniciar'}
+                      </Button>
                     </div>
                   ))}
                   
@@ -961,6 +1000,52 @@ export default function TutorApp() {
             isLessonCompleted={isLessonCompleted}
             userKey={userKey}
           />
+        );
+      case 7:
+        if (!selectedAiContent) return null;
+        return (
+          <div className="space-y-6">
+            <Button variant="ghost" onClick={() => setStep(previousStep)} className="mb-2 text-secondary hover:text-accent">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Voltar para {previousStep === 2 ? 'meu plano' : 'sessão rápida'}
+            </Button>
+            <Card className="max-w-4xl mx-auto border-border shadow-xl overflow-hidden bg-card/50 backdrop-blur-md">
+              <CardHeader className="bg-accent/5 border-b border-border/50 pb-8">
+                <div className="flex justify-between items-center mb-6">
+                  <Badge className="bg-accent text-primary-foreground font-bold px-3 py-1">Conteúdo do Tutor</Badge>
+                  <TutorAiLogo showText={false} className="scale-125" />
+                </div>
+                <CardTitle className="text-3xl sm:text-4xl font-serif font-bold text-foreground leading-tight">
+                  {selectedAiContent.titulo}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 sm:p-12">
+                <div className="prose prose-slate max-w-none">
+                  <MarkdownRenderer 
+                    content={selectedAiContent.conteudo} 
+                    className="text-lg leading-relaxed text-secondary space-y-6" 
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="bg-muted/30 border-t border-border/50 flex flex-col sm:flex-row justify-between gap-4 p-8">
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto border-accent text-accent hover:bg-accent/5 font-bold h-12 px-6 rounded-xl"
+                  onClick={() => { 
+                    setDuvida(`Sobre o conteúdo "${selectedAiContent.titulo}": `); 
+                    setStep(4); 
+                  }}
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" /> Tirar dúvida com o Tutor
+                </Button>
+                <Button 
+                  className="w-full sm:w-auto bg-[#b3e51d] text-[#051124] hover:bg-[#b3e51d]/90 font-bold h-12 px-8 rounded-xl shadow-lg shadow-[#b3e51d]/20 transition-all hover:scale-105" 
+                  onClick={() => setStep(previousStep)}
+                >
+                  <CheckCircle2 className="w-5 h-5 mr-2" /> Concluir e Voltar
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         );
       default: return null;
     }
