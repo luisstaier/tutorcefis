@@ -745,7 +745,10 @@ export default function TutorApp() {
                       <div className="bg-card p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
                         {chat.fonte && (
                           <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20 flex items-center gap-2 w-fit text-[10px] py-1 px-2 h-7">
-                            <CefisLogo className="w-10" />
+                            <div className="bg-white/90 px-1 py-0.5 rounded">
+                              <CefisLogo className="w-10 text-[#051124]" />
+                            </div>
+
                             <span className="text-foreground/80 font-medium">Baseado na aula: {chat.fonte.aula} — curso {chat.fonte.curso}</span>
                           </Badge>
                         )}
