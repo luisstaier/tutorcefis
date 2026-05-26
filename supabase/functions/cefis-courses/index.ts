@@ -13,10 +13,24 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const search = url.searchParams.get("search") || "";
-    const id = url.searchParams.get("id") || "";
-    const count = url.searchParams.get("count") || "10";
-    const page = url.searchParams.get("page") || "1";
+    let search = url.searchParams.get("search") || "";
+    let id = url.searchParams.get("id") || "";
+    let count = url.searchParams.get("count") || "10";
+    let page = url.searchParams.get("page") || "1";
+
+    // Handle POST request body
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        search = body.search || search;
+        id = body.id || id;
+        count = body.count || count;
+        page = body.page || page;
+      } catch (e) {
+        console.log("No JSON body found or invalid JSON");
+      }
+    }
+
 
     const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
 
