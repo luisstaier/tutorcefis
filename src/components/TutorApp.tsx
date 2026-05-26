@@ -428,9 +428,10 @@ export default function TutorApp() {
                             {gap.curso_cefis_relacionado && (
                               <div className="text-xs bg-muted/30 p-2 rounded border border-border flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <div className="bg-primary/10 p-1 rounded">
-                                    <CefisLogo className="w-10 text-primary" />
+                                  <div className="bg-white/90 p-1 rounded">
+                                    <CefisLogo className="w-10 text-[#051124]" />
                                   </div>
+
                                   <span className="font-bold text-accent">Curso:</span> {gap.curso_cefis_relacionado}
                                 </div>
                                 <Button 
@@ -525,12 +526,13 @@ export default function TutorApp() {
                               } text-primary-foreground border-none shrink-0`}
                             >
                               {stepItem.origem === 'catalogo_cefis' ? (
-                                <span className="flex items-center gap-1">
-                                  <CefisLogo className="w-12 text-primary-foreground" />
+                                <span className="flex items-center gap-1 bg-white/90 px-1 py-0.5 rounded">
+                                  <CefisLogo className="w-12 text-[#051124]" />
                                 </span>
                               ) : (
                                 <span className="flex items-center gap-1">✨ Tutor</span>
                               )}
+
 
                             </Badge>
                           </div>
@@ -665,7 +667,12 @@ export default function TutorApp() {
                                   item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
                                 } text-primary-foreground border-none`}
                               >
-                                {item?.origem === 'catalogo_cefis' ? <CefisLogo className="w-12 text-primary-foreground" /> : '✨ Tutor'}
+                                {item?.origem === 'catalogo_cefis' ? (
+                                  <div className="bg-white/90 px-1 py-0.5 rounded">
+                                    <CefisLogo className="w-12 text-[#051124]" />
+                                  </div>
+                                ) : '✨ Tutor'}
+
                               </Badge>
                               <div className="flex items-center gap-4 overflow-hidden">
                                 {item?.fonte && (
@@ -738,7 +745,10 @@ export default function TutorApp() {
                       <div className="bg-card p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
                         {chat.fonte && (
                           <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20 flex items-center gap-2 w-fit text-[10px] py-1 px-2 h-7">
-                            <CefisLogo className="w-10" />
+                            <div className="bg-white/90 px-1 py-0.5 rounded">
+                              <CefisLogo className="w-10 text-[#051124]" />
+                            </div>
+
                             <span className="text-foreground/80 font-medium">Baseado na aula: {chat.fonte.aula} — curso {chat.fonte.curso}</span>
                           </Badge>
                         )}
@@ -830,7 +840,10 @@ export default function TutorApp() {
                     <div className="flex justify-between items-start gap-2">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <CefisLogo className="w-14 text-primary" />
+                          <div className="bg-white/90 px-1 py-0.5 rounded">
+                            <CefisLogo className="w-14 text-[#051124]" />
+                          </div>
+
                           {courses.length === 1 && (
                             <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5">CURSO ENCONTRADO</Badge>
                           )}
