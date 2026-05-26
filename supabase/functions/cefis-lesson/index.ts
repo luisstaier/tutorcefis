@@ -37,7 +37,7 @@ serve(async (req) => {
       title: l.title || `Aula ${idx + 1}`,
       duration: l.duration || null,
       order: l.order ?? idx,
-      thumbnail: l.thumbnail || l.poster || null,
+      thumbnail: l.thumbnail || l.poster || l.banner || l.cover_url || l.image || null,
       hasVideo: !!(l.stream_sources && l.stream_sources.length > 0),
     }));
 
