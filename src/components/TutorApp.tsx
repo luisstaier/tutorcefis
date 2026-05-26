@@ -428,7 +428,10 @@ export default function TutorApp() {
                             {gap.curso_cefis_relacionado && (
                               <div className="text-xs bg-muted/30 p-2 rounded border border-border flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-accent">Curso CEFIS:</span> {gap.curso_cefis_relacionado}
+                                  <div className="bg-primary/10 p-1 rounded">
+                                    <CefisLogo className="w-10 text-primary" />
+                                  </div>
+                                  <span className="font-bold text-accent">Curso:</span> {gap.curso_cefis_relacionado}
                                 </div>
                                 <Button 
                                   variant="ghost" 
@@ -440,6 +443,7 @@ export default function TutorApp() {
                                 </Button>
                               </div>
                             )}
+
 
                           </CardContent>
                         </Card>
