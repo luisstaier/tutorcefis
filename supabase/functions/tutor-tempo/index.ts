@@ -62,6 +62,17 @@ serve(async (req) => {
     console.log(`Total de cursos reais da CEFIS obtidos: ${coursesList.length}`);
 
     // 2. Chama a Claude para montar a micro-trilha
+    const estilo = perfil?.estiloAprendizagem;
+    const stylePrompt = estilo === "exemplos práticos" 
+      ? "Sempre inclua 1-2 exemplos concretos e situações reais do dia a dia do aluno. Ex: se o aluno é dono de empresa, use exemplos da empresa dele."
+      : estilo === "explicação teórica"
+      ? "Explique o conceito completo antes de dar exemplos. Seja preciso tecnicamente."
+      : estilo === "direto ao ponto"
+      ? "Seja objetivo e conciso. Vá direto ao que importa, sem enrolação."
+      : estilo === "analogias"
+      ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
+      : "Sempre inclua pelo menos um exemplo prático e concreto na resposta.";
+
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -74,6 +85,8 @@ serve(async (req) => {
         max_tokens: 2000,
         system: `Você é o Tutor CEFIS. O aluno tem ${minutos} minutos para aprender sobre ${topico}. 
         SUA MISSÃO: Monte uma micro-trilha que CABE exatamente no tempo informado (some os tempos; não ultrapasse).
+        
+        ESTILO DE APRENDIZAGEM: ${stylePrompt}
         
         REGRA DE OURO: PRIORIZE incluir conteúdos REAIS da CEFIS listados no contexto.
         - Se um curso do catálogo CEFIS for minimamente relevante ao tópico, use-o!
