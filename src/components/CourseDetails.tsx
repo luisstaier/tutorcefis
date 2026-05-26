@@ -541,10 +541,12 @@ export default function CourseDetails({
               </div>
             ) : preferredStreamSource ? (
               <video 
+                key={lesson?.id}
                 ref={videoRef}
                 controls 
+                autoPlay
                 className="w-full h-full"
-                poster={course?.banner}
+                poster={lesson?.thumbnail || lesson?.poster || course?.banner}
               >
                 <source 
                   src={preferredStreamSource?.link_secure} 
