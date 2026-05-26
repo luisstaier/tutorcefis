@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, Trophy } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, Trophy, CheckCircle2, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-
 import { Progress } from "@/components/ui/progress";
 import { useGamification } from "@/hooks/useGamification";
 import { Toaster } from "@/components/ui/sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
@@ -1071,6 +1071,8 @@ export default function TutorApp() {
   return (
     <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
       <Toaster position="top-center" richColors />
+      <JourneyProgressBar step={step} />
+      <FloatingXPDisplay xps={floatingXPs} />
       <JourneyProgressBar step={step} />
       <FloatingXPDisplay xps={floatingXPs} />
       
