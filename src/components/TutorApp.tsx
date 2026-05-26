@@ -685,7 +685,21 @@ export default function TutorApp() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Minutos disponíveis</Label>
-                  <Input type="number" value={modoData.minutos} onChange={e => setModoData({...modoData, minutos: e.target.value})} placeholder="Ex: 20" />
+                  <Select 
+                    value={modoData.minutos} 
+                    onValueChange={val => setModoData({...modoData, minutos: val})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Tempo..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 minutos</SelectItem>
+                      <SelectItem value="20">20 minutos</SelectItem>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">60 minutos</SelectItem>
+                      <SelectItem value="90">90 minutos</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Tópico de interesse</Label>
