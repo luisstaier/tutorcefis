@@ -76,6 +76,16 @@ serve(async (req) => {
         Se o catálogo fornecido não cobrir a dúvida diretamente, responda com seu conhecimento técnico (contabilidade, impostos, carreira, etc), mas seja honesto e mencione que não há um curso específico sobre esse detalhe exato no catálogo atual da plataforma. 
         Nunca invente cursos ou títulos que não estão na lista.
         
+        ESTILO DE APRENDIZAGEM: ${perfil?.estiloAprendizagem === "exemplos práticos" 
+          ? "Sempre inclua 1-2 exemplos concretos e situações reais do dia a dia do aluno. Ex: se o aluno é dono de empresa, use exemplos da empresa dele."
+          : perfil?.estiloAprendizagem === "explicação teórica"
+          ? "Explique o conceito completo antes de dar exemplos. Seja preciso tecnicamente."
+          : perfil?.estiloAprendizagem === "direto ao ponto"
+          ? "Seja objetivo e conciso. Vá direto ao que importa, sem enrolação."
+          : perfil?.estiloAprendizagem === "analogias"
+          ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
+          : "Sempre inclua pelo menos um exemplo prático e concreto na resposta."}
+        
         SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
 
         Responda ESTRITAMENTE em formato JSON:
