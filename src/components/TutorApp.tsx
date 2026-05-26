@@ -1070,6 +1070,7 @@ export default function TutorApp() {
                         onClick={() => {
                           console.log("navegando para curso (catálogo):", course.id, "Título:", course.title);
                           setSelectedCourse(course);
+                          setNavigationContext({ source: 'catalogo' });
                           setPreviousStep(step);
                           setStep(6);
                         }}
