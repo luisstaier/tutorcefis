@@ -89,7 +89,16 @@ export default function CourseDetails({
     }
   };
 
-  const handleStartQuiz = async (lessonId: number) => {
+  const handleStartQuiz = async (lessonId: number | undefined | null) => {
+    const finalLessonId = lessonId || lesson?.id;
+    console.log("lessonId para quiz:", finalLessonId);
+    
+    if (!finalLessonId) {
+      console.error("No lessonId available for quiz");
+      setQuizError("Aula não identificada para gerar o quiz.");
+      return;
+    }
+
     if (isLoadingQuiz || quiz) {
       setShowQuiz(true);
       return;
@@ -100,7 +109,7 @@ export default function CourseDetails({
     try {
       const { data, error } = await supabase.functions.invoke('tutor-quiz', {
         body: { 
-          lessonId, 
+          lessonId: finalLessonId, 
           courseTitle: course?.title || "Curso", 
           nivel: userProfile?.nivel || "Iniciante" 
         }
