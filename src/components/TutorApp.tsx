@@ -373,28 +373,39 @@ export default function TutorApp() {
               </div>
               
               <div className="pt-6 border-t border-border">
-                {quickSession ? (
+                {isGeneratingSession ? (
+                  <div className="flex flex-col items-center py-8">
+                    <Loader2 className="w-8 h-8 text-accent animate-spin mb-3" />
+                    <p className="text-sm text-secondary">Otimizando conteúdo para {modoData.minutos} minutos...</p>
+                  </div>
+                ) : error ? (
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm mb-4">
+                    {error}
+                  </div>
+                ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
                   <div className="space-y-4">
-                    <h3 className="font-bold text-lg">Sua Micro-Trilha ({quickSession.total_min} min)</h3>
+                    <h3 className="font-bold text-lg">
+                      Sua Micro-Trilha ({quickSession?.total_min ?? 0} min)
+                    </h3>
                     <div className="space-y-4">
                       {quickSession.itens.map((item: any, i: number) => (
                         <div key={i} className="p-4 bg-muted/30 rounded-lg border border-border space-y-2">
                           <div className="flex justify-between items-start gap-2">
-                            <h4 className="font-bold text-md">{item.titulo}</h4>
+                            <h4 className="font-bold text-md">{item?.titulo ?? "Sem título"}</h4>
                             <Badge variant="outline" className="text-[10px] shrink-0">
-                              {item.tempo_min} min
+                              {item?.tempo_min ?? 0} min
                             </Badge>
                           </div>
-                          <p className="text-sm text-secondary">{item.resumo}</p>
+                          <p className="text-sm text-secondary">{item?.resumo ?? ""}</p>
                           <div className="flex items-center justify-between pt-2">
                             <Badge 
                               className={`${
-                                item.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
+                                item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
                               } text-white border-none text-[10px]`}
                             >
-                              {item.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
+                              {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
                             </Badge>
-                            {item.fonte && (
+                            {item?.fonte && (
                               <span className="text-[10px] text-secondary italic truncate max-w-[150px]">
                                 {item.fonte}
                               </span>
