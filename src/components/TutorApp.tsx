@@ -1039,6 +1039,7 @@ export default function TutorApp() {
                         size="sm" 
                         className="bg-primary hover:bg-primary/90 text-primary-foreground border-none font-bold shadow-sm"
                         onClick={() => {
+                          console.log("Abrindo curso:", course.id, course.title);
                           setSelectedCourse(course);
                           setPreviousStep(step);
                           setStep(6);
