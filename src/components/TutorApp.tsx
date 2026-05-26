@@ -42,18 +42,12 @@ export default function TutorApp() {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Using query string for parameters as 'params' is not supported in the standard invoke
+      const url = new URL(`${window.location.origin}/functions/v1/cefis-courses`);
+      if (searchQuery) url.searchParams.set('search', searchQuery);
+      
+      const { data, error: functionError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(searchQuery)}`, {
+        method: 'GET'
       });
-
-      // Recalling that I need to pass query params via URL if I can't use 'params' in FunctionInvokeOptions
-      // Standard supabase-js invoke usually takes body, but for GET with query params we should append to path or use a different approach if available.
-      // Wait, let me check the actual type of invoke in this project.
-    } catch (err: any) {
 
       if (functionError) throw functionError;
       setCourses(data.data || []);
