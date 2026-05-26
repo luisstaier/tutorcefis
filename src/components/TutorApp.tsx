@@ -707,7 +707,7 @@ export default function TutorApp() {
 
                           <div className="flex justify-between items-center pt-2 border-t border-border/30 text-xs text-secondary">
                             <span><Clock className="inline w-3 h-3 mr-1" />{item.tempo_estimado_min} min</span>
-                            {item.curso_id && <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Ver o curso</Button>}
+                            {item.curso_id ? <Button variant="link" className="h-auto p-0 text-accent font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'plano', trail: studyPlan })}>Ver o curso</Button> : null}
                           </div>
                         </div>
                       </div>
