@@ -612,9 +612,24 @@ export default function TutorApp() {
       case 2:
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">Seu Plano de Estudos</CardTitle>
-              <CardDescription>Rota recomendada para atingir seu objetivo.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-serif">Seu Plano de Estudos</CardTitle>
+                <CardDescription>Rota recomendada para atingir seu objetivo.</CardDescription>
+              </div>
+              {!isGeneratingPlan && studyPlan.length > 0 && (
+                <Button 
+                  onClick={() => {
+                    const firstCourse = studyPlan.find(item => item.curso_id);
+                    if (firstCourse) {
+                      handleSearchCourses(undefined, firstCourse.curso_id, false, { source: 'plano', trail: studyPlan });
+                    }
+                  }}
+                  className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20 animate-pulse"
+                >
+                  <PlayCircle className="w-4 h-4 mr-2" /> Iniciar Trilha
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {isGeneratingPlan ? (
