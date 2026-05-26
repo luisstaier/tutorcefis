@@ -101,12 +101,12 @@ export default function CourseDetails({
         const progress = (video.currentTime / video.duration) * 100;
         setVideoProgress(progress);
 
-        // Gatilhos de 25%, 50%, 75%
-        const milestones = [25, 50, 75];
-        milestones.forEach(milestone => {
-          if (progress >= milestone && progress < milestone + 2 && !triggeredMilestonesRef.current.includes(milestone)) {
+        // Gatilhos de 25%, 50%, 75% baseados no progresso do CURSO
+        const courseMilestones = [25, 50, 75];
+        courseMilestones.forEach(milestone => {
+          if (courseProgressPercent >= milestone && courseProgressPercent < milestone + 2 && !triggeredMilestonesRef.current.includes(milestone)) {
             triggeredMilestonesRef.current.push(milestone);
-            fetchMotivationalMessage(`O aluno atingiu ${milestone}% da aula.`);
+            fetchMotivationalMessage(`O aluno atingiu ${milestone}% de progresso total no curso "${course?.title}".`);
           }
         });
 
