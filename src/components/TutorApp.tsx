@@ -428,7 +428,10 @@ export default function TutorApp() {
                             {gap.curso_cefis_relacionado && (
                               <div className="text-xs bg-muted/30 p-2 rounded border border-border flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-accent">Curso CEFIS:</span> {gap.curso_cefis_relacionado}
+                                  <div className="bg-primary/10 p-1 rounded">
+                                    <CefisLogo className="w-10 text-primary" />
+                                  </div>
+                                  <span className="font-bold text-accent">Curso:</span> {gap.curso_cefis_relacionado}
                                 </div>
                                 <Button 
                                   variant="ghost" 
@@ -440,6 +443,7 @@ export default function TutorApp() {
                                 </Button>
                               </div>
                             )}
+
 
                           </CardContent>
                         </Card>
@@ -521,10 +525,13 @@ export default function TutorApp() {
                               } text-primary-foreground border-none shrink-0`}
                             >
                               {stepItem.origem === 'catalogo_cefis' ? (
-                                <span className="flex items-center gap-1">📚 CEFIS</span>
+                                <span className="flex items-center gap-1">
+                                  <CefisLogo className="w-12 text-primary-foreground" />
+                                </span>
                               ) : (
                                 <span className="flex items-center gap-1">✨ Tutor</span>
                               )}
+
                             </Badge>
                           </div>
                           <div className="text-sm text-secondary">
@@ -658,7 +665,7 @@ export default function TutorApp() {
                                   item?.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
                                 } text-primary-foreground border-none`}
                               >
-                                {item?.origem === 'catalogo_cefis' ? '📚 CEFIS' : '✨ Tutor'}
+                                {item?.origem === 'catalogo_cefis' ? <CefisLogo className="w-12 text-primary-foreground" /> : '✨ Tutor'}
                               </Badge>
                               <div className="flex items-center gap-4 overflow-hidden">
                                 {item?.fonte && (
@@ -730,11 +737,12 @@ export default function TutorApp() {
                     <div className="flex justify-start">
                       <div className="bg-card p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
                         {chat.fonte && (
-                          <Badge variant="outline" className="mb-2 bg-success/5 text-success border-success/20 flex items-center gap-1 w-fit text-[10px] py-0 px-2 h-6">
-                            <BookOpen className="w-3 h-3" />
-                            📖 Baseado na aula: {chat.fonte.aula} — curso {chat.fonte.curso}
+                          <Badge variant="outline" className="mb-2 bg-primary/10 text-primary border-primary/20 flex items-center gap-2 w-fit text-[10px] py-1 px-2 h-7">
+                            <CefisLogo className="w-10" />
+                            <span className="text-foreground/80 font-medium">Baseado na aula: {chat.fonte.aula} — curso {chat.fonte.curso}</span>
                           </Badge>
                         )}
+
                         <MarkdownRenderer content={chat.resposta} />
                         <div className="pt-2 flex justify-end">
                           <Button 
@@ -821,11 +829,15 @@ export default function TutorApp() {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start gap-2">
                       <div className="space-y-1">
-                        {courses.length === 1 && (
-                          <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5 mb-1">CURSO ENCONTRADO</Badge>
-                        )}
+                        <div className="flex items-center gap-2 mb-1">
+                          <CefisLogo className="w-14 text-primary" />
+                          {courses.length === 1 && (
+                            <Badge className="bg-accent text-primary-foreground border-none text-[10px] h-5">CURSO ENCONTRADO</Badge>
+                          )}
+                        </div>
                         <CardTitle className="text-lg font-bold leading-tight group-hover:text-accent transition-colors">{course.title}</CardTitle>
                       </div>
+
                       {course.averageRating && (
                         <div className="flex items-center text-yellow-600 bg-yellow-50 px-2 py-1 rounded text-xs font-bold shrink-0">
                           <Star className="w-3 h-3 fill-current mr-1" />
