@@ -866,20 +866,19 @@ export default function TutorApp() {
   };
 
   return (
-    <main className="min-h-screen pb-12 bg-[#FAF8F3]">
+    <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
       <div className="max-w-4xl mx-auto px-4">
         <header className="py-8 flex flex-col items-center">
-          <div className="mb-6 flex flex-col items-center cursor-pointer" onClick={() => setStep(0)}>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-                <BookOpen className="text-white w-6 h-6" />
+          <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
+            <div className="flex flex-col items-center gap-4 mb-1 transition-transform duration-300 group-hover:scale-105">
+              <CefisLogo className="w-48 sm:w-64 text-primary" />
+              <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">TUTOR IA</span>
               </div>
-              <h1 className="text-4xl font-black text-foreground tracking-tight">
-                Tutor <span className="text-accent">CEFIS</span>
-              </h1>
             </div>
-            <p className="text-secondary font-medium italic">Seu aprendizado, no seu tempo.</p>
+            <p className="text-secondary font-medium italic mt-2">Seu aprendizado, no seu tempo.</p>
           </div>
+
           
           {renderNavigation()}
         </header>
