@@ -795,7 +795,7 @@ export default function TutorApp() {
                           <TutorAiLogo className="scale-75 origin-left" />
                         )}
                       </div>
-                      {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Acessar Conteúdo</Button>}
+                      {item.curso_id && <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Ver o curso</Button>}
                     </div>
                   ))}
                   
@@ -848,7 +848,7 @@ export default function TutorApp() {
                              <span>Fonte: {chat.fonte.curso} - {chat.fonte.aula}</span>
                              {chat.fonte.curso_id && <Button variant="link" className="h-auto p-0 text-[10px] text-accent font-bold" onClick={() => handleSearchCourses(undefined, chat.fonte?.curso_id)}>Acessar Conteúdo</Button>}
                            </div>
-                        ) : <span></span>}
+                        ) : null}
                         
                         <Button 
                           size="sm" 
