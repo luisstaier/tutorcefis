@@ -260,7 +260,7 @@ export default function TutorApp() {
 
   const renderNavigation = () => {
     return (
-      <nav className="flex flex-wrap justify-center gap-1 md:gap-4 mb-8 bg-white/50 backdrop-blur-sm p-2 rounded-2xl border border-border sticky top-4 z-50">
+      <nav className="flex flex-wrap justify-center gap-1 md:gap-4 mb-8 bg-card/50 backdrop-blur-sm p-2 rounded-2xl border border-border sticky top-4 z-50">
         {navItems.map((item) => (
           <button
             key={item.id}
@@ -358,7 +358,7 @@ export default function TutorApp() {
                 onClick={() => setStep(5)}
               >
                 <CardContent className="p-6 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-accent">
+                  <div className="w-12 h-12 bg-card rounded-xl flex items-center justify-center shadow-sm text-accent">
                     <Library className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
@@ -385,7 +385,7 @@ export default function TutorApp() {
                 </div>
               ) : error ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm">
                     {error}
                   </div>
                   <Button onClick={() => setStep(0)} variant="outline">Tentar novamente</Button>
@@ -491,7 +491,7 @@ export default function TutorApp() {
                   <div className="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
                     {studyPlan.map((stepItem, i) => (
                       <div key={i} className="relative">
-                        <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-white border-2 border-accent flex items-center justify-center text-accent font-bold z-10 shadow-sm">
+                        <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-card border-2 border-accent flex items-center justify-center text-accent font-bold z-10 shadow-sm">
                           {stepItem.passo}
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-3 hover:bg-muted/50 transition-colors">
@@ -612,7 +612,7 @@ export default function TutorApp() {
                     <p className="text-sm text-secondary">Selecionando o melhor do catálogo CEFIS para você.</p>
                   </div>
                 ) : error ? (
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm mb-4">
+                  <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg text-sm mb-4">
                     {error}
                   </div>
                 ) : quickSession?.itens && Array.isArray(quickSession.itens) && quickSession.itens.length > 0 ? (
@@ -683,7 +683,7 @@ export default function TutorApp() {
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm flex flex-col h-[650px] overflow-hidden">
             <div className="h-2 bg-accent w-full" />
-            <CardHeader className="bg-white/80 backdrop-blur-sm z-10 border-b border-border">
+            <CardHeader className="bg-card/80 backdrop-blur-sm z-10 border-b border-border">
               <CardTitle className="text-2xl flex items-center gap-2">
                 <MessageCircle className="text-accent" /> Tire suas dúvidas
               </CardTitle>
@@ -710,7 +710,7 @@ export default function TutorApp() {
                       </div>
                     </div>
                     <div className="flex justify-start">
-                      <div className="bg-white p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
+                      <div className="bg-card p-5 rounded-2xl rounded-tl-none max-w-[90%] text-sm border border-border shadow-sm space-y-3">
                         {chat.fonte && (
                           <Badge variant="outline" className="mb-2 bg-success/5 text-success border-success/20 flex items-center gap-1 w-fit text-[10px] py-0 px-2 h-6">
                             <BookOpen className="w-3 h-3" />
@@ -736,7 +736,7 @@ export default function TutorApp() {
                 ))}
                 {isAsking && (
                   <div className="flex justify-start animate-pulse">
-                    <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-border flex items-center gap-3 shadow-sm">
+                    <div className="bg-card p-4 rounded-2xl rounded-tl-none border border-border flex items-center gap-3 shadow-sm">
                       <Loader2 className="w-4 h-4 animate-spin text-accent" />
                       <span className="text-sm text-secondary font-medium">Tutor está consultando o catálogo...</span>
                     </div>
@@ -744,7 +744,7 @@ export default function TutorApp() {
                 )}
               </div>
               
-              <form onSubmit={handleAskDuvida} className="p-4 bg-white border-t border-border flex gap-2">
+              <form onSubmit={handleAskDuvida} className="p-4 bg-card border-t border-border flex gap-2">
                 <Input 
                   placeholder="Ex: Como funciona a tributação do Simples Nacional?" 
                   value={duvida}
@@ -789,7 +789,7 @@ export default function TutorApp() {
             </Card>
 
             {error && (
-              <div className="max-w-4xl mx-auto p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
+              <div className="max-w-4xl mx-auto p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg">
                 {error}
               </div>
             )}
