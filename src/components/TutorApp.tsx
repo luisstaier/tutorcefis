@@ -232,9 +232,10 @@ export default function TutorApp() {
           
         if (keywords && keywords !== q) {
           console.log(`Fallback: Nenhuma correspondência exata para "${q}". Tentando palavras-chave: "${keywords}"`);
-          const { data: retryData, error: retryError } = await supabase.functions.invoke(`cefis-courses?search=${encodeURIComponent(keywords)}`, {
-            method: 'GET'
+          const { data: retryData, error: retryError } = await supabase.functions.invoke('cefis-courses', {
+            body: { search: keywords }
           });
+
           if (!retryError && retryData.data && retryData.data.length > 0) {
             finalCourses = retryData.data;
             setSearchQuery(keywords); // Update the input field to reflect what actually worked
