@@ -657,9 +657,12 @@ export default function TutorApp() {
                               {item.titulo}
                               {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d]" />}
                             </h4>
-                            <Badge className={item.origem === 'catalogo_cefis' ? 'bg-accent text-primary-foreground font-bold' : 'bg-success text-white font-bold'}>
-                              {item.origem === 'catalogo_cefis' ? "CEFIS" : "tutor.ai"}
-                            </Badge>
+                            {item.origem === 'catalogo_cefis' ? (
+                              <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
+                            ) : (
+                              <TutorAiLogo showText={false} className="scale-90" />
+                            )}
+
                           </div>
                           <MarkdownRenderer content={item.descricao} className="text-secondary" />
                           <div className="flex items-center gap-1.5 pt-1">
