@@ -348,8 +348,6 @@ export default function TutorApp() {
             onClick={() => {
               if (item.id === 5 && courses.length === 0) {
                 handleSearchCourses(searchQuery);
-              } else if (item.id === 3 && studyPlan.length > 0) {
-                setShowStartSessionModal(true);
               } else {
                 setStep(item.id);
               }
