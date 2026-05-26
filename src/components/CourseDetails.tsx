@@ -116,7 +116,7 @@ export default function CourseDetails({
       });
       if (error) throw error;
       
-      if (data?.fallback) {
+      if (data?.fallback || !data?.questoes || data.questoes.length === 0) {
         setQuizError("Quiz não disponível para esta aula — tente outra aula do curso.");
         setQuiz(null);
       } else {
