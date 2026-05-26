@@ -11,12 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { courseId } = await req.json();
+    const { courseId, lessonId } = await req.json();
     const cefisApiKey = Deno.env.get("CEFIS_API_KEY");
 
     if (!cefisApiKey) throw new Error("API Key ausente");
 
-    // Busca as aulas do curso
     const response = await fetch(`https://api-v3.cefis.com.br/courses/${courseId}/lessons`, {
       headers: {
         "Authorization": `Bearer ${cefisApiKey}`,
@@ -25,13 +24,28 @@ serve(async (req) => {
     });
 
     const lessonsResult = await response.json();
-    // A API pode retornar { data: [...] } ou direto [...]
     const lessons = Array.isArray(lessonsResult) ? lessonsResult : (lessonsResult.data || []);
-    
-    // Retorna a primeira aula que tiver stream_sources
-    const firstLesson = lessons.find((l: any) => l.stream_sources && l.stream_sources.length > 0) || lessons[0];
 
-    return new Response(JSON.stringify(firstLesson || null), {
+    // Se lessonId vier, retorna aquela aula específica
+    const selected = lessonId
+      ? lessons.find((l: any) => String(l.id) === String(lessonId))
+      : (lessons.find((l: any) => l.stream_sources && l.stream_sources.length > 0) || lessons[0] || null);
+
+    // Lista enxuta para galeria (sem expor links secure de todas)
+    const gallery = lessons.map((l: any, idx: number) => ({
+      id: l.id,
+      title: l.title || `Aula ${idx + 1}`,
+      duration: l.duration || null,
+      order: l.order ?? idx,
+      thumbnail: l.thumbnail || l.poster || null,
+      hasVideo: !!(l.stream_sources && l.stream_sources.length > 0),
+    }));
+
+    return new Response(JSON.stringify({
+      current: selected,
+      lessons: gallery,
+      total: lessons.length,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

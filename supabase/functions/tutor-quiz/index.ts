@@ -9,47 +9,49 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { lessonId, courseTitle, nivel } = await req.json();
+    const { lessonId, courseTitle, lessonTitle, courseSummary, courseGoals, nivel } = await req.json();
     const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!anthropicApiKey) throw new Error("ANTHROPIC_API_KEY ausente");
 
-    // 1. Busca transcrição
-    console.log(`Buscando transcrição para aula ${lessonId}...`);
-    const subResponse = await fetch(`https://api-v3.cefis.com.br/lessons/${lessonId}/subtitles`);
-    const subtitlesResult = await subResponse.json();
-    const subtitles = Array.isArray(subtitlesResult) ? subtitlesResult : (subtitlesResult.data || []);
-    const publishedSub = subtitles.find((s: any) => s.published);
+    // 1. Tenta buscar transcrição (opcional)
+    let cleanText = "";
+    try {
+      console.log(`Buscando transcrição para aula ${lessonId}...`);
+      const subResponse = await fetch(`https://api-v3.cefis.com.br/lessons/${lessonId}/subtitles`);
+      const subtitlesResult = await subResponse.json();
+      const subtitles = Array.isArray(subtitlesResult) ? subtitlesResult : (subtitlesResult.data || []);
+      const publishedSub = subtitles.find((s: any) => s.published);
 
-    if (!publishedSub || !publishedSub.url) {
-      console.log("Nenhuma legenda publicada encontrada para aula", lessonId);
-      return new Response(JSON.stringify({ fallback: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (publishedSub?.url) {
+        const textResponse = await fetch(publishedSub.url);
+        const vttText = await textResponse.text();
+        cleanText = vttText
+          .substring(0, 5000)
+          .replace(/WEBVTT[\s\S]*?\n\n/g, '')
+          .replace(/\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/g, '')
+          .replace(/<[^>]*>/g, '')
+          .trim();
+      } else {
+        console.log("Nenhuma legenda publicada encontrada para aula", lessonId);
+      }
+    } catch (e) {
+      console.log("Erro ao buscar transcrição (seguindo sem ela):", e instanceof Error ? e.message : e);
     }
 
-    // 2. Busca texto da legenda
-    const textResponse = await fetch(publishedSub.url);
-    const vttText = await textResponse.text();
-    // Limpeza básica de VTT para economizar tokens
-    const cleanText = vttText
-      .substring(0, 5000)
-      .replace(/WEBVTT[\s\S]*?\n\n/g, '')
-      .replace(/\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/g, '')
-      .replace(/<[^>]*>/g, '')
-      .trim();
+    // Monta o contexto que será dado ao modelo
+    const goalsList = Array.isArray(courseGoals)
+      ? courseGoals.join("\n- ")
+      : (typeof courseGoals === "string" ? courseGoals : "");
 
-    if (!cleanText || cleanText.length < 50) {
-      console.log("Legenda muito curta ou vazia para aula", lessonId);
-      return new Response(JSON.stringify({ fallback: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const hasTranscript = cleanText.length >= 50;
+    const contextBlock = hasTranscript
+      ? `Use ESTRITAMENTE o conteúdo da transcrição abaixo da aula "${lessonTitle || ''}" do curso "${courseTitle}".\n\nTRANSCRIÇÃO:\n${cleanText}`
+      : `Não há transcrição disponível. Crie questões com base no contexto do curso e da aula:\n\nCURSO: ${courseTitle}\nAULA: ${lessonTitle || 'Aula do curso'}\nRESUMO: ${courseSummary || 'sem resumo'}\nOBJETIVOS DE APRENDIZAGEM:\n- ${goalsList || 'não informado'}\n\nGere 4 questões conceituais relevantes ao tema desta aula dentro do escopo do curso. Mantenha o nível ${nivel || 'intermediário'} e foque em aplicação prática.`;
 
     const model = "claude-sonnet-4-6";
-    console.log(`Usando modelo: ${model}`);
+    console.log(`Usando modelo: ${model} | comTranscricao: ${hasTranscript}`);
 
-    // 3. Chama Claude para gerar o quiz
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -58,15 +60,10 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: model,
+        model,
         max_tokens: 1500,
-        system: `Crie 4 questões de múltipla escolha baseadas ESTRITAMENTE no conteúdo da transcrição fornecida. Nível ${nivel || 'intermediário'}. Cada questão tem 4 alternativas (a,b,c,d), uma correta. Responda ESTRITAMENTE em JSON válido, sem texto explicativo fora do JSON. Formato: { "questoes": [ { "pergunta": "...", "alternativas": {"a": "...", "b": "...", "c": "...", "d": "..."}, "correta": "a", "explicacao": "..." } ] }`,
-        messages: [
-          { 
-            role: "user", 
-            content: `Transcrição da aula do curso "${courseTitle}":\n\n${cleanText}` 
-          }
-        ],
+        system: `Você é um professor que cria avaliações de múltipla escolha. Responda ESTRITAMENTE em JSON válido, sem markdown ou comentários. Formato exato: { "questoes": [ { "pergunta": "...", "alternativas": {"a": "...", "b": "...", "c": "...", "d": "..."}, "correta": "a", "explicacao": "..." } ] }. Sempre 4 questões com 4 alternativas cada. Nível ${nivel || 'intermediário'}.`,
+        messages: [{ role: "user", content: contextBlock }],
       }),
     });
 
@@ -79,26 +76,20 @@ serve(async (req) => {
     const claudeResult = await claudeResponse.json();
     const text = claudeResult.content[0].text;
     console.log("resposta bruta do quiz:", text);
-    
-    // Limpeza de cercas markdown: extrai do primeiro { até o último }
+
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
-    
     if (firstBrace === -1 || lastBrace === -1) {
-      console.error("JSON não encontrado na resposta:", text);
       throw new Error("Resposta da IA não contém JSON válido");
     }
+    const data = JSON.parse(text.substring(firstBrace, lastBrace + 1));
 
-    const clean = text.substring(firstBrace, lastBrace + 1);
-    console.log("Conteúdo extraído para parse:", clean);
-    const data = JSON.parse(clean);
-
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ ...data, _source: hasTranscript ? "transcricao" : "metadados" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error("Error in tutor-quiz:", error);
-    return new Response(JSON.stringify({ fallback: true, error: error.message }), {
+    return new Response(JSON.stringify({ fallback: true, error: error instanceof Error ? error.message : String(error) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

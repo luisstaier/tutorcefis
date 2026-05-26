@@ -29,7 +29,9 @@ export default function CourseDetails({
 }: CourseDetailsProps) {
   console.log("CourseDetail montou com courseId:", course?.id);
   const [lesson, setLesson] = useState<any>(null);
+  const [lessonsGallery, setLessonsGallery] = useState<any[]>([]);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
+  const [isSwitchingLesson, setIsSwitchingLesson] = useState(false);
   const [quiz, setQuiz] = useState<any>(null);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
@@ -64,28 +66,33 @@ export default function CourseDetails({
     };
   }, [course?.id]);
 
-  const fetchLesson = async () => {
+  const fetchLesson = async (lessonId?: number) => {
     if (!course?.id) return;
-    setIsLoadingLesson(true);
+    if (lessonId) {
+      setIsSwitchingLesson(true);
+      setShowQuiz(false);
+      setQuiz(null);
+      setQuizAnswers([]);
+      setCurrentQuestionIndex(0);
+      setIsQuizFinished(false);
+      setQuizError(null);
+    } else {
+      setIsLoadingLesson(true);
+    }
     setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
-        body: { courseId: course.id }
+        body: { courseId: course.id, lessonId }
       });
       if (error) throw error;
-      setLesson(data);
-      
-      // Timer for quiz (10 seconds)
-      quizTimerRef.current = setTimeout(() => {
-        if (!showQuiz && !isQuizFinished) {
-          handleStartQuiz(data?.id);
-        }
-      }, 10000);
+      setLesson(data?.current || data);
+      if (data?.lessons) setLessonsGallery(data.lessons);
     } catch (err) {
       console.error("Error fetching lesson:", err);
       setHasError(true);
     } finally {
       setIsLoadingLesson(false);
+      setIsSwitchingLesson(false);
     }
   };
 
@@ -110,7 +117,10 @@ export default function CourseDetails({
       const { data, error } = await supabase.functions.invoke('tutor-quiz', {
         body: { 
           lessonId: finalLessonId, 
-          courseTitle: course?.title || "Curso", 
+          courseTitle: course?.title || "Curso",
+          lessonTitle: lesson?.title || "",
+          courseSummary: course?.summary || "",
+          courseGoals: normalizedGoals,
           nivel: userProfile?.nivel || "Iniciante" 
         }
       });
@@ -410,7 +420,7 @@ export default function CourseDetails({
           <Button onClick={onBack} variant="ghost" className="text-secondary hover:text-accent font-medium">
             <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
           </Button>
-          <Button onClick={fetchLesson} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">
+          <Button onClick={() => fetchLesson()} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">
             Tentar Novamente
           </Button>
         </div>
@@ -521,7 +531,7 @@ export default function CourseDetails({
 
       {/* SEÇÃO 2 — PLAYER DA AULA */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold font-serif">Aula 01 — Introdução e Primeiros Passos</h2>
+        <h2 className="text-2xl font-bold font-serif">{lesson?.title || "Aula em destaque"}</h2>
         <Card className="overflow-hidden border-border shadow-sm">
           <CardContent className="p-0 bg-black aspect-video flex items-center justify-center relative">
             {isLoadingLesson ? (
@@ -545,14 +555,14 @@ export default function CourseDetails({
             ) : (
               <div className="p-12 text-center space-y-4">
                 <p className="text-white/60">Não foi possível carregar o vídeo desta aula.</p>
-                <Button onClick={fetchLesson} variant="secondary" size="sm">Tentar Novamente</Button>
+                <Button onClick={() => fetchLesson()} variant="secondary" size="sm">Tentar Novamente</Button>
               </div>
             )}
           </CardContent>
           {lesson && (
             <CardFooter className="p-4 bg-muted/30 border-t border-border">
               <div className="flex justify-between items-center w-full">
-                <p className="font-bold text-sm">{lesson.title}</p>
+                <p className="text-xs text-secondary">Pronto para testar o que aprendeu nesta aula?</p>
                 {!showQuiz && !isQuizFinished && (
                   <Button 
                     size="sm" 
@@ -567,6 +577,81 @@ export default function CourseDetails({
           )}
         </Card>
       </section>
+
+      {/* SEÇÃO 2.5 — GALERIA DE AULAS */}
+      {lessonsGallery.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold font-serif">Todas as aulas do curso</h2>
+            <span className="text-sm text-secondary">{lessonsGallery.length} aulas</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {lessonsGallery.map((l, idx) => {
+              const isActive = lesson?.id === l.id;
+              const completed = isLessonCompleted(course?.id, l.id);
+              return (
+                <button
+                  key={l.id}
+                  disabled={isSwitchingLesson || isActive}
+                  onClick={() => {
+                    fetchLesson(l.id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={cn(
+                    "group text-left rounded-xl overflow-hidden border bg-card transition-all hover:shadow-md disabled:opacity-100",
+                    isActive ? "border-accent ring-2 ring-accent/30" : "border-border hover:border-accent/40"
+                  )}
+                >
+                  <div className="relative aspect-video bg-muted overflow-hidden">
+                    {l.thumbnail ? (
+                      <img src={l.thumbnail} alt={l.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                        <PlayCircle className="w-10 h-10 text-secondary/60" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-black/70 text-white border-none text-[10px] font-bold">
+                        Aula {String(idx + 1).padStart(2, '0')}
+                      </Badge>
+                    </div>
+                    {completed && (
+                      <div className="absolute top-2 right-2 bg-[#b3e51d] rounded-full p-1">
+                        <CheckCircle2 className="w-3 h-3 text-[#051124]" />
+                      </div>
+                    )}
+                    {isActive && (
+                      <div className="absolute bottom-2 right-2">
+                        <Badge className="bg-accent text-primary-foreground border-none text-[10px] font-bold">
+                          Assistindo
+                        </Badge>
+                      </div>
+                    )}
+                    {isSwitchingLesson && isActive && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs font-bold leading-tight line-clamp-2 min-h-[2rem]">
+                      {l.title}
+                    </p>
+                    {l.duration && (
+                      <p className="text-[10px] text-secondary mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {Math.floor(l.duration / 60)}min
+                      </p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
 
       {/* SEÇÃO 3 — QUIZ */}
       {showQuiz && (
