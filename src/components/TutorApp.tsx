@@ -26,7 +26,9 @@ export default function TutorApp() {
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<any[]>([]);
   const [diagnosis, setDiagnosis] = useState<any[]>([]);
+  const [studyPlan, setStudyPlan] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const nextStep = () => setStep((s) => s + 1);
@@ -53,6 +55,29 @@ export default function TutorApp() {
       setIsLoading(false);
     }
   };
+
+  const handleGeneratePlan = async () => {
+    setIsGeneratingPlan(true);
+    setError(null);
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('tutor-plano', {
+        body: {
+          perfil: formData,
+          lacunas: diagnosis
+        }
+      });
+
+      if (functionError) throw functionError;
+      setStudyPlan(data.plano || []);
+      setStep(2); // Mudar para tela de plano
+    } catch (err: any) {
+      console.error('Plan generation error:', err);
+      setError(err.message || 'Erro ao gerar plano de estudos.');
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
 
   const handleSearchCourses = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,8 +218,19 @@ export default function TutorApp() {
                     ))}
                   </div>
 
-                  <Button onClick={nextStep} className="w-full bg-accent hover:bg-accent/90 text-white">
-                    Ver Plano de Estudos
+                  <Button 
+                    onClick={handleGeneratePlan} 
+                    disabled={isGeneratingPlan}
+                    className="w-full bg-accent hover:bg-accent/90 text-white"
+                  >
+                    {isGeneratingPlan ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Montando seu plano...
+                      </>
+                    ) : (
+                      "Ver Plano de Estudos"
+                    )}
                   </Button>
                 </div>
               )}
@@ -209,23 +245,57 @@ export default function TutorApp() {
               <CardDescription className="text-lg">Estrutura recomendada para {formData.objetivo}.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="p-4 bg-muted/30 rounded-lg border border-border flex gap-4 items-start">
-                    <div className="bg-white w-8 h-8 rounded-full flex items-center justify-center text-accent font-bold border border-border">
-                      {i}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-foreground">Módulo {i}: Fundamentos de {formData.objetivo}</h4>
-                      <p className="text-sm text-secondary">Descrição detalhada do conteúdo e objetivos de aprendizado.</p>
-                    </div>
+              {isGeneratingPlan ? (
+                <div className="flex flex-col items-center py-12">
+                  <Loader2 className="w-12 h-12 text-accent animate-spin mb-4" />
+                  <h3 className="text-xl font-bold">Montando seu plano...</h3>
+                  <p className="text-secondary mt-2 text-center">Cruzando o catálogo da CEFIS com seu perfil.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
+                    {studyPlan.map((step, i) => (
+                      <div key={i} className="relative">
+                        <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-white border-2 border-accent flex items-center justify-center text-accent font-bold z-10 shadow-sm">
+                          {step.passo}
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-3">
+                          <div className="flex justify-between items-start gap-4">
+                            <h4 className="font-bold text-lg leading-tight">{step.titulo}</h4>
+                            <Badge 
+                              className={`${
+                                step.origem === 'catalogo_cefis' ? 'bg-success hover:bg-success' : 'bg-accent hover:bg-accent'
+                              } text-white border-none shrink-0`}
+                            >
+                              {step.origem === 'catalogo_cefis' ? (
+                                <span className="flex items-center gap-1">📚 CEFIS</span>
+                              ) : (
+                                <span className="flex items-center gap-1">✨ Tutor</span>
+                              )}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-secondary">{step.descricao}</p>
+                          
+                          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border/50">
+                            <div className="flex items-center gap-1 text-xs text-secondary font-medium">
+                              <Clock className="w-3 h-3" /> {step.tempo_estimado_min} min
+                            </div>
+                            {step.fonte && (
+                              <div className="text-xs text-secondary font-medium italic">
+                                Fonte: {step.fonte}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div className="flex justify-between mt-8">
-                <Button variant="ghost" onClick={prevStep} className="text-secondary">Voltar</Button>
-                <Button onClick={nextStep} className="bg-accent hover:bg-accent/90 text-white">Configurar Sessão Rápida</Button>
-              </div>
+                  <div className="flex justify-between mt-8 pt-6 border-t border-border">
+                    <Button variant="ghost" onClick={() => setStep(1)} className="text-secondary">Voltar ao Diagnóstico</Button>
+                    <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-white">Configurar Sessão Rápida</Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         );
