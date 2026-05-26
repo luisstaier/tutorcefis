@@ -689,7 +689,31 @@ export default function TutorApp() {
                 </div>
                 <div className="space-y-2">
                   <Label>Tópico de interesse</Label>
-                  <Input value={modoData.topico} onChange={e => setModoData({...modoData, topico: e.target.value})} placeholder="Ex: ICMS" />
+                  {studyPlan.length > 0 ? (
+                    <Select 
+                      value={modoData.topico} 
+                      onValueChange={val => setModoData({...modoData, topico: val})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um tópico do seu plano..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {studyPlan.map((item, idx) => (
+                          <SelectItem key={idx} value={item.titulo}>{item.titulo}</SelectItem>
+                        ))}
+                        <SelectItem value="outro">-- Outro tópico --</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={modoData.topico} onChange={e => setModoData({...modoData, topico: e.target.value})} placeholder="Ex: ICMS" />
+                  )}
+                  {studyPlan.length > 0 && modoData.topico === "outro" && (
+                    <Input 
+                      className="mt-2"
+                      placeholder="Digite o tópico desejado..." 
+                      onChange={e => setModoData({...modoData, topico: e.target.value})} 
+                    />
+                  )}
                 </div>
               </div>
               <Button onClick={() => handleGenerateSession()} disabled={isGeneratingSession} className="w-full bg-accent h-12">
