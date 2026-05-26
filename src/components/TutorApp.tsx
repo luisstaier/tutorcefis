@@ -318,8 +318,11 @@ export default function TutorApp() {
         <div className="flex flex-col items-center justify-center min-h-[80vh]">
           <Card className="w-full max-w-md border-border shadow-2xl overflow-hidden bg-card/80 backdrop-blur-sm">
             <div className="h-1.5 bg-accent w-full" />
-            <CardHeader className="text-center pt-8 pb-4">
-              <CefisLogo className="w-48 mx-auto text-primary" />
+            <CardHeader className="text-center pt-10 pb-6">
+              <div className="relative inline-block">
+                <div className="absolute -inset-4 bg-accent/20 blur-2xl rounded-full opacity-50" />
+                <CefisLogo className="w-56 mx-auto text-primary relative z-10" />
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
@@ -605,14 +608,14 @@ export default function TutorApp() {
           <header className="py-8 flex flex-col items-center">
             <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
               <div className="flex flex-col items-center">
-                <h1 className="text-4xl sm:text-5xl font-serif font-black tracking-tighter text-accent transition-transform group-hover:scale-105">
+                <h1 className="text-4xl sm:text-5xl font-serif font-black tracking-tighter text-accent transition-transform group-hover:scale-105 drop-shadow-[0_0_15px_rgba(179,229,29,0.2)]">
                   TUTOR<span className="text-foreground/50">.</span>IA
                 </h1>
-                <div className="flex items-center gap-2 mt-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <div className="h-[1px] w-4 bg-secondary/30" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary">Powered by</span>
+                <div className="flex items-center gap-3 mt-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <div className="h-[1px] w-8 bg-secondary/20" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Powered by</span>
                   <CefisLogo className="h-3 text-secondary" />
-                  <div className="h-[1px] w-4 bg-secondary/30" />
+                  <div className="h-[1px] w-8 bg-secondary/20" />
                 </div>
               </div>
             </div>
