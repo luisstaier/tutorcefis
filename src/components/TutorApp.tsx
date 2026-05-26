@@ -572,9 +572,21 @@ export default function TutorApp() {
       case 1:
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">Diagnóstico de Aprendizado</CardTitle>
-              <CardDescription>Análise baseada no seu objetivo: {formData.objetivo}</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div className="space-y-1.5">
+                <CardTitle className="text-2xl font-serif">Diagnóstico de Aprendizado</CardTitle>
+                <CardDescription>Análise baseada no seu objetivo: {formData.objetivo}</CardDescription>
+              </div>
+              {!isLoading && diagnosis.length > 0 && (
+                <Button 
+                  onClick={handleGeneratePlan} 
+                  disabled={isGeneratingPlan} 
+                  size="sm"
+                  className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20"
+                >
+                  {isGeneratingPlan ? <Loader2 className="animate-spin mr-2 w-4 h-4" /> : "Gerar Plano"}
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {isLoading ? (
