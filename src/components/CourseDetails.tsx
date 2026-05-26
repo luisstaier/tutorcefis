@@ -556,10 +556,10 @@ export default function CourseDetails({
                 {!showQuiz && !isQuizFinished && (
                   <Button 
                     size="sm" 
-                    onClick={() => handleStartQuiz(lesson.id)}
+                    onClick={() => handleStartQuiz(lesson?.id)}
                     className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold"
                   >
-                    Testar o que aprendi
+                    Teste de Conhecimento
                   </Button>
                 )}
               </div>
