@@ -56,6 +56,7 @@ const CefisLogo = ({ className = "" }: { className?: string }) => (
 
 
 export default function TutorApp() {
+  const { xp, addXp, currentLevel, nextLevel, progress } = useGamification();
   const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo
   const [formData, setFormData] = useState({
     nome: "",
@@ -85,6 +86,15 @@ export default function TutorApp() {
     fonte?: { curso: string; aula: string; curso_id?: number };
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
+  const [showStartSessionModal, setShowStartSessionModal] = useState(false);
+
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("tutor_cefs_profile");
+    if (savedProfile) {
+      setFormData(JSON.parse(savedProfile));
+    }
+  }, []);
+
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
