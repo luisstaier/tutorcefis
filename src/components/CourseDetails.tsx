@@ -29,7 +29,9 @@ export default function CourseDetails({
 }: CourseDetailsProps) {
   console.log("CourseDetail montou com courseId:", course?.id);
   const [lesson, setLesson] = useState<any>(null);
+  const [lessonsGallery, setLessonsGallery] = useState<any[]>([]);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
+  const [isSwitchingLesson, setIsSwitchingLesson] = useState(false);
   const [quiz, setQuiz] = useState<any>(null);
   const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
