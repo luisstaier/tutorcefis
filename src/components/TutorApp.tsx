@@ -1105,6 +1105,19 @@ export default function TutorApp() {
       <div className="max-w-4xl mx-auto px-4">
         {step >= 0 && (
           <header className="py-8 flex flex-col items-center">
+            {formData.objetivo && (
+              <div className="w-full flex justify-center mb-6">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleSearchCourses(formData.objetivo)}
+                  className="rounded-full border-accent/30 bg-accent/5 text-accent hover:bg-accent/10 hover:border-accent flex items-center gap-2 px-4 py-1.5 h-auto transition-all group"
+                >
+                  <Sparkles className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Objetivo: {formData.objetivo}</span>
+                </Button>
+              </div>
+            )}
             <div className="mb-6 flex flex-col items-center cursor-pointer group" onClick={() => setStep(0)}>
               <div className="flex flex-col items-center">
                 <h1 className="text-4xl sm:text-5xl font-serif font-black tracking-tighter text-accent transition-transform group-hover:scale-105 drop-shadow-[0_0_15px_rgba(179,229,29,0.2)]">
