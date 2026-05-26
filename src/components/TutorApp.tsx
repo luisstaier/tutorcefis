@@ -629,7 +629,7 @@ export default function TutorApp() {
               variant="outline" 
               size="sm" 
               className="text-xs border-accent text-accent hover:bg-accent/5"
-              onClick={() => setStep(4)}
+              onClick={() => setStep(5)}
             >
               Testar Catálogo
             </Button>
