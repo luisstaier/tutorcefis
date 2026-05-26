@@ -29,6 +29,7 @@ export default function CourseDetails({
 }: CourseDetailsProps) {
   console.log("CourseDetail montou com courseId:", course?.id);
   const [lesson, setLesson] = useState<any>(null);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const [lessonsGallery, setLessonsGallery] = useState<any[]>([]);
   const [isLoadingLesson, setIsLoadingLesson] = useState(true);
   const [isSwitchingLesson, setIsSwitchingLesson] = useState(false);
@@ -50,9 +51,7 @@ export default function CourseDetails({
     : typeof course?.goals === "string"
       ? course.goals.split("\n").filter((goal: string) => goal.trim())
       : [];
-  const preferredStreamSource = lesson?.stream_sources?.find((source: any) => source?.quality === "sd")
-    || lesson?.stream_sources?.[0]
-    || null;
+  const preferredStreamSource = currentVideoUrl;
 
   useEffect(() => {
     console.log("CourseDetails montado com courseId:", course?.id);
@@ -88,9 +87,29 @@ export default function CourseDetails({
     }
   }, [lesson?.id]);
 
-  const fetchLesson = async (lessonId?: number) => {
+  const fetchLesson = async (selectedLessonId?: number) => {
     if (!course?.id) return;
-    if (lessonId) {
+    
+    // Se já temos a galeria e o lessonId, apenas trocamos localmente
+    if (selectedLessonId && lessonsGallery.length > 0) {
+      const foundLesson = lessonsGallery.find(l => l.id === selectedLessonId);
+      if (foundLesson) {
+        setIsSwitchingLesson(true);
+        setShowQuiz(false);
+        setQuiz(null);
+        setQuizAnswers([]);
+        setCurrentQuestionIndex(0);
+        setIsQuizFinished(false);
+        setQuizError(null);
+        
+        setLesson(foundLesson);
+        setCurrentVideoUrl(foundLesson.videoUrl);
+        setIsSwitchingLesson(false);
+        return;
+      }
+    }
+
+    if (selectedLessonId) {
       setIsSwitchingLesson(true);
       setShowQuiz(false);
       setQuiz(null);
@@ -101,13 +120,17 @@ export default function CourseDetails({
     } else {
       setIsLoadingLesson(true);
     }
+    
     setHasError(false);
     try {
       const { data, error } = await supabase.functions.invoke('cefis-lesson', {
-        body: { courseId: course.id, lessonId }
+        body: { courseId: course.id, lessonId: selectedLessonId }
       });
       if (error) throw error;
-      setLesson(data?.current || data);
+      
+      const current = data?.current || data;
+      setLesson(current);
+      setCurrentVideoUrl(current?.videoUrl || null);
       if (data?.lessons) setLessonsGallery(data.lessons);
     } catch (err) {
       console.error("Error fetching lesson:", err);
