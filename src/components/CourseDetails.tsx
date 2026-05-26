@@ -553,7 +553,7 @@ export default function CourseDetails({
 
       {/* SEÇÃO 2 — PLAYER DA AULA */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold font-serif">{isSwitchingLesson ? "Carregando aula..." : (lesson?.title || "Aula em destaque")}</h2>
+        <h2 className="text-2xl font-bold font-serif">{isSwitchingLesson ? "Carregando aula..." : (lesson?.title || course?.title || "Aula em destaque")}</h2>
         <Card className="overflow-hidden border-border shadow-sm">
           <CardContent className="p-0 bg-black aspect-video flex items-center justify-center relative">
             {isLoadingLesson || isSwitchingLesson ? (
@@ -572,7 +572,6 @@ export default function CourseDetails({
                 key={lesson?.id}
                 ref={videoRef}
                 controls 
-                autoPlay
                 className="w-full h-full"
                 poster={lesson?.thumbnail || lesson?.poster || course?.banner}
               >
