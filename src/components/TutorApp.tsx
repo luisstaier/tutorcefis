@@ -802,12 +802,7 @@ export default function TutorApp() {
                       </div>
                       <p className="text-sm text-secondary">{item.resumo}</p>
                       <div className="flex items-center gap-1.5 pt-1">
-                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por:</p>
-                        {item.curso_id ? (
-                          <span className="text-[10px] font-bold text-accent">Conteúdo Original CEFIS</span>
-                        ) : (
-                          <TutorAiLogo className="scale-75 origin-left" />
-                        )}
+                        <p className="text-[10px] text-muted-foreground italic">Informação gerada por: {item.curso_id ? 'Conteúdo Original CEFIS' : 'tutor.ai'}</p>
                       </div>
                       {item.curso_id ? <Button variant="outline" size="sm" className="h-7 text-[10px] font-bold" onClick={() => handleSearchCourses(undefined, item.curso_id, false, { source: 'sessao', trail: quickSession?.itens || [] })}>Ver o curso</Button> : null}
                     </div>
