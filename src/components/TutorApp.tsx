@@ -4,15 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, Trophy, CheckCircle2, Circle } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
-import { Progress } from "@/components/ui/progress";
-import { useGamification } from "@/hooks/useGamification";
 import { Toaster } from "@/components/ui/sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 const MarkdownRenderer = ({ content, className = "" }: { content: string; className?: string }) => (
@@ -55,63 +52,12 @@ const CefisLogo = ({ className = "" }: { className?: string }) => (
 );
 
 
-const JourneyProgressBar = ({ step }: { step: number }) => {
-  const progress = (step + 1) * 20;
-  return (
-    <div className="fixed top-0 left-0 w-full z-[100] h-[3px] bg-muted/20">
-      <div 
-        className="h-full bg-accent transition-all duration-700 ease-in-out"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  );
-};
-
-const LevelIndicator = ({ xp, currentLevel, nextLevel, levelProgress }: any) => {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card/50 backdrop-blur-sm cursor-help transition-all hover:border-accent/30">
-            <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs font-medium text-foreground tracking-tight">Nível {currentLevel.name}</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="bg-[#051124] border-border text-white px-3 py-2">
-          <p className="font-medium">{xp} XP Total</p>
-          {nextLevel && (
-            <p className="text-white/60 mt-0.5">{nextLevel.minXP - xp} XP para o nível {nextLevel.name}</p>
-          )}
-          <div className="mt-2 h-1 w-32 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-accent" style={{ width: `${levelProgress}%` }} />
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-};
-
-const FloatingXPDisplay = ({ xps }: { xps: any[] }) => {
-  return (
-    <div className="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-[100] pointer-events-none">
-      {xps.map((fxp) => (
-        <div 
-          key={fxp.id}
-          className="text-accent font-bold text-lg animate-in fade-out slide-out-to-top-8 duration-2000 ease-in fill-mode-forwards"
-        >
-          +{fxp.amount} XP
-        </div>
-      ))}
-    </div>
-  );
-};
 
 
 
 
 
 export default function TutorApp() {
-  const { xp, addXp, currentLevel, nextLevel, levelProgress, floatingXPs, exploredSteps, markStepExplored } = useGamification();
   const [step, setStep] = useState(0); // 0: Início, 1: Diagnóstico, 2: Plano, 3: Sessão Rápida, 4: Dúvidas, 5: Catálogo
   const [formData, setFormData] = useState({
     nome: "",
@@ -154,7 +100,7 @@ export default function TutorApp() {
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem("tutor_cefs_profile", JSON.stringify(formData));
-    addXp(50);
+    
     setStep(1); // Mudar para tela de diagnóstico
     
     setIsLoading(true);
@@ -166,7 +112,6 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setDiagnosis(data.lacunas || []);
-      addXp(100);
     } catch (err: any) {
       console.error('Diagnosis error:', err);
       setError(err.message || 'Erro ao gerar diagnóstico.');
@@ -188,7 +133,7 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setStudyPlan(data.plano || []);
-      addXp(150);
+      
       setStep(2); // Mudar para tela de plano
       
       // Preparar dados para o modal de Sessão Rápida
@@ -228,7 +173,7 @@ export default function TutorApp() {
 
       if (functionError) throw functionError;
       setQuickSession(data);
-      addXp(100);
+      
     } catch (err: any) {
 
       console.error('Session generation error:', err);
@@ -285,7 +230,7 @@ export default function TutorApp() {
           fonte: transData.fonte
         }]);
       }
-      addXp(75);
+      
     } catch (err: any) {
 
       console.error('Duvida error:', err);
@@ -629,11 +574,7 @@ export default function TutorApp() {
                     {studyPlan.map((stepItem, i) => (
                       <div key={i} className="relative">
                         <div className="absolute -left-10 top-0 w-8 h-8 flex items-center justify-center z-10">
-                          {exploredSteps.has(i) ? (
-                            <CheckCircle2 className="w-6 h-6 text-accent fill-accent/10" />
-                          ) : (
-                            <Circle className="w-6 h-6 text-muted-foreground/30" />
-                          )}
+                          <div className="w-2 h-2 rounded-full bg-accent/40" />
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-3 hover:bg-muted/50 transition-colors">
                           <div className="flex justify-between items-start gap-4">
@@ -675,7 +616,7 @@ export default function TutorApp() {
                                 size="sm" 
                                 className="h-7 text-[10px] text-accent hover:text-accent hover:bg-accent/5 font-bold gap-1"
                                 onClick={() => {
-                                  markStepExplored(i);
+                                  
                                   handleSearchCourses(stepItem.fonte || stepItem.titulo, stepItem.curso_id);
                                 }}
                               >
@@ -686,16 +627,6 @@ export default function TutorApp() {
                         </div>
                       </div>
                     ))}
-                  </div>
-                  <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
-                    <p className="text-xs text-secondary font-medium">
-                      {exploredSteps.size} de {studyPlan.length} etapas exploradas
-                    </p>
-                    {exploredSteps.size === studyPlan.length && (
-                      <p className="text-xs text-accent font-bold animate-in fade-in slide-in-from-right-2">
-                        Jornada concluída · Expert em {formData.objetivo || "seu objetivo"}
-                      </p>
-                    )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                     <Button onClick={() => setStep(3)} className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold">Ir para Sessão Rápida</Button>
@@ -1071,10 +1002,6 @@ export default function TutorApp() {
   return (
     <main className="min-h-screen pb-12 bg-background text-foreground transition-colors duration-500">
       <Toaster position="top-center" richColors />
-      <JourneyProgressBar step={step} />
-      <FloatingXPDisplay xps={floatingXPs} />
-      <JourneyProgressBar step={step} />
-      <FloatingXPDisplay xps={floatingXPs} />
       
 
 
@@ -1091,14 +1018,6 @@ export default function TutorApp() {
             <p className="text-secondary font-medium italic mt-2">Seu aprendizado, no seu tempo.</p>
           </div>
 
-          <div className="fixed top-8 right-8 z-[60]">
-            <LevelIndicator 
-              xp={xp} 
-              currentLevel={currentLevel} 
-              nextLevel={nextLevel} 
-              levelProgress={levelProgress} 
-            />
-          </div>
           
           {renderNavigation()}
         </header>
