@@ -83,6 +83,7 @@ export default function TutorApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [isGeneratingSession, setIsGeneratingSession] = useState(false);
+  const [navigationContext, setNavigationContext] = useState<{ source: string; trail?: any[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [duvida, setDuvida] = useState("");
   const [chatHistory, setChatHistory] = useState<{
@@ -272,7 +273,7 @@ export default function TutorApp() {
     }
   };
 
-  const handleSearchCourses = async (query?: string, courseId?: number, autoOpen = false) => {
+  const handleSearchCourses = async (query?: string, courseId?: number, autoOpen = false, context?: { source: string; trail?: any[] }) => {
     let q = query ?? searchQuery;
     if (query) setSearchQuery(query);
     
@@ -280,7 +281,14 @@ export default function TutorApp() {
     setError(null);
     
     // Only change step if not auto-opening (which is used for background fetch)
-    if (!autoOpen && !courseId) setStep(5);
+    if (!autoOpen && !courseId) {
+      setStep(5);
+      setNavigationContext({ source: 'catalogo' });
+    }
+    
+    if (context) {
+      setNavigationContext(context);
+    }
     
     try {
       const { data, error: functionError } = await supabase.functions.invoke('cefis-courses', {
