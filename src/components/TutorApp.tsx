@@ -291,60 +291,84 @@ export default function TutorApp() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
+  const audioCacheRef = useRef<Record<string, string>>({});
 
-  const unlockAudio = async () => {
-    if (isAudioUnlocked.current) return;
-    
+  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  const getAudio = () => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
+      audioRef.current.preload = 'auto';
     }
-    
+    return audioRef.current;
+  };
+
+  const unlockAudio = () => {
+    if (isAudioUnlocked.current) return;
+    const audio = getAudio();
     try {
-      const audio = audioRef.current;
       audio.muted = true;
-      await audio.play();
-      audio.pause();
+      const p = audio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+          isAudioUnlocked.current = true;
+        }).catch(() => { audio.muted = false; });
+      } else {
+        audio.pause();
+        audio.muted = false;
+        isAudioUnlocked.current = true;
+      }
+    } catch {
       audio.muted = false;
-      isAudioUnlocked.current = true;
-      console.log("Audio unlocked successfully");
-    } catch (e) {
-      console.log("Audio unlock failed:", e);
     }
   };
+
+  // Unlock global no primeiro gesto do usuário (essencial em mobile)
+  useEffect(() => {
+    const handler = () => unlockAudio();
+    document.addEventListener('touchstart', handler, { once: true, passive: true });
+    document.addEventListener('click', handler, { once: true });
+    return () => {
+      document.removeEventListener('touchstart', handler);
+      document.removeEventListener('click', handler);
+    };
+  }, []);
 
   const persistProfile = (profile: typeof formData) => {
     safeStorage.setLocal("tutor_cefis_profile", JSON.stringify(profile));
   };
 
   const generateAudio = async (text: string): Promise<string | null> => {
-    // Cache key based on text and voice (voice_id is currently hardcoded in function)
     const cacheKey = btoa(unescape(encodeURIComponent(text.normalize('NFC').slice(0, 100) + text.length)));
-    if (audioCache[cacheKey]) {
-      return audioCache[cacheKey];
-    }
+    if (audioCacheRef.current[cacheKey]) return audioCacheRef.current[cacheKey];
+    if (audioCache[cacheKey]) return audioCache[cacheKey];
 
     try {
       const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
       if (!data || !data.audio) return null;
       const byteCharacters = atob(data.audio);
       const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
+      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'audio/mpeg' });
       const url = URL.createObjectURL(blob);
-      
+      audioCacheRef.current[cacheKey] = url;
       setAudioCache(prev => ({ ...prev, [cacheKey]: url }));
       return url;
     } catch (err: any) {
       console.error("Erro ao gerar áudio:", err);
-      // Se o erro for do Supabase ou rede, tentamos logar o detalhe
-      const errorMsg = err?.message || "Erro desconhecido";
-      console.log(`Detalhe do erro de áudio: ${errorMsg}`);
       return null;
     }
   };
+
+  const getCachedAudioUrl = (text: string): string | null => {
+    const cacheKey = btoa(unescape(encodeURIComponent(text.normalize('NFC').slice(0, 100) + text.length)));
+    return audioCacheRef.current[cacheKey] || audioCache[cacheKey] || null;
+  };
+
 
   const askQuestion = async (questionText: string) => {
     if (!questionText.trim()) return;
@@ -413,27 +437,28 @@ export default function TutorApp() {
         return newHistory;
       });
 
-      // 3. Gera áudio em paralelo
-      if (isVoiceActive && finalResponse) {
-        setIsPreparingAudio(chatHistory.length);
-        const audioUrl = await generateAudio(finalResponse);
-        setIsPreparingAudio(null);
+      // 3. Áudio: no mobile, apenas pré-gera (sem autoplay). No desktop, toca se "Voz Ativa".
+      if (finalResponse) {
+        const shouldAutoPlay = isVoiceActive && !isMobile;
+        if (shouldAutoPlay || isMobile) {
+          setIsPreparingAudio(chatHistory.length);
+          const audioUrl = await generateAudio(finalResponse);
+          setIsPreparingAudio(null);
 
-        if (audioUrl && audioRef.current) {
-          const audio = audioRef.current;
-          audio.pause();
-          audio.src = audioUrl;
-          
-          const playAudio = () => {
-            setCurrentlyPlayingId(chatHistory.length);
-            audio.play().catch(err => {
-              console.error("Erro ao reproduzir áudio automático:", err);
-            });
-            audio.removeEventListener('canplaythrough', playAudio);
-          };
-
-          audio.addEventListener('canplaythrough', playAudio);
-          audio.onended = () => setCurrentlyPlayingId(null);
+          if (audioUrl && shouldAutoPlay) {
+            const audio = getAudio();
+            audio.pause();
+            audio.src = audioUrl;
+            const playAudio = () => {
+              setCurrentlyPlayingId(chatHistory.length);
+              audio.play().catch(err => console.error("Erro ao reproduzir áudio automático:", err));
+              audio.removeEventListener('canplaythrough', playAudio);
+            };
+            audio.addEventListener('canplaythrough', playAudio);
+            audio.onended = () => setCurrentlyPlayingId(null);
+          }
+        } else if (isVoiceActive) {
+          // já tratado acima (desktop)
         }
       }
     } finally {
@@ -678,34 +703,52 @@ export default function TutorApp() {
   };
 
   const handleListenResponse = async (index: number, text: string) => {
+    // Pausar se já tocando
     if (currentlyPlayingId === index) {
       audioRef.current?.pause();
       setCurrentlyPlayingId(null);
       return;
     }
 
+    unlockAudio();
+    const audio = getAudio();
+    audio.pause();
+
+    // Se áudio já está em cache, tocar SINCRONAMENTE dentro do gesto do usuário
+    const cachedUrl = getCachedAudioUrl(text);
+    if (cachedUrl) {
+      audio.src = cachedUrl;
+      audio.onended = () => setCurrentlyPlayingId(null);
+      const playPromise = audio.play();
+      setCurrentlyPlayingId(index);
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.catch(err => {
+          console.error("Erro ao reproduzir áudio:", err);
+          setCurrentlyPlayingId(null);
+          toast.error("Toque novamente no botão para ouvir.");
+        });
+      }
+      return;
+    }
+
+    // Sem cache: buscar áudio e pedir segundo toque (mobile bloqueia play após await)
     setIsPreparingAudio(index);
     try {
       const url = await generateAudio(text);
       if (!url) throw new Error("Falha ao gerar áudio");
 
-      unlockAudio(); // Garante que temos a instância única
-      
-      if (audioRef.current) {
-        const audio = audioRef.current;
-        audio.pause();
+      if (isMobile) {
+        // No mobile, áudio só toca em novo gesto
+        toast.success("Áudio pronto — toque novamente em Ouvir resposta");
+      } else {
         audio.src = url;
-        
+        audio.onended = () => setCurrentlyPlayingId(null);
         const playAudio = () => {
           setCurrentlyPlayingId(index);
-          audio.play().catch(err => {
-            console.error("Erro ao reproduzir áudio manual:", err);
-          });
+          audio.play().catch(err => console.error("Erro ao reproduzir áudio:", err));
           audio.removeEventListener('canplaythrough', playAudio);
         };
-
         audio.addEventListener('canplaythrough', playAudio);
-        audio.onended = () => setCurrentlyPlayingId(null);
       }
     } catch (err: any) {
       console.error("Erro manual ao ouvir resposta:", err);
@@ -1205,19 +1248,21 @@ export default function TutorApp() {
                   <CardTitle className="flex items-center gap-2 font-serif"><MessageCircle className="text-accent" /> Chat com o Tutor</CardTitle>
                   <CardDescription>Tire dúvidas técnicas baseadas no catálogo real da CEFIS.</CardDescription>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={isVoiceActive ? "default" : "outline"}
-                  onClick={handleToggleVoice}
-                  className={cn(
-                    "h-8 gap-2 font-bold transition-all shrink-0",
-                    isVoiceActive ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "text-secondary border-dashed"
-                  )}
-                >
-                  <Sparkles className={cn("w-3 h-3", isVoiceActive && "animate-pulse")} />
-                  {isVoiceActive ? "Voz Ativa" : "Ativar Voz"}
-                </Button>
+                {!isMobile && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isVoiceActive ? "default" : "outline"}
+                    onClick={handleToggleVoice}
+                    className={cn(
+                      "h-8 gap-2 font-bold transition-all shrink-0",
+                      isVoiceActive ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "text-secondary border-dashed"
+                    )}
+                  >
+                    <Sparkles className={cn("w-3 h-3", isVoiceActive && "animate-pulse")} />
+                    {isVoiceActive ? "Voz Ativa" : "Ativar Voz"}
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -1289,7 +1334,7 @@ export default function TutorApp() {
                 </div>
               )}
             </CardContent>
-            {isVoiceActive && (
+            {isVoiceActive && !isMobile && (
               <div className="px-4 py-2 border-t bg-muted/10 flex items-center justify-end">
                 <span className="text-[10px] text-accent font-bold animate-pulse flex items-center gap-1">
                   <div className="flex gap-0.5 items-end h-3">
