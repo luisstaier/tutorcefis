@@ -360,14 +360,17 @@ export default function TutorApp() {
     setIsLoggingIn(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('cefis-login', {
-        body: { email: loginEmail, pass: loginPass }
-      });
-
-      if (functionError) throw functionError;
+      const { data } = await invokeTutorFunction<{
+        error?: string;
+        key?: string;
+        userName?: string;
+        occupation?: string;
+        nivel?: number;
+      }>('cefis-login', { email: loginEmail, pass: loginPass });
       if (data.error) throw new Error(data.error);
+      if (!data.key) throw new Error("Não foi possível concluir o login no celular.");
 
-      sessionStorage.setItem("cefis_user_key", data.key);
+      safeStorage.setSession("cefis_user_key", data.key);
       const profile = {
         nome: data.userName || "",
         experiencia: data.occupation || "",
@@ -375,7 +378,7 @@ export default function TutorApp() {
         objetivo: "",
         estiloAprendizagem: ""
       };
-      localStorage.setItem("tutor_cefis_profile", JSON.stringify(profile));
+      persistProfile(profile);
 
       setUserKey(data.key);
       setFormData(profile);
@@ -391,8 +394,8 @@ export default function TutorApp() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("cefis_user_key");
-    localStorage.removeItem("tutor_cefis_profile");
+    safeStorage.removeSession("cefis_user_key");
+    safeStorage.removeLocal("tutor_cefis_profile");
     setUserKey(undefined);
     setIsAuthenticated(false);
     setStep(-1);
@@ -407,7 +410,7 @@ export default function TutorApp() {
         ...prev,
         [courseId]: [...courseLessons, lessonId]
       };
-      localStorage.setItem("tutor_cefis_progress", JSON.stringify(newProgress));
+      safeStorage.setLocal("tutor_cefis_progress", JSON.stringify(newProgress));
       toast.success("Aula marcada como concluída!");
       return newProgress;
     });
@@ -419,15 +422,12 @@ export default function TutorApp() {
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("tutor_cefis_profile", JSON.stringify(formData));
+    persistProfile(formData);
     setStep(1);
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-diagnostico', {
-        body: { ...formData, userKey }
-      });
-      if (functionError) throw functionError;
+      const { data } = await invokeTutorFunction<{ lacunas?: any[] }>('tutor-diagnostico', { ...formData, userKey });
       setDiagnosis(data.lacunas || []);
     } catch (err: any) {
       setError(err.message || 'Erro ao gerar diagnóstico.');
@@ -440,10 +440,11 @@ export default function TutorApp() {
     setIsGeneratingPlan(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-plano', {
-        body: { perfil: formData, lacunas: diagnosis, userKey }
+      const { data } = await invokeTutorFunction<{ plano?: any[] }>('tutor-plano', {
+        perfil: formData,
+        lacunas: diagnosis,
+        userKey,
       });
-      if (functionError) throw functionError;
       setStudyPlan(data.plano || []);
       setStep(2);
       if (data.plano?.length > 0) {
@@ -462,10 +463,12 @@ export default function TutorApp() {
     if (!mins || !top) return;
     setIsGeneratingSession(true);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-tempo', {
-        body: { minutos: parseInt(mins), topico: top, perfil: formData, userKey }
+      const { data } = await invokeTutorFunction('tutor-tempo', {
+        minutos: parseInt(mins),
+        topico: top,
+        perfil: formData,
+        userKey,
       });
-      if (functionError) throw functionError;
       setQuickSession(data);
     } finally {
       setIsGeneratingSession(false);
@@ -474,34 +477,7 @@ export default function TutorApp() {
 
   const handleAskDuvida = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!duvida.trim()) return;
-    const q = duvida;
-    setDuvida("");
-    setIsAsking(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('tutor-transcricao', {
-        body: { pergunta: q, perfil: formData, userKey }
-      });
-      
-      if (error || !data || data.error) {
-        const { data: duvData } = await supabase.functions.invoke('tutor-duvidas', {
-          body: { pergunta: q, perfil: formData, userKey }
-        });
-        const finalResponse = duvData.resposta;
-        setChatHistory(prev => [...prev, { pergunta: q, resposta: finalResponse, fonte: duvData.curso_id ? { curso: duvData.curso_titulo, aula: "Geral", curso_id: duvData.curso_id } : undefined }]);
-        if (isVoiceActive) {
-          handleListenResponse(chatHistory.length, finalResponse);
-        }
-      } else {
-        const finalResponse = data.resposta;
-        setChatHistory(prev => [...prev, { pergunta: q, resposta: finalResponse, fonte: data.fonte }]);
-        if (isVoiceActive) {
-          handleListenResponse(chatHistory.length, finalResponse);
-        }
-      }
-    } finally {
-      setIsAsking(false);
-    }
+    await askQuestion(duvida);
   };
 
   const handleToggleVoice = () => {
