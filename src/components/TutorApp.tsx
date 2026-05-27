@@ -676,7 +676,7 @@ export default function TutorApp() {
       { id: 5, label: "Catálogo", icon: Library },
     ];
     return (
-      <nav className="w-full mb-8 bg-card/50 backdrop-blur-sm p-1.5 rounded-2xl border border-border sticky top-4 z-50 overflow-hidden">
+      <nav className="w-full mb-8 bg-card/50 backdrop-blur-sm p-1.5 rounded-2xl border border-border sticky top-4 z-[100] overflow-hidden">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 sm:justify-center sm:flex-wrap md:gap-4 scroll-smooth">
           {navItems.map((item) => (
             <button
@@ -904,7 +904,7 @@ export default function TutorApp() {
                     return (
                       <div key={i} className="relative pl-8 before:absolute before:left-3 before:top-2 before:bottom-0 before:w-0.5 before:bg-muted last:before:hidden">
                         <div className={cn(
-                          "absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors z-10",
+                          "absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors z-[1]",
                           lessons.length > 0 ? "bg-[#b3e51d] text-[#051124]" : "bg-accent text-white"
                         )}>
                           {lessons.length > 0 ? "✓" : i+1}
