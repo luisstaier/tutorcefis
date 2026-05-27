@@ -8,6 +8,7 @@ import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { Toaster, toast } from "sonner";
 import { TutorAiLogo } from "./TutorAiLogo";
@@ -176,7 +177,8 @@ const MarkdownRenderer = ({
 
   return (
     <div className={cn("text-sm", className)}>
-      <ReactMarkdown 
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           h1: ({node, ...props}) => <h1 className="font-serif text-xl font-bold mb-3 text-foreground" {...props} />,
           h2: ({node, ...props}) => <h2 className="font-serif text-lg font-bold mb-2 text-foreground" {...props} />,
@@ -187,6 +189,16 @@ const MarkdownRenderer = ({
           li: ({node, ...props}) => <li className="mb-1" {...props} />,
           blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-accent pl-4 italic my-4 text-secondary bg-accent/5 py-2 rounded-r" {...props} />,
           strong: ({node, ...props}) => <strong className="font-bold text-accent" {...props} />,
+          table: ({node, ...props}) => (
+            <div className="my-4 overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm border-collapse" {...props} />
+            </div>
+          ),
+          thead: ({node, ...props}) => <thead className="bg-accent/10" {...props} />,
+          tbody: ({node, ...props}) => <tbody className="divide-y divide-border" {...props} />,
+          tr: ({node, ...props}) => <tr className="border-b border-border last:border-0" {...props} />,
+          th: ({node, ...props}) => <th className="px-3 py-2 text-left font-bold text-foreground border-r border-border last:border-r-0" {...props} />,
+          td: ({node, ...props}) => <td className="px-3 py-2 text-foreground border-r border-border last:border-r-0 align-top" {...props} />,
           a: ({node, ...props}) => {
             const href = props.href || "";
             if (href.startsWith("course://")) {
@@ -437,29 +449,11 @@ export default function TutorApp() {
         return newHistory;
       });
 
-      // 3. Áudio: no mobile, apenas pré-gera (sem autoplay). No desktop, toca se "Voz Ativa".
+      // 3. Áudio: SEM autoplay em nenhuma plataforma. Pré-gera para o botão "Ouvir resposta".
       if (finalResponse) {
-        const shouldAutoPlay = isVoiceActive && !isMobile;
-        if (shouldAutoPlay || isMobile) {
-          setIsPreparingAudio(chatHistory.length);
-          const audioUrl = await generateAudio(finalResponse);
-          setIsPreparingAudio(null);
-
-          if (audioUrl && shouldAutoPlay) {
-            const audio = getAudio();
-            audio.pause();
-            audio.src = audioUrl;
-            const playAudio = () => {
-              setCurrentlyPlayingId(chatHistory.length);
-              audio.play().catch(err => console.error("Erro ao reproduzir áudio automático:", err));
-              audio.removeEventListener('canplaythrough', playAudio);
-            };
-            audio.addEventListener('canplaythrough', playAudio);
-            audio.onended = () => setCurrentlyPlayingId(null);
-          }
-        } else if (isVoiceActive) {
-          // já tratado acima (desktop)
-        }
+        setIsPreparingAudio(chatHistory.length);
+        await generateAudio(finalResponse);
+        setIsPreparingAudio(null);
       }
     } finally {
       setIsAsking(false);
