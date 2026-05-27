@@ -1242,21 +1242,33 @@ export default function TutorApp() {
                   <CardTitle className="flex items-center gap-2 font-serif"><MessageCircle className="text-accent" /> Chat com o Tutor</CardTitle>
                   <CardDescription>Tire dúvidas técnicas baseadas no catálogo real da CEFIS.</CardDescription>
                 </div>
-                {!isMobile && chatHistory.some(c => !c.isLoading && c.resposta) && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={isVoiceActive ? "default" : "outline"}
-                    onClick={handleToggleVoice}
-                    className={cn(
-                      "h-8 gap-2 font-bold transition-all shrink-0",
-                      isVoiceActive ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "text-secondary border-dashed"
-                    )}
-                  >
-                    <Sparkles className={cn("w-3 h-3", isVoiceActive && "animate-pulse")} />
-                    {isVoiceActive ? "Voz Ativa" : "Ativar Voz"}
-                  </Button>
-                )}
+                {!isMobile && (() => {
+                  const lastIdx = [...chatHistory].map((c, i) => ({ c, i })).reverse().find(({ c }) => !c.isLoading && c.resposta)?.i;
+                  if (lastIdx === undefined) return null;
+                  const chat = chatHistory[lastIdx];
+                  const isPlaying = currentlyPlayingId === lastIdx;
+                  const isPreparing = isPreparingAudio === lastIdx;
+                  return (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleListenResponse(lastIdx, chat.resposta)}
+                      className={cn(
+                        "h-8 gap-2 font-bold transition-all shrink-0",
+                        isPlaying ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "bg-muted text-secondary hover:text-accent"
+                      )}
+                    >
+                      {isPreparing ? (
+                        <><Loader2 className="w-3 h-3 animate-spin" /> Preparando...</>
+                      ) : isPlaying ? (
+                        <><Pause className="w-3 h-3" /> Pausar</>
+                      ) : (
+                        <><Volume2 className="w-3 h-3 text-[#b3e51d]" /> Ouvir resposta</>
+                      )}
+                    </Button>
+                  );
+                })()}
+
 
 
               </div>
