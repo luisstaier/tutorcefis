@@ -544,7 +544,7 @@ export default function TutorApp() {
               <span className="text-xs text-secondary font-medium italic">Logado como {formData.nome}</span>
             </div>
             <CardHeader>
-              <CardTitle className="text-2xl font-serif">Bem-vindo ao seu Tutor IA</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl font-serif break-words leading-tight">Bem-vindo ao seu Tutor IA</CardTitle>
               <CardDescription>Vamos alinhar seu objetivo para criar um plano de estudos sob medida.</CardDescription>
             </CardHeader>
             <CardContent>
