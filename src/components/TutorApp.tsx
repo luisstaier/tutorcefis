@@ -432,11 +432,6 @@ export default function TutorApp() {
           audio.onended = () => setCurrentlyPlayingId(null);
         }
       }
-            audioRef.current = fallbackAudio;
-            fallbackAudio.play().catch(e => console.error("Fallback audio final failed", e));
-          });
-        }, 50);
-      }
     } finally {
       setIsAsking(false);
     }
