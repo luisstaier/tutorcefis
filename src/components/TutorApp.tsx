@@ -163,25 +163,31 @@ export default function TutorApp() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const savedKey = sessionStorage.getItem("cefis_user_key");
-    const savedProfile = localStorage.getItem("tutor_cefis_profile");
-    const validKey = savedKey && savedKey !== "undefined" && savedKey !== "null" ? savedKey : null;
+    try {
+      const savedKey = (() => { try { return sessionStorage.getItem("cefis_user_key"); } catch { return null; } })();
+      const savedProfile = (() => { try { return localStorage.getItem("tutor_cefis_profile"); } catch { return null; } })();
+      const validKey = savedKey && savedKey !== "undefined" && savedKey !== "null" ? savedKey : null;
 
-    if (validKey && savedProfile) {
-      setUserKey(validKey);
-      setFormData(JSON.parse(savedProfile));
-      setIsAuthenticated(true);
-      setStep(0);
-    } else {
-      if (savedKey) sessionStorage.removeItem("cefis_user_key");
+      if (validKey && savedProfile) {
+        setUserKey(validKey);
+        try { setFormData(JSON.parse(savedProfile)); } catch { /* perfil corrompido, ignora */ }
+        setIsAuthenticated(true);
+        setStep(0);
+      } else {
+        if (savedKey) { try { sessionStorage.removeItem("cefis_user_key"); } catch {} }
+        setStep(-1);
+      }
+
+      const savedProgress = (() => { try { return localStorage.getItem("tutor_cefis_progress"); } catch { return null; } })();
+      if (savedProgress) {
+        try { setCompletedLessons(JSON.parse(savedProgress)); } catch { /* progresso corrompido, ignora */ }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados salvos:", err);
       setStep(-1);
     }
-
-    const savedProgress = localStorage.getItem("tutor_cefis_progress");
-    if (savedProgress) {
-      setCompletedLessons(JSON.parse(savedProgress));
-    }
   }, []);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
