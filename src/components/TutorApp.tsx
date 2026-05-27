@@ -119,39 +119,59 @@ const MarkdownRenderer = ({
   className = "", 
   courseName, 
   courseId, 
-  onCourseClick 
+  onCourseClick,
+  isTyping = false
 }: { 
   content: string; 
   className?: string;
   courseName?: string;
   courseId?: number;
   onCourseClick?: (id: number, title: string) => void;
+  isTyping?: boolean;
 }) => {
+  const [displayedText, setDisplayedText] = useState(isTyping ? "" : content);
+  
+  useEffect(() => {
+    if (!isTyping) {
+      setDisplayedText(content);
+      return;
+    }
+
+    let currentText = "";
+    let i = 0;
+    const speed = 20; // ms por caractere
+
+    const timer = setInterval(() => {
+      if (i < content.length) {
+        currentText += content[i];
+        setDisplayedText(currentText);
+        i++;
+      } else {
+        clearInterval(timer);
+      }
+    }, speed);
+
+    return () => clearInterval(timer);
+  }, [content, isTyping]);
+
   const processedContent = useMemo(() => {
-    if (!courseName || !courseId || !onCourseClick) return content;
+    if (!courseName || !courseId || !onCourseClick) return displayedText;
     
-    // Procura por "Nome do Curso" ou Nome do Curso (destacado)
-    // Vamos usar regex para encontrar a primeira ocorrência do nome do curso entre aspas ou como texto exato
-    // Escapa caracteres especiais do nome do curso para o regex
     const escapedName = courseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`(["'])(${escapedName})\\1|(${escapedName})`, 'i');
     
-    const match = content.match(regex);
-    if (!match) return content;
+    const match = displayedText.match(regex);
+    if (!match) return displayedText;
 
     const matchedText = match[0];
     const startIndex = match.index!;
     
-    // Substitui apenas a primeira ocorrência por um marcador customizado para o Markdown ou link HTML
-    // Como estamos usando react-markdown, podemos injetar um link que o componente 'a' irá renderizar
-    // ou simplesmente retornar partes. Mas o react-markdown é mais limpo.
-    // Vamos envolver com um link markdown [Texto](course://id)
     return (
-      content.slice(0, startIndex) + 
+      displayedText.slice(0, startIndex) + 
       `[${matchedText}](course://${courseId})` + 
-      content.slice(startIndex + matchedText.length)
+      displayedText.slice(startIndex + matchedText.length)
     );
-  }, [content, courseName, courseId]);
+  }, [displayedText, courseName, courseId, onCourseClick]);
 
   return (
     <div className={cn("text-sm", className)}>
@@ -188,6 +208,9 @@ const MarkdownRenderer = ({
       >
         {processedContent}
       </ReactMarkdown>
+      {isTyping && displayedText.length < content.length && (
+        <span className="inline-block w-1 h-4 ml-1 bg-accent animate-pulse align-middle" />
+      )}
     </div>
   );
 };
@@ -251,6 +274,7 @@ export default function TutorApp() {
     pergunta: string;
     resposta: string;
     fonte?: { curso: string; aula: string; curso_id?: number };
+    isNew?: boolean;
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
@@ -259,6 +283,7 @@ export default function TutorApp() {
   const [isPreparingAudio, setIsPreparingAudio] = useState<number | null>(null);
   const [selectedAiContent, setSelectedAiContent] = useState<{ titulo: string; conteudo: string } | null>(null);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [audioCache, setAudioCache] = useState<Record<string, string>>({});
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -269,6 +294,12 @@ export default function TutorApp() {
   };
 
   const generateAudio = async (text: string): Promise<string | null> => {
+    // Cache key based on text and voice (voice_id is currently hardcoded in function)
+    const cacheKey = btoa(unescape(encodeURIComponent(text.slice(0, 100) + text.length)));
+    if (audioCache[cacheKey]) {
+      return audioCache[cacheKey];
+    }
+
     try {
       const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
       if (!data || !data.audio) return null;
@@ -279,7 +310,10 @@ export default function TutorApp() {
       }
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'audio/mpeg' });
-      return URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      
+      setAudioCache(prev => ({ ...prev, [cacheKey]: url }));
+      return url;
     } catch (err) {
       console.error("Erro ao gerar áudio:", err);
       return null;
@@ -297,6 +331,7 @@ export default function TutorApp() {
       let finalResponse = "";
       let finalFonte: any = undefined;
 
+      // 1. Inicia o carregamento da resposta (texto e depois áudio se voz ativa)
       const { data } = await invokeTutorFunction<{
         resposta?: string;
         fonte?: { curso: string; aula: string; curso_id?: number };
@@ -326,18 +361,21 @@ export default function TutorApp() {
         finalFonte = data.fonte;
       }
 
+      // 2. Gera áudio ANTES de mostrar se voz ativa, para sincronizar
       let audioUrl = null;
       if (isVoiceActive && finalResponse) {
         audioUrl = await generateAudio(finalResponse);
       }
 
+      // 3. Mostra a mensagem e inicia áudio simultaneamente
       const nextIndex = chatHistory.length;
       setChatHistory((prev) => [
-        ...prev,
+        ...prev.map(msg => ({ ...msg, isNew: false })), // Garante que apenas a última seja 'isNew'
         {
           pergunta: q,
           resposta: finalResponse,
           fonte: finalFonte,
+          isNew: true
         },
       ]);
 
@@ -351,8 +389,6 @@ export default function TutorApp() {
         audio.onended = () => setCurrentlyPlayingId(null);
         audio.play().catch(err => {
           console.error("Erro ao reproduzir áudio:", err);
-          // Em alguns navegadores mobile, play() precisa de interação direta. 
-          // Mas como isso vem de um clique (no botão de enviar ou mic), deve funcionar.
         });
       }
     } finally {
@@ -1123,6 +1159,7 @@ export default function TutorApp() {
                         courseName={chat.fonte?.curso}
                         courseId={chat.fonte?.curso_id}
                         onCourseClick={(id, title) => handleSearchCourses(undefined, id, false)}
+                        isTyping={chat.isNew}
                       />
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
                         {chat.fonte ? (
