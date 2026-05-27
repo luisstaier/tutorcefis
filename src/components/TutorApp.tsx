@@ -413,12 +413,21 @@ export default function TutorApp() {
       if (audioUrl && audioRef.current) {
         const audio = audioRef.current;
         audio.src = audioUrl;
-        const lastIndex = chatHistory.length; // Referência correta ao índice do áudio
-        setCurrentlyPlayingId(lastIndex);
+        // O índice do áudio no histórico é newHistory.length - 1
+        const audioIndex = chatHistory.length; 
+        setCurrentlyPlayingId(audioIndex);
         audio.onended = () => setCurrentlyPlayingId(null);
-        audio.play().catch(err => {
-          console.error("Erro ao reproduzir áudio:", err);
-        });
+        
+        // Pequeno atraso para garantir que o src foi processado pelo browser
+        setTimeout(() => {
+          audio.play().catch(err => {
+            console.error("Erro ao reproduzir áudio automático:", err);
+            // Se falhar o src reaproveitado, tenta um novo objeto como fallback
+            const fallbackAudio = new Audio(audioUrl);
+            audioRef.current = fallbackAudio;
+            fallbackAudio.play().catch(e => console.error("Fallback audio final failed", e));
+          });
+        }, 50);
       }
     } finally {
       setIsAsking(false);

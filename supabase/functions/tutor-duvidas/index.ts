@@ -132,9 +132,9 @@ serve(async (req) => {
       return (j === -1 ? rawContent.substring(from) : rawContent.substring(from, j)).trim();
     };
 
-    const resposta = pick("###RESPOSTA###", "###CURSO_ID###") || rawContent.trim();
+    const resposta = (pick("###RESPOSTA###", "###CURSO_ID###") || rawContent.trim()).normalize('NFC');
     const cursoIdRaw = pick("###CURSO_ID###", "###CURSO_TITULO###");
-    const cursoTituloRaw = pick("###CURSO_TITULO###", "###FIM###");
+    const cursoTituloRaw = pick("###CURSO_TITULO###", "###FIM###").normalize('NFC');
 
     const cursoIdNum = parseInt(cursoIdRaw, 10);
     const curso_id = Number.isFinite(cursoIdNum) ? cursoIdNum : null;
