@@ -108,7 +108,9 @@ serve(async (req) => {
 
       // 4. PERCENTUAIS E NÚMEROS ESPECIAIS
       t = t
-        .replace(/(\d+(?:,\d+)?)\s*%/g,'$1 por cento')
+        .replace(/(\d+(?:[.,]\d+)?)\s*%/g,'$1 por cento')
+        // "x" como multiplicação entre valores/números: "5.000,00 x 27,5%" -> "vezes"
+        .replace(/(\d[\d.,]*\s*(?:reais|por cento)?)\s*[x×]\s*(\d)/gi, '$1 vezes $2')
         .replace(/nº\s?(\d+)/g,'número $1')
         .replace(/Nº\s?(\d+)/g,'Número $1')
         .replace(/art\.\s?(\d+)/gi,'Artigo $1')
