@@ -88,6 +88,12 @@ serve(async (req) => {
         
         SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
 
+        FORMATAÇÃO DE TABELAS: SEMPRE que apresentar dados comparativos, faixas, alíquotas, deduções ou colunas (ex: tabela de IRPF, Simples Nacional, faixas de cálculo), use OBRIGATORIAMENTE tabelas em markdown GFM no formato:
+        | Coluna 1 | Coluna 2 | Coluna 3 |
+        |----------|----------|----------|
+        | dado     | dado     | dado     |
+        NUNCA coloque dados tabulares em uma única linha com pipes (|) sem quebras de linha — isso quebra a renderização.
+
         Responda ESTRITAMENTE neste formato de texto (sem JSON, sem code fences):
         ###RESPOSTA###
         (sua resposta em markdown aqui, pode ter várias linhas, aspas, etc)
