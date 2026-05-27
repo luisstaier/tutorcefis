@@ -20,22 +20,15 @@ serve(async (req) => {
     }
 
     const processTextForAudio = (text: string) => {
-      let t = text
+      let t = text;
 
-      // ── 1. CORRIGE ENCODING CORROMPIDO (Latin-1 lido como UTF-8) ──
-      t = t
-        .replace(/Ã§/g,'ç').replace(/Ã£/g,'ã').replace(/Ã¡/g,'á')
-        .replace(/Ã©/g,'é').replace(/Ã­/g,'í').replace(/Ã³/g,'ó')
-        .replace(/Ãº/g,'ú').replace(/Ã¢/g,'â').replace(/Ãª/g,'ê')
-        .replace(/Ã´/g,'ô').replace(/Ã /g,'à').replace(/Ãµ/g,'õ')
-        .replace(/Ã‡/g,'Ç').replace(/Ãƒ/g,'Ã').replace(/Ã‰/g,'É')
-        .replace(/Ã"/g,'Ó').replace(/Ãš/g,'Ú').replace(/Ã‚/g,'Â')
-        .replace(/ÃŠ/g,'Ê').replace(/Ã"/g,'Ô').replace(/Ã€/g,'À')
+      // REMOVIDO: Substituições manuais de encoding Ã§ etc. que causavam mais problemas.
+      // O Deno já trata JSON como UTF-8 corretamente.
+      
+      // 1. NORMALIZA UNICODE para garantir acentos compostos
+      t = t.normalize('NFC');
 
-      // ── 2. NORMALIZA UNICODE ──
-      t = t.normalize('NFC')
-
-      // ── 3. REMOVE MARKDOWN ──
+      // 2. REMOVE MARKDOWN (Preservando acentos e ç)
       t = t
         .replace(/#{1,6}\s+/g,'')
         .replace(/\*\*(.*?)\*\*/gs,'$1')
@@ -50,24 +43,24 @@ serve(async (req) => {
         .replace(/\[([^\]]+)\]\([^)]+\)/g,'$1')
         .replace(/---+/g,'')
         .replace(/===+/g,'')
-        .replace(/\n{3,}/g,'\n\n')
+        .replace(/\n{3,}/g,'\n\n');
 
-      // ── 4. VALORES MONETÁRIOS ──
+      // 3. VALORES MONETÁRIOS
       t = t
         .replace(/R\$\s?(\d[\d.,]*)/g,'$1 reais')
         .replace(/US\$\s?(\d[\d.,]*)/g,'$1 dólares')
         .replace(/€\s?(\d[\d.,]*)/g,'$1 euros')
-        .replace(/(?<![A-Za-zÀ-ú\d])\$(\d)/g,'$1 dólares')
+        .replace(/(?<![A-Za-zÀ-ú\d])\$(\d)/g,'$1 dólares');
 
-      // ── 5. PERCENTUAIS E NÚMEROS ESPECIAIS ──
+      // 4. PERCENTUAIS E NÚMEROS ESPECIAIS
       t = t
         .replace(/(\d+(?:,\d+)?)\s*%/g,'$1 por cento')
         .replace(/nº\s?(\d+)/g,'número $1')
         .replace(/Nº\s?(\d+)/g,'Número $1')
         .replace(/art\.\s?(\d+)/gi,'Artigo $1')
-        .replace(/§\s?(\d+)/g,'parágrafo $1')
+        .replace(/§\s?(\d+)/g,'parágrafo $1');
 
-      // ── 6. ORDINAIS ──
+      // 5. ORDINAIS
       t = t
         .replace(/\b13º/g,'décimo terceiro')
         .replace(/\b12º/g,'décimo segundo')
@@ -83,9 +76,9 @@ serve(async (req) => {
         .replace(/\b11ª/g,'décima primeira')
         .replace(/\b10ª/g,'décima')
         .replace(/\b3ª/g,'terceira').replace(/\b2ª/g,'segunda')
-        .replace(/\b1ª/g,'primeira')
+        .replace(/\b1ª/g,'primeira');
 
-      // ── 7. SIGLAS CONTÁBEIS E FISCAIS ──
+      // 6. SIGLAS CONTÁBEIS E FISCAIS
       t = t
         .replace(/\bPIS\b/g,'P I S')
         .replace(/\bCOFINS\b/g,'Cofins')
@@ -121,17 +114,17 @@ serve(async (req) => {
         .replace(/\bCTe\b/g,'Conhecimento de Transporte Eletrônico')
         .replace(/\bLTDA\.?/g,'Limitada')
         .replace(/\bS\.A\.?/g,'Sociedade Anônima')
-        .replace(/\bEIRELI\b/g,'Eireli')
+        .replace(/\bEIRELI\b/g,'Eireli');
 
-      // ── 8. PAUSAS NATURAIS ──
+      // 7. PAUSAS NATURAIS
       t = t
         .replace(/\. /g,'.  ')
         .replace(/: /g,':  ')
         .replace(/([!?]) /g,'$1  ')
-        .replace(/\n\n/g,'\n\n  ')
+        .replace(/\n\n/g,'\n\n  ');
 
-      return t.trim()
-    }
+      return t.trim();
+    };
 
     const cleanText = processTextForAudio(text);
 
@@ -142,16 +135,9 @@ serve(async (req) => {
       for (const p of paragraphs) {
         let current = p.trim();
         while (current.length > maxChars) {
-          // Busca o último ponto final antes do limite de 500 caracteres
           let splitIndex = current.lastIndexOf('.', maxChars);
-          
-          // Se não houver ponto, tenta vírgula
           if (splitIndex === -1) splitIndex = current.lastIndexOf(',', maxChars);
-          
-          // Se não houver vírgula, tenta espaço
           if (splitIndex === -1) splitIndex = current.lastIndexOf(' ', maxChars);
-          
-          // Se ainda assim não houver, corta no limite
           if (splitIndex === -1) splitIndex = maxChars;
 
           chunks.push(current.substring(0, splitIndex + 1).trim());
@@ -165,14 +151,12 @@ serve(async (req) => {
     const chunks = splitIntoChunks(cleanText);
     const audioChunks: Uint8Array[] = [];
 
-    console.log(`Processando ${chunks.length} blocos de áudio para ElevenLabs.`);
-
     for (let i = 0; i < chunks.length; i++) {
       const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: "POST",
         headers: {
           "xi-api-key": apiKey,
-          "Content-Type": "application/json; charset=utf-8",
+          "Content-Type": "application/json", // Removido charset=utf-8 redundante
         },
         body: JSON.stringify({
           text: chunks[i],
@@ -200,7 +184,6 @@ serve(async (req) => {
       throw new Error("Não foi possível gerar nenhum áudio.");
     }
 
-    // Concatena todos os chunks de áudio (MP3)
     const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
     const combinedAudio = new Uint8Array(totalLength);
     let offset = 0;
@@ -209,7 +192,6 @@ serve(async (req) => {
       offset += chunk.length;
     }
 
-    // Converte para base64
     let binary = "";
     const CHUNK_SIZE = 8192;
     for (let i = 0; i < combinedAudio.length; i += CHUNK_SIZE) {

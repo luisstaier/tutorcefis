@@ -327,8 +327,11 @@ export default function TutorApp() {
       
       setAudioCache(prev => ({ ...prev, [cacheKey]: url }));
       return url;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao gerar áudio:", err);
+      // Se o erro for do Supabase ou rede, tentamos logar o detalhe
+      const errorMsg = err?.message || "Erro desconhecido";
+      console.log(`Detalhe do erro de áudio: ${errorMsg}`);
       return null;
     }
   };
@@ -671,8 +674,9 @@ export default function TutorApp() {
       };
 
       await audio.play();
-    } catch (err) {
-      toast.error("Áudio indisponível no momento");
+    } catch (err: any) {
+      console.error("Erro manual ao ouvir resposta:", err);
+      toast.error(`Áudio indisponível: ${err?.message || 'Tente novamente'}`);
     } finally {
       setIsPreparingAudio(null);
     }
