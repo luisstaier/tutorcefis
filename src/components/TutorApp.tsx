@@ -879,12 +879,14 @@ export default function TutorApp() {
                               <span className="break-words">{item.titulo}</span>
                               {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d] shrink-0" />}
                             </h4>
-                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                              {item.origem === 'catalogo_cefis' ? (
-                                <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
-                              ) : (
-                                <TutorAiLogo showText={false} className="scale-90" />
-                              )}
+                            <div className="flex items-center justify-between sm:justify-start gap-2 shrink-0 flex-wrap w-full sm:w-auto">
+                              <div className="flex items-center gap-2">
+                                {item.origem === 'catalogo_cefis' ? (
+                                  <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
+                                ) : (
+                                  <TutorAiLogo showText={false} className="scale-90" />
+                                )}
+                              </div>
                               <Button 
                                 size="sm"
                                 onClick={() => {
@@ -900,7 +902,7 @@ export default function TutorApp() {
                                   }
                                 }}
                                 className={cn(
-                                  "font-bold h-8",
+                                  "font-bold h-8 flex-1 sm:flex-none",
                                   item.curso_id 
                                     ? "bg-accent hover:bg-accent/90 text-primary-foreground" 
                                     : "bg-[#b3e51d] hover:bg-[#b3e51d]/90 text-[#051124]"
