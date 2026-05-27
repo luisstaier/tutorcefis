@@ -29,7 +29,8 @@ serve(async (req) => {
       body: JSON.stringify({ email, pass }),
     });
 
-    const data = await response.json();
+    const payload = await response.json();
+    const loginData = payload?.data ?? payload;
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -39,15 +40,25 @@ serve(async (req) => {
         );
       }
       return new Response(
-        JSON.stringify({ error: data.message || "Erro ao fazer login na CEFIS" }),
+        JSON.stringify({ error: payload?.message || loginData?.message || "Erro ao fazer login na CEFIS" }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const user = data.user || {};
+    const user = loginData?.user || {};
+    const key = loginData?.key;
+
+    if (!key) {
+      console.error("Login payload sem chave de acesso:", payload);
+      return new Response(
+        JSON.stringify({ error: "A resposta do login veio incompleta." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({
-        key: data.key,
+        key,
         userName: user.name,
         userEmail: user.email,
         occupation: user.occupation,
