@@ -20,15 +20,21 @@ serve(async (req) => {
     }
 
     const processTextForAudio = (text: string) => {
-      // 1. Primeiro normaliza encoding
-      let result = text.normalize('NFC')
-      
-      // 2. Remove markdown
+      // 1. Normaliza encoding UTF-8 e preserva acentos
+      let result = text
+        .normalize('NFC')
+        .replace(/Ã§/g, 'ç').replace(/Ã£/g, 'ã').replace(/Ã¡/g, 'á')
+        .replace(/Ã©/g, 'é').replace(/Ã­/g, 'í').replace(/Ã³/g, 'ó')
+        .replace(/Ãº/g, 'ú').replace(/Ã¢/g, 'â').replace(/Ãª/g, 'ê')
+        .replace(/Ã´/g, 'ô').replace(/Ã /g, 'à').replace(/Ã¥/g, 'õ')
+        .replace(/Ã‡/g, 'Ç').replace(/Ãƒ/g, 'Ã')
+
+      // 2. Remove markdown mas preserva letras acentuadas
       result = result
         .replace(/#{1,6}\s+/g, '')
-        .replace(/\*\*(.*?)\*\*/g, '$1')
-        .replace(/\*(.*?)\*/g, '$1')
-        .replace(/`(.*?)`/g, '$1')
+        .replace(/\*\*(.*?)\*\*/gs, '$1')
+        .replace(/\*(.*?)\*/gs, '$1')
+        .replace(/`(.*?)`/gs, '$1')
         .replace(/^[-*+]\s+/gm, '')
         .replace(/^\d+\.\s+/gm, '')
         .replace(/^>\s+/gm, '')
@@ -36,18 +42,19 @@ serve(async (req) => {
         .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
         .replace(/---+/g, '')
         .replace(/\n{3,}/g, '\n\n')
-      
-      // 3. Converte valores monetários para fala natural
+
+      // 3. Valores monetários para fala natural
       result = result
         .replace(/R\$\s?(\d[\d.,]*)/g, '$1 reais')
-        .replace(/(?<!R)\$/g, '')
-      
-      // 4. Adiciona pausas naturais
+        .replace(/(?<![A-Za-zÀ-ú])\$(?!\d)/g, '')
+
+      // 4. Pausas naturais
       result = result
         .replace(/\. /g, '.  ')
         .replace(/: /g, ':  ')
         .replace(/([!?]) /g, '$1  ')
-      
+
+      // 5. Garante que o JSON final vai como UTF-8
       return result.trim()
     }
 
@@ -90,7 +97,7 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "xi-api-key": apiKey,
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
         },
         body: JSON.stringify({
           text: chunks[i],
