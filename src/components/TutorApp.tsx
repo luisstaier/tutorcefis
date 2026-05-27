@@ -142,8 +142,9 @@ const MarkdownRenderer = ({
     const speed = 20; // ms por caractere
 
     const timer = setInterval(() => {
-      if (i < content.length) {
-        currentText += content[i];
+      const normalizedContent = content.normalize('NFC');
+      if (i < normalizedContent.length) {
+        currentText += normalizedContent[i];
         setDisplayedText(currentText);
         i++;
       } else {
@@ -291,16 +292,20 @@ export default function TutorApp() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
 
-  const unlockAudio = () => {
-    if (isAudioUnlocked.current) return;
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
-    const audio = audioRef.current;
-    audio.play().then(() => {
+  const unlockAudio = async () => {
+    if (isAudioUnlocked.current || !audioRef.current) return;
+    
+    try {
+      const audio = audioRef.current;
+      audio.muted = true;
+      await audio.play();
       audio.pause();
+      audio.muted = false;
       isAudioUnlocked.current = true;
-    }).catch(e => console.log("Audio unlock failed", e));
+      console.log("Audio unlocked successfully");
+    } catch (e) {
+      console.log("Audio unlock failed:", e);
+    }
   };
 
   const persistProfile = (profile: typeof formData) => {
@@ -405,25 +410,28 @@ export default function TutorApp() {
       });
 
       // 3. Gera áudio em paralelo
-      let audioUrl = null;
       if (isVoiceActive && finalResponse) {
-        audioUrl = await generateAudio(finalResponse);
-      }
+        setIsPreparingAudio(chatHistory.length);
+        const audioUrl = await generateAudio(finalResponse);
+        setIsPreparingAudio(null);
 
-      if (audioUrl && audioRef.current) {
-        const audio = audioRef.current;
-        audio.src = audioUrl;
-        // O índice do áudio no histórico é newHistory.length - 1
-        const audioIndex = chatHistory.length; 
-        setCurrentlyPlayingId(audioIndex);
-        audio.onended = () => setCurrentlyPlayingId(null);
-        
-        // Pequeno atraso para garantir que o src foi processado pelo browser
-        setTimeout(() => {
-          audio.play().catch(err => {
-            console.error("Erro ao reproduzir áudio automático:", err);
-            // Se falhar o src reaproveitado, tenta um novo objeto como fallback
-            const fallbackAudio = new Audio(audioUrl);
+        if (audioUrl && audioRef.current) {
+          const audio = audioRef.current;
+          audio.pause();
+          audio.src = audioUrl;
+          
+          const playAudio = () => {
+            setCurrentlyPlayingId(chatHistory.length);
+            audio.play().catch(err => {
+              console.error("Erro ao reproduzir áudio automático:", err);
+            });
+            audio.removeEventListener('canplaythrough', playAudio);
+          };
+
+          audio.addEventListener('canplaythrough', playAudio);
+          audio.onended = () => setCurrentlyPlayingId(null);
+        }
+      }
             audioRef.current = fallbackAudio;
             fallbackAudio.play().catch(e => console.error("Fallback audio final failed", e));
           });
@@ -1260,7 +1268,7 @@ export default function TutorApp() {
                   </div>
                 </div>
               ))}
-              {(isAsking || isPreparingAudio !== null) && (
+              {isPreparingAudio !== null && (
                 <div className="flex justify-start">
                   <div className="bg-muted p-3 rounded-2xl rounded-tl-none flex items-center gap-3 shadow-sm">
                     <div className="flex items-center gap-1.5 px-1">
@@ -1269,7 +1277,7 @@ export default function TutorApp() {
                       <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_infinite_400ms]" />
                     </div>
                     <span className="text-xs font-medium text-secondary">
-                      {isAsking ? "Tutor está digitando..." : "Preparando áudio..."}
+                      Preparando áudio...
                     </span>
                   </div>
                 </div>
@@ -1291,6 +1299,8 @@ export default function TutorApp() {
               <Button 
                 type="button"
                 onClick={isRecording ? handleStopRecording : handleStartRecording}
+                onTouchStart={() => unlockAudio()}
+                onMouseDown={() => unlockAudio()}
                 className={cn(
                   "h-12 w-12 shrink-0 rounded-xl transition-all duration-300",
                   isRecording ? "bg-red-500 hover:bg-red-600 animate-pulse" : "bg-muted/50 hover:bg-muted text-secondary hover:text-accent"
@@ -1306,7 +1316,14 @@ export default function TutorApp() {
                 disabled={isAsking || isRecording} 
                 className="h-12 border-none bg-muted/30" 
               />
-              <Button type="submit" disabled={isAsking || isRecording || !duvida.trim()} size="icon" className="h-12 w-12 bg-accent shrink-0 rounded-xl">
+              <Button 
+                type="submit" 
+                disabled={isAsking || isRecording || !duvida.trim()} 
+                size="icon" 
+                className="h-12 w-12 bg-accent shrink-0 rounded-xl"
+                onTouchStart={() => unlockAudio()}
+                onMouseDown={() => unlockAudio()}
+              >
                 <Send className="w-5 h-5" />
               </Button>
             </form>

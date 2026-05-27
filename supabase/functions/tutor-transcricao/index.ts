@@ -120,17 +120,17 @@ serve(async (req) => {
 
     const claudeResult = await claudeResponse.json();
     let answer = claudeResult.content[0].text;
-    answer = answer.replace(/^```[a-z]*\n/i, "").replace(/\n```$/i, "").trim();
+    answer = answer.replace(/^```[a-z]*\n/i, "").replace(/\n```$/i, "").trim().normalize('NFC');
 
     return new Response(JSON.stringify({ 
       resposta: answer,
       fonte: {
-        curso: course.title,
-        aula: lesson.title,
+        curso: (course.title as string).normalize('NFC'),
+        aula: (lesson.title as string).normalize('NFC'),
         curso_id: course.id
       }
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
     });
 
   } catch (error) {
