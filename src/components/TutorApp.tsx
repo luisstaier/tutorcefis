@@ -327,8 +327,11 @@ export default function TutorApp() {
       
       setAudioCache(prev => ({ ...prev, [cacheKey]: url }));
       return url;
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao gerar áudio:", err);
+      // Se o erro for do Supabase ou rede, tentamos logar o detalhe
+      const errorMsg = err?.message || "Erro desconhecido";
+      console.log(`Detalhe do erro de áudio: ${errorMsg}`);
       return null;
     }
   };
