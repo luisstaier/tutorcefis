@@ -2,7 +2,7 @@
 
 Tutor de aprendizado pessoal com Inteligência Artificial, criado para alunos da plataforma **CEFIS**. O Tutor entende o perfil, o objetivo e o nível do aluno, identifica lacunas de conhecimento, monta um plano de estudos personalizado usando o catálogo real de cursos da CEFIS e responde dúvidas por **texto ou voz** — com áudio gerado em português natural.
 
-> Projeto desenvolvido com [Lovable](https://lovable.dev) e sincronizado com GitHub.
+> Projeto desenvolvido por **Luis Staier** ([www.estouapta.com.br](http://www.estouapta.com.br)) com o uso do [Lovable](https://lovable.dev) e sincronizado com GitHub.
 
 ---
 
