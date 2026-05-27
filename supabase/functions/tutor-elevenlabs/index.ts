@@ -45,9 +45,63 @@ serve(async (req) => {
         .replace(/===+/g,'')
         .replace(/\n{3,}/g,'\n\n');
 
-      // 3. VALORES MONETÁRIOS
+      // 3. VALORES MONETÁRIOS - converte número em extenso (pt-BR conversacional)
+      const numeroPorExtenso = (numStr: string): string => {
+        // Remove separadores de milhar (.) e troca decimal (,) por (.)
+        const limpo = numStr.replace(/\./g, '').replace(',', '.');
+        const partes = limpo.split('.');
+        const inteiro = parseInt(partes[0], 10) || 0;
+        const centavos = partes[1] ? parseInt(partes[1].padEnd(2, '0').substring(0, 2), 10) : 0;
+
+        const unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        const especiais = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+        const dezenas = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+        const centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+        const ate999 = (n: number): string => {
+          if (n === 0) return '';
+          if (n === 100) return 'cem';
+          const c = Math.floor(n / 100);
+          const resto = n % 100;
+          const d = Math.floor(resto / 10);
+          const u = resto % 10;
+          const parts: string[] = [];
+          if (c > 0) parts.push(centenas[c]);
+          if (resto > 0 && resto < 10) parts.push(unidades[u]);
+          else if (resto >= 10 && resto < 20) parts.push(especiais[resto - 10]);
+          else if (resto >= 20) {
+            if (u === 0) parts.push(dezenas[d]);
+            else parts.push(`${dezenas[d]} e ${unidades[u]}`);
+          }
+          return parts.join(' e ');
+        };
+
+        const porExtenso = (n: number): string => {
+          if (n === 0) return 'zero';
+          if (n < 0) return `menos ${porExtenso(-n)}`;
+          const bilhoes = Math.floor(n / 1_000_000_000);
+          const milhoes = Math.floor((n % 1_000_000_000) / 1_000_000);
+          const milhares = Math.floor((n % 1_000_000) / 1000);
+          const resto = n % 1000;
+          const parts: string[] = [];
+          if (bilhoes > 0) parts.push(bilhoes === 1 ? 'um bilhão' : `${ate999(bilhoes)} bilhões`);
+          if (milhoes > 0) parts.push(milhoes === 1 ? 'um milhão' : `${ate999(milhoes)} milhões`);
+          if (milhares > 0) {
+            if (milhares === 1) parts.push('mil');
+            else parts.push(`${ate999(milhares)} mil`);
+          }
+          if (resto > 0) parts.push(ate999(resto));
+          return parts.join(' ');
+        };
+
+        const reaisTxt = inteiro === 0 ? '' : (inteiro === 1 ? 'um real' : `${porExtenso(inteiro)} reais`);
+        const centavosTxt = centavos === 0 ? '' : (centavos === 1 ? 'um centavo' : `${porExtenso(centavos)} centavos`);
+        if (reaisTxt && centavosTxt) return `${reaisTxt} e ${centavosTxt}`;
+        return reaisTxt || centavosTxt || 'zero reais';
+      };
+
       t = t
-        .replace(/R\$\s?(\d[\d.,]*)/g,'$1 reais')
+        .replace(/R\$\s?(\d[\d.,]*)/g, (_m, num) => numeroPorExtenso(num))
         .replace(/US\$\s?(\d[\d.,]*)/g,'$1 dólares')
         .replace(/€\s?(\d[\d.,]*)/g,'$1 euros')
         .replace(/(?<![A-Za-zÀ-ú\d])\$(\d)/g,'$1 dólares');
