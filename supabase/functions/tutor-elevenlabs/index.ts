@@ -156,7 +156,7 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "xi-api-key": apiKey,
-          "Content-Type": "application/json", // Removido charset=utf-8 redundante
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text: chunks[i],
