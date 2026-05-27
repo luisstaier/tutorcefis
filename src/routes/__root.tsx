@@ -80,8 +80,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "Tutor CEFIS | Aprendizado Personalizado com IA" },
       { name: "twitter:description", content: "Domine novos conhecimentos com um tutor de IA humano e confiável." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3ee597e7-de40-476c-8759-90bd16a3ebce/id-preview-361098fd--00f38a9f-beda-46b3-9a32-f49484211591.lovable.app-1779802491448.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3ee597e7-de40-476c-8759-90bd16a3ebce/id-preview-361098fd--00f38a9f-beda-46b3-9a32-f49484211591.lovable.app-1779802491448.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e447a2f8-2225-4e00-becf-ba82f1c884b4" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e447a2f8-2225-4e00-becf-ba82f1c884b4" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
