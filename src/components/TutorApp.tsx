@@ -267,6 +267,24 @@ export default function TutorApp() {
     safeStorage.setLocal("tutor_cefis_profile", JSON.stringify(profile));
   };
 
+  const generateAudio = async (text: string): Promise<string | null> => {
+    try {
+      const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
+      if (!data || !data.audio) return null;
+      const byteCharacters = atob(data.audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+      return URL.createObjectURL(blob);
+    } catch (err) {
+      console.error("Erro ao gerar áudio:", err);
+      return null;
+    }
+  };
+
   const askQuestion = async (questionText: string) => {
     if (!questionText.trim()) return;
 
@@ -275,6 +293,9 @@ export default function TutorApp() {
     setIsAsking(true);
 
     try {
+      let finalResponse = "";
+      let finalFonte: any = undefined;
+
       const { data } = await invokeTutorFunction<{
         resposta?: string;
         fonte?: { curso: string; aula: string; curso_id?: number };
@@ -295,33 +316,43 @@ export default function TutorApp() {
           perfil: formData,
           userKey,
         });
+        finalResponse = duvData.resposta;
+        finalFonte = duvData.curso_id
+          ? { curso: duvData.curso_titulo || "CEFIS", aula: "Geral", curso_id: duvData.curso_id }
+          : undefined;
+      } else {
+        finalResponse = data.resposta;
+        finalFonte = data.fonte;
+      }
 
-        const nextIndex = chatHistory.length;
-        const finalResponse = duvData.resposta;
-        setChatHistory((prev) => [
-          ...prev,
-          {
-            pergunta: q,
-            resposta: finalResponse,
-            fonte: duvData.curso_id
-              ? { curso: duvData.curso_titulo || "CEFIS", aula: "Geral", curso_id: duvData.curso_id }
-              : undefined,
-          },
-        ]);
-
-        if (isVoiceActive) {
-          handleListenResponse(nextIndex, finalResponse);
-        }
-
-        return;
+      let audioUrl = null;
+      if (isVoiceActive && finalResponse) {
+        audioUrl = await generateAudio(finalResponse);
       }
 
       const nextIndex = chatHistory.length;
-      const finalResponse = data.resposta;
-      setChatHistory((prev) => [...prev, { pergunta: q, resposta: finalResponse, fonte: data.fonte }]);
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          pergunta: q,
+          resposta: finalResponse,
+          fonte: finalFonte,
+        },
+      ]);
 
-      if (isVoiceActive) {
-        handleListenResponse(nextIndex, finalResponse);
+      if (audioUrl) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        setCurrentlyPlayingId(nextIndex);
+        audio.onended = () => setCurrentlyPlayingId(null);
+        audio.play().catch(err => {
+          console.error("Erro ao reproduzir áudio:", err);
+          // Em alguns navegadores mobile, play() precisa de interação direta. 
+          // Mas como isso vem de um clique (no botão de enviar ou mic), deve funcionar.
+        });
       }
     } finally {
       setIsAsking(false);
@@ -551,16 +582,8 @@ export default function TutorApp() {
 
     setIsPreparingAudio(index);
     try {
-      const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
-
-      const byteCharacters = atob(data.audio);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
-      const url = URL.createObjectURL(blob);
+      const url = await generateAudio(text);
+      if (!url) throw new Error("Falha ao gerar áudio");
 
       if (audioRef.current) {
         audioRef.current.pause();
@@ -1107,14 +1130,14 @@ export default function TutorApp() {
               {(isAsking || isPreparingAudio !== null) && (
                 <div className="flex justify-start">
                   <div className="bg-muted p-3 rounded-2xl rounded-tl-none flex items-center gap-3 shadow-sm">
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-accent/70 animate-[bounce_1.2s_infinite_0ms]" />
-                      <span className="w-2 h-2 rounded-full bg-accent/70 animate-[bounce_1.2s_infinite_150ms]" />
-                      <span className="w-2 h-2 rounded-full bg-accent/70 animate-[bounce_1.2s_infinite_300ms]" />
+                    <div className="flex items-center gap-1.5 px-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_infinite_0ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_infinite_200ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_infinite_400ms]" />
                     </div>
-                    <span className="text-xs text-secondary italic">
+                    <span className="text-xs font-medium text-secondary">
                       {isAsking
-                        ? (isVoiceActive ? "Tutor está pensando e preparando áudio..." : "Tutor está digitando...")
+                        ? (isVoiceActive ? "Tutor está preparando voz..." : "Tutor está digitando...")
                         : "Preparando áudio..."}
                     </span>
                   </div>
