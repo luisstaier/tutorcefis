@@ -132,13 +132,48 @@ serve(async (req) => {
       return (j === -1 ? rawContent.substring(from) : rawContent.substring(from, j)).trim();
     };
 
-    const resposta = (pick("###RESPOSTA###", "###CURSO_ID###") || rawContent.trim()).normalize('NFC');
+    let resposta = (pick("###RESPOSTA###", "###CURSO_ID###") || rawContent.trim()).normalize('NFC');
     const cursoIdRaw = pick("###CURSO_ID###", "###CURSO_TITULO###");
     const cursoTituloRaw = pick("###CURSO_TITULO###", "###FIM###").normalize('NFC');
 
     const cursoIdNum = parseInt(cursoIdRaw, 10);
     const curso_id = Number.isFinite(cursoIdNum) ? cursoIdNum : null;
     const curso_titulo = cursoTituloRaw && cursoTituloRaw.toLowerCase() !== "null" ? cursoTituloRaw : null;
+
+    // Etapa de revisão ortográfica e gramatical pt-BR via Lovable AI Gateway
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    if (lovableKey && resposta) {
+      try {
+        const revisor = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${lovableKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              {
+                role: "system",
+                content: "Você é um revisor profissional de português do Brasil (pt-BR). Corrija APENAS erros de ortografia, acentuação (á, é, í, ó, ú, ã, õ, â, ê, ô, à), cedilha (ç), pontuação e gramática conforme o Acordo Ortográfico vigente. NÃO altere o sentido, o tom, a estrutura, a formatação markdown, listas, títulos, links, números ou termos técnicos. NÃO adicione comentários, explicações, preâmbulos ou aspas envolvendo o texto. Retorne SOMENTE o texto revisado."
+              },
+              { role: "user", content: resposta }
+            ],
+          }),
+        });
+        if (revisor.ok) {
+          const rev = await revisor.json();
+          const corrigido = rev?.choices?.[0]?.message?.content;
+          if (typeof corrigido === "string" && corrigido.trim().length > 0) {
+            resposta = corrigido.trim().normalize('NFC');
+          }
+        } else {
+          console.warn("Revisor pt-BR falhou:", revisor.status, await revisor.text());
+        }
+      } catch (revErr) {
+        console.warn("Erro na revisão pt-BR (mantendo original):", revErr);
+      }
+    }
 
     return new Response(JSON.stringify({ resposta, curso_id, curso_titulo }), {
       headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
