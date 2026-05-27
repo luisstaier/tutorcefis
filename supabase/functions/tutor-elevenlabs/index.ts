@@ -97,7 +97,7 @@ serve(async (req) => {
         method: "POST",
         headers: {
           "xi-api-key": apiKey,
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
         },
         body: JSON.stringify({
           text: chunks[i],
