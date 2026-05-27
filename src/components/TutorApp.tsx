@@ -640,26 +640,32 @@ export default function TutorApp() {
       { id: 5, label: "Catálogo", icon: Library },
     ];
     return (
-      <nav className="flex flex-wrap justify-center gap-1 md:gap-4 mb-8 bg-card/50 backdrop-blur-sm p-2 rounded-2xl border border-border sticky top-4 z-50">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => { setPreviousStep(step); setStep(item.id); }}
-            className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200",
-              step === item.id ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" : "text-secondary hover:bg-accent/10 hover:text-accent"
-            )}
-          >
-            <item.icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{item.label}</span>
+      <nav className="w-full mb-8 bg-card/50 backdrop-blur-sm p-1.5 rounded-2xl border border-border sticky top-4 z-50 overflow-hidden">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 sm:justify-center sm:flex-wrap md:gap-4 scroll-smooth">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => { setPreviousStep(step); setStep(item.id); }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 shrink-0 whitespace-nowrap",
+                step === item.id ? "bg-accent text-primary-foreground shadow-md shadow-accent/20" : "text-secondary hover:bg-accent/10 hover:text-accent"
+              )}
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span className={cn(
+                "sm:inline",
+                step === item.id ? "inline" : "hidden"
+              )}>{item.label}</span>
+            </button>
+          ))}
+          <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all shrink-0 whitespace-nowrap ml-auto sm:ml-0">
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">Sair</span>
           </button>
-        ))}
-        <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all">
-          <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">Sair</span>
-        </button>
+        </div>
       </nav>
     );
+
   };
 
   const renderContent = () => {
