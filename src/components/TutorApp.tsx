@@ -394,9 +394,6 @@ export default function TutorApp() {
     } finally {
       setIsAsking(false);
     }
-    } finally {
-      setIsAsking(false);
-    }
   };
 
   useEffect(() => {
@@ -1162,6 +1159,7 @@ export default function TutorApp() {
                         courseName={chat.fonte?.curso}
                         courseId={chat.fonte?.curso_id}
                         onCourseClick={(id, title) => handleSearchCourses(undefined, id, false)}
+                        isTyping={chat.isNew}
                       />
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
                         {chat.fonte ? (
