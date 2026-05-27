@@ -218,6 +218,7 @@ export default function TutorApp() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [previousStep, setPreviousStep] = useState(0);
   const [formData, setFormData] = useState({
