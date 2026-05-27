@@ -1242,21 +1242,8 @@ export default function TutorApp() {
                   <CardTitle className="flex items-center gap-2 font-serif"><MessageCircle className="text-accent" /> Chat com o Tutor</CardTitle>
                   <CardDescription>Tire dúvidas técnicas baseadas no catálogo real da CEFIS.</CardDescription>
                 </div>
-                {!isMobile && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={isVoiceActive ? "default" : "outline"}
-                    onClick={handleToggleVoice}
-                    className={cn(
-                      "h-8 gap-2 font-bold transition-all shrink-0",
-                      isVoiceActive ? "bg-accent text-primary-foreground shadow-lg shadow-accent/20" : "text-secondary border-dashed"
-                    )}
-                  >
-                    <Sparkles className={cn("w-3 h-3", isVoiceActive && "animate-pulse")} />
-                    {isVoiceActive ? "Voz Ativa" : "Ativar Voz"}
-                  </Button>
-                )}
+
+
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
