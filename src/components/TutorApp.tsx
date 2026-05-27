@@ -275,6 +275,7 @@ export default function TutorApp() {
     resposta: string;
     fonte?: { curso: string; aula: string; curso_id?: number };
     isNew?: boolean;
+    isLoading?: boolean;
   }[]>([]);
   const [isAsking, setIsAsking] = useState(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
@@ -343,6 +344,17 @@ export default function TutorApp() {
     setDuvida("");
     setIsAsking(true);
 
+    // 0. Exibe a pergunta do usuário IMEDIATAMENTE no chat
+    setChatHistory((prev) => [
+      ...prev.map(msg => ({ ...msg, isNew: false })),
+      {
+        pergunta: q,
+        resposta: "", // Resposta vazia enquanto a IA processa
+        isNew: true,
+        isLoading: true // Novo estado para mostrar skeleton ou loader na resposta
+      },
+    ]);
+
     try {
       let finalResponse = "";
       let finalFonte: any = undefined;
@@ -377,35 +389,35 @@ export default function TutorApp() {
         finalFonte = data.fonte;
       }
 
-      // 2. Gera áudio ANTES de mostrar se voz ativa, para sincronizar
+      // 2. Atualiza o histórico com o texto da resposta IMEDIATAMENTE
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+        const lastIndex = newHistory.length - 1;
+        if (lastIndex >= 0) {
+          newHistory[lastIndex] = {
+            ...newHistory[lastIndex],
+            resposta: finalResponse,
+            fonte: finalFonte,
+            isLoading: false
+          };
+        }
+        return newHistory;
+      });
+
+      // 3. Gera áudio em paralelo
       let audioUrl = null;
       if (isVoiceActive && finalResponse) {
         audioUrl = await generateAudio(finalResponse);
       }
 
-      // 3. Mostra a mensagem e inicia áudio simultaneamente
-      const nextIndex = chatHistory.length;
-      setChatHistory((prev) => [
-        ...prev.map(msg => ({ ...msg, isNew: false })), // Garante que apenas a última seja 'isNew'
-        {
-          pergunta: q,
-          resposta: finalResponse,
-          fonte: finalFonte,
-          isNew: true
-        },
-      ]);
-
       if (audioUrl && audioRef.current) {
         const audio = audioRef.current;
         audio.src = audioUrl;
-        setCurrentlyPlayingId(nextIndex);
+        const lastIndex = chatHistory.length; // Referência correta ao índice do áudio
+        setCurrentlyPlayingId(lastIndex);
         audio.onended = () => setCurrentlyPlayingId(null);
         audio.play().catch(err => {
           console.error("Erro ao reproduzir áudio:", err);
-          // Fallback se o src falhar por algum motivo
-          const newAudio = new Audio(audioUrl);
-          audioRef.current = newAudio;
-          newAudio.play().catch(e => console.error("Fallback audio failed", e));
         });
       }
     } finally {
@@ -617,7 +629,7 @@ export default function TutorApp() {
         try {
           const { data } = await invokeTutorFunction<{ text?: string }>('tutor-whisper', formData);
           if (data.text) {
-            setDuvida(data.text);
+            // No need to setDuvida and wait, we send it straight to askQuestion
             unlockAudio();
             await askQuestion(data.text);
           }
@@ -1194,13 +1206,21 @@ export default function TutorApp() {
                   <div className="flex justify-end"><div className="bg-accent text-primary-foreground p-3 rounded-2xl rounded-tr-none max-w-[80%] text-sm">{chat.pergunta}</div></div>
                   <div className="flex justify-start">
                     <div className="bg-muted p-4 rounded-2xl rounded-tl-none max-w-[90%] space-y-3 relative group">
-                      <MarkdownRenderer 
-                        content={chat.resposta} 
-                        courseName={chat.fonte?.curso}
-                        courseId={chat.fonte?.curso_id}
-                        onCourseClick={(id, title) => handleSearchCourses(undefined, id, false)}
-                        isTyping={chat.isNew}
-                      />
+                      {chat.isLoading ? (
+                        <div className="flex items-center gap-1.5 px-1 py-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0.2s]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0.4s]" />
+                        </div>
+                      ) : (
+                        <MarkdownRenderer 
+                          content={chat.resposta} 
+                          courseName={chat.fonte?.curso}
+                          courseId={chat.fonte?.curso_id}
+                          onCourseClick={(id, title) => handleSearchCourses(undefined, id, false)}
+                          isTyping={chat.isNew}
+                        />
+                      )}
                       <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
                         {chat.fonte ? (
                           <div className="text-[10px] text-secondary flex items-center gap-2">
