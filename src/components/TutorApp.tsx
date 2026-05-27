@@ -1334,7 +1334,7 @@ export default function TutorApp() {
                 </div>
               )}
             </CardContent>
-            {isVoiceActive && (
+            {isVoiceActive && !isMobile && (
               <div className="px-4 py-2 border-t bg-muted/10 flex items-center justify-end">
                 <span className="text-[10px] text-accent font-bold animate-pulse flex items-center gap-1">
                   <div className="flex gap-0.5 items-end h-3">
