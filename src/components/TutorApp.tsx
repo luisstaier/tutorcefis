@@ -56,7 +56,10 @@ const safeStorage = {
   },
 };
 
-async function invokeTutorFunction<T = any>(name: string, body?: unknown): Promise<{ data: T; error: null }> {
+async function invokeTutorFunction<T = any>(
+  name: string,
+  body?: FormData | Record<string, unknown>,
+): Promise<{ data: T; error: null }> {
   try {
     const result = await supabase.functions.invoke(name, { body });
     if (result.error) throw result.error;
@@ -260,10 +263,75 @@ export default function TutorApp() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const persistProfile = (profile: typeof formData) => {
+    safeStorage.setLocal("tutor_cefis_profile", JSON.stringify(profile));
+  };
+
+  const askQuestion = async (questionText: string) => {
+    if (!questionText.trim()) return;
+
+    const q = questionText.trim();
+    setDuvida("");
+    setIsAsking(true);
+
+    try {
+      const { data } = await invokeTutorFunction<{
+        resposta?: string;
+        fonte?: { curso: string; aula: string; curso_id?: number };
+        error?: string;
+      }>("tutor-transcricao", {
+        pergunta: q,
+        perfil: formData,
+        userKey,
+      });
+
+      if (!data || data.error || !data.resposta) {
+        const { data: duvData } = await invokeTutorFunction<{
+          resposta: string;
+          curso_id?: number;
+          curso_titulo?: string;
+        }>("tutor-duvidas", {
+          pergunta: q,
+          perfil: formData,
+          userKey,
+        });
+
+        const nextIndex = chatHistory.length;
+        const finalResponse = duvData.resposta;
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            pergunta: q,
+            resposta: finalResponse,
+            fonte: duvData.curso_id
+              ? { curso: duvData.curso_titulo || "CEFIS", aula: "Geral", curso_id: duvData.curso_id }
+              : undefined,
+          },
+        ]);
+
+        if (isVoiceActive) {
+          handleListenResponse(nextIndex, finalResponse);
+        }
+
+        return;
+      }
+
+      const nextIndex = chatHistory.length;
+      const finalResponse = data.resposta;
+      setChatHistory((prev) => [...prev, { pergunta: q, resposta: finalResponse, fonte: data.fonte }]);
+
+      if (isVoiceActive) {
+        handleListenResponse(nextIndex, finalResponse);
+      }
+    } finally {
+      setIsAsking(false);
+    }
+  };
+
   useEffect(() => {
     try {
-      const savedKey = (() => { try { return sessionStorage.getItem("cefis_user_key"); } catch { return null; } })();
-      const savedProfile = (() => { try { return localStorage.getItem("tutor_cefis_profile"); } catch { return null; } })();
+      const savedKey = safeStorage.getSession("cefis_user_key");
+      const savedProfile = safeStorage.getLocal("tutor_cefis_profile");
       const validKey = savedKey && savedKey !== "undefined" && savedKey !== "null" ? savedKey : null;
 
       if (validKey && savedProfile) {
@@ -272,11 +340,11 @@ export default function TutorApp() {
         setIsAuthenticated(true);
         setStep(0);
       } else {
-        if (savedKey) { try { sessionStorage.removeItem("cefis_user_key"); } catch {} }
+        if (savedKey) safeStorage.removeSession("cefis_user_key");
         setStep(-1);
       }
 
-      const savedProgress = (() => { try { return localStorage.getItem("tutor_cefis_progress"); } catch { return null; } })();
+      const savedProgress = safeStorage.getLocal("tutor_cefis_progress");
       if (savedProgress) {
         try { setCompletedLessons(JSON.parse(savedProgress)); } catch { /* progresso corrompido, ignora */ }
       }
