@@ -683,12 +683,12 @@ export default function TutorApp() {
                           {lessons.length > 0 ? "✓" : i+1}
                         </div>
                         <div className="p-4 rounded-xl border border-border bg-card space-y-2">
-                          <div className="flex justify-between items-start gap-4">
-                            <h4 className="font-bold flex items-center gap-2 truncate">
-                              {item.titulo}
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
+                            <h4 className="font-bold flex items-center gap-2 min-w-0 break-words">
+                              <span className="break-words">{item.titulo}</span>
                               {lessons.length > 0 && <CheckCircle2 className="w-4 h-4 text-[#b3e51d] shrink-0" />}
                             </h4>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
                               {item.origem === 'catalogo_cefis' ? (
                                 <Badge className="bg-accent text-primary-foreground font-bold">CEFIS</Badge>
                               ) : (
