@@ -674,8 +674,9 @@ export default function TutorApp() {
       };
 
       await audio.play();
-    } catch (err) {
-      toast.error("Áudio indisponível no momento");
+    } catch (err: any) {
+      console.error("Erro manual ao ouvir resposta:", err);
+      toast.error(`Áudio indisponível: ${err?.message || 'Tente novamente'}`);
     } finally {
       setIsPreparingAudio(null);
     }
