@@ -200,7 +200,7 @@ serve(async (req) => {
     const base64Audio = btoa(binary);
 
     return new Response(JSON.stringify({ audio: base64Audio }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
     });
 
   } catch (error) {

@@ -141,7 +141,7 @@ serve(async (req) => {
     const curso_titulo = cursoTituloRaw && cursoTituloRaw.toLowerCase() !== "null" ? cursoTituloRaw : null;
 
     return new Response(JSON.stringify({ resposta, curso_id, curso_titulo }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
     });
 
   } catch (error) {
