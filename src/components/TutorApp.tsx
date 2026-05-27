@@ -314,7 +314,7 @@ export default function TutorApp() {
 
   const generateAudio = async (text: string): Promise<string | null> => {
     // Cache key based on text and voice (voice_id is currently hardcoded in function)
-    const cacheKey = btoa(unescape(encodeURIComponent(text.slice(0, 100) + text.length)));
+    const cacheKey = btoa(unescape(encodeURIComponent(text.normalize('NFC').slice(0, 100) + text.length)));
     if (audioCache[cacheKey]) {
       return audioCache[cacheKey];
     }
@@ -1241,23 +1241,25 @@ export default function TutorApp() {
                            </div>
                         ) : null}
                         
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => handleListenResponse(i, chat.resposta)}
-                          className={cn(
-                            "h-7 text-[10px] gap-1 px-2 font-bold transition-all",
-                            currentlyPlayingId === i ? "text-accent bg-accent/10" : "text-secondary hover:text-accent"
-                          )}
-                        >
-                          {isPreparingAudio === i ? (
-                            <><Loader2 className="w-3 h-3 animate-spin" /> Preparando...</>
-                          ) : currentlyPlayingId === i ? (
-                            <><Pause className="w-3 h-3" /> Pausar</>
-                          ) : (
-                            <><Volume2 className="w-3 h-3 text-[#b3e51d]" /> Ouvir resposta</>
-                          )}
-                        </Button>
+                        {!chat.isLoading && chat.resposta && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            onClick={() => handleListenResponse(i, chat.resposta)}
+                            className={cn(
+                              "h-7 text-[10px] gap-1 px-2 font-bold transition-all",
+                              currentlyPlayingId === i ? "text-accent bg-accent/10" : "text-secondary hover:text-accent"
+                            )}
+                          >
+                            {isPreparingAudio === i ? (
+                              <><Loader2 className="w-3 h-3 animate-spin" /> Preparando...</>
+                            ) : currentlyPlayingId === i ? (
+                              <><Pause className="w-3 h-3" /> Pausar</>
+                            ) : (
+                              <><Volume2 className="w-3 h-3 text-[#b3e51d]" /> Ouvir resposta</>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
