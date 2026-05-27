@@ -368,8 +368,7 @@ export default function TutorApp() {
     const cacheKey = btoa(unescape(encodeURIComponent(text.normalize('NFC').slice(0, 100) + text.length)));
     return audioCacheRef.current[cacheKey] || audioCache[cacheKey] || null;
   };
-    }
-  };
+
 
   const askQuestion = async (questionText: string) => {
     if (!questionText.trim()) return;
