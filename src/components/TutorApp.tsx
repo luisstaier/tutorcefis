@@ -437,27 +437,28 @@ export default function TutorApp() {
         return newHistory;
       });
 
-      // 3. Gera áudio em paralelo
-      if (isVoiceActive && finalResponse) {
-        setIsPreparingAudio(chatHistory.length);
-        const audioUrl = await generateAudio(finalResponse);
-        setIsPreparingAudio(null);
+      // 3. Áudio: no mobile, apenas pré-gera (sem autoplay). No desktop, toca se "Voz Ativa".
+      if (finalResponse) {
+        const shouldAutoPlay = isVoiceActive && !isMobile;
+        if (shouldAutoPlay || isMobile) {
+          setIsPreparingAudio(chatHistory.length);
+          const audioUrl = await generateAudio(finalResponse);
+          setIsPreparingAudio(null);
 
-        if (audioUrl && audioRef.current) {
-          const audio = audioRef.current;
-          audio.pause();
-          audio.src = audioUrl;
-          
-          const playAudio = () => {
-            setCurrentlyPlayingId(chatHistory.length);
-            audio.play().catch(err => {
-              console.error("Erro ao reproduzir áudio automático:", err);
-            });
-            audio.removeEventListener('canplaythrough', playAudio);
-          };
-
-          audio.addEventListener('canplaythrough', playAudio);
-          audio.onended = () => setCurrentlyPlayingId(null);
+          if (audioUrl && shouldAutoPlay) {
+            const audio = getAudio();
+            audio.pause();
+            audio.src = audioUrl;
+            const playAudio = () => {
+              setCurrentlyPlayingId(chatHistory.length);
+              audio.play().catch(err => console.error("Erro ao reproduzir áudio automático:", err));
+              audio.removeEventListener('canplaythrough', playAudio);
+            };
+            audio.addEventListener('canplaythrough', playAudio);
+            audio.onended = () => setCurrentlyPlayingId(null);
+          }
+        } else if (isVoiceActive) {
+          // já tratado acima (desktop)
         }
       }
     } finally {
