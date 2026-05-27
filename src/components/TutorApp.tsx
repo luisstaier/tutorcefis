@@ -291,26 +291,51 @@ export default function TutorApp() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const isAudioUnlocked = useRef(false);
+  const audioCacheRef = useRef<Record<string, string>>({});
 
-  const unlockAudio = async () => {
-    if (isAudioUnlocked.current) return;
-    
+  const isMobile = typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  const getAudio = () => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
+      audioRef.current.preload = 'auto';
     }
-    
+    return audioRef.current;
+  };
+
+  const unlockAudio = () => {
+    if (isAudioUnlocked.current) return;
+    const audio = getAudio();
     try {
-      const audio = audioRef.current;
       audio.muted = true;
-      await audio.play();
-      audio.pause();
+      const p = audio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+          isAudioUnlocked.current = true;
+        }).catch(() => { audio.muted = false; });
+      } else {
+        audio.pause();
+        audio.muted = false;
+        isAudioUnlocked.current = true;
+      }
+    } catch {
       audio.muted = false;
-      isAudioUnlocked.current = true;
-      console.log("Audio unlocked successfully");
-    } catch (e) {
-      console.log("Audio unlock failed:", e);
     }
   };
+
+  // Unlock global no primeiro gesto do usuário (essencial em mobile)
+  useEffect(() => {
+    const handler = () => unlockAudio();
+    document.addEventListener('touchstart', handler, { once: true, passive: true });
+    document.addEventListener('click', handler, { once: true });
+    return () => {
+      document.removeEventListener('touchstart', handler);
+      document.removeEventListener('click', handler);
+    };
+  }, []);
 
   const persistProfile = (profile: typeof formData) => {
     safeStorage.setLocal("tutor_cefis_profile", JSON.stringify(profile));
