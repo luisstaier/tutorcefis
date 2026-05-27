@@ -13,6 +13,107 @@ import { Toaster, toast } from "sonner";
 import { TutorAiLogo } from "./TutorAiLogo";
 import CourseDetails from "./CourseDetails";
 
+const safeStorage = {
+  getLocal(key: string) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setLocal(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  removeLocal(key: string) {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  },
+  getSession(key: string) {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setSession(key: string, value: string) {
+    try {
+      sessionStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  removeSession(key: string) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {}
+  },
+};
+
+async function invokeTutorFunction<T = any>(
+  name: string,
+  body?: FormData | Record<string, unknown>,
+): Promise<{ data: T; error: null }> {
+  try {
+    const result = await supabase.functions.invoke(name, { body });
+    if (result.error) throw result.error;
+    return { data: result.data as T, error: null };
+  } catch (supabaseError) {
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!baseUrl || !publishableKey) {
+      throw supabaseError;
+    }
+
+    const headers: Record<string, string> = {
+      apikey: publishableKey,
+      authorization: `Bearer ${publishableKey}`,
+    };
+
+    const init: RequestInit = {
+      method: "POST",
+      headers,
+    };
+
+    if (body instanceof FormData) {
+      init.body = body;
+      delete headers["content-type"];
+    } else if (body !== undefined) {
+      headers["content-type"] = "application/json";
+      init.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${baseUrl}/functions/v1/${name}`, init);
+    const raw = await response.text();
+    let data: T | null = null;
+
+    if (raw) {
+      try {
+        data = JSON.parse(raw) as T;
+      } catch {
+        throw new Error("Resposta inválida do servidor.");
+      }
+    }
+
+    if (!response.ok) {
+      const message =
+        data && typeof data === "object" && "error" in (data as object)
+          ? String((data as { error?: unknown }).error ?? "Erro ao processar solicitação.")
+          : "Erro ao processar solicitação.";
+      throw new Error(message);
+    }
+
+    return { data: (data ?? ({} as T)) as T, error: null };
+  }
+}
+
 const MarkdownRenderer = ({ 
   content, 
   className = "", 
@@ -162,10 +263,75 @@ export default function TutorApp() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const persistProfile = (profile: typeof formData) => {
+    safeStorage.setLocal("tutor_cefis_profile", JSON.stringify(profile));
+  };
+
+  const askQuestion = async (questionText: string) => {
+    if (!questionText.trim()) return;
+
+    const q = questionText.trim();
+    setDuvida("");
+    setIsAsking(true);
+
+    try {
+      const { data } = await invokeTutorFunction<{
+        resposta?: string;
+        fonte?: { curso: string; aula: string; curso_id?: number };
+        error?: string;
+      }>("tutor-transcricao", {
+        pergunta: q,
+        perfil: formData,
+        userKey,
+      });
+
+      if (!data || data.error || !data.resposta) {
+        const { data: duvData } = await invokeTutorFunction<{
+          resposta: string;
+          curso_id?: number;
+          curso_titulo?: string;
+        }>("tutor-duvidas", {
+          pergunta: q,
+          perfil: formData,
+          userKey,
+        });
+
+        const nextIndex = chatHistory.length;
+        const finalResponse = duvData.resposta;
+        setChatHistory((prev) => [
+          ...prev,
+          {
+            pergunta: q,
+            resposta: finalResponse,
+            fonte: duvData.curso_id
+              ? { curso: duvData.curso_titulo || "CEFIS", aula: "Geral", curso_id: duvData.curso_id }
+              : undefined,
+          },
+        ]);
+
+        if (isVoiceActive) {
+          handleListenResponse(nextIndex, finalResponse);
+        }
+
+        return;
+      }
+
+      const nextIndex = chatHistory.length;
+      const finalResponse = data.resposta;
+      setChatHistory((prev) => [...prev, { pergunta: q, resposta: finalResponse, fonte: data.fonte }]);
+
+      if (isVoiceActive) {
+        handleListenResponse(nextIndex, finalResponse);
+      }
+    } finally {
+      setIsAsking(false);
+    }
+  };
+
   useEffect(() => {
     try {
-      const savedKey = (() => { try { return sessionStorage.getItem("cefis_user_key"); } catch { return null; } })();
-      const savedProfile = (() => { try { return localStorage.getItem("tutor_cefis_profile"); } catch { return null; } })();
+      const savedKey = safeStorage.getSession("cefis_user_key");
+      const savedProfile = safeStorage.getLocal("tutor_cefis_profile");
       const validKey = savedKey && savedKey !== "undefined" && savedKey !== "null" ? savedKey : null;
 
       if (validKey && savedProfile) {
@@ -174,11 +340,11 @@ export default function TutorApp() {
         setIsAuthenticated(true);
         setStep(0);
       } else {
-        if (savedKey) { try { sessionStorage.removeItem("cefis_user_key"); } catch {} }
+        if (savedKey) safeStorage.removeSession("cefis_user_key");
         setStep(-1);
       }
 
-      const savedProgress = (() => { try { return localStorage.getItem("tutor_cefis_progress"); } catch { return null; } })();
+      const savedProgress = safeStorage.getLocal("tutor_cefis_progress");
       if (savedProgress) {
         try { setCompletedLessons(JSON.parse(savedProgress)); } catch { /* progresso corrompido, ignora */ }
       }
@@ -194,14 +360,17 @@ export default function TutorApp() {
     setIsLoggingIn(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('cefis-login', {
-        body: { email: loginEmail, pass: loginPass }
-      });
-
-      if (functionError) throw functionError;
+      const { data } = await invokeTutorFunction<{
+        error?: string;
+        key?: string;
+        userName?: string;
+        occupation?: string;
+        nivel?: number;
+      }>('cefis-login', { email: loginEmail, pass: loginPass });
       if (data.error) throw new Error(data.error);
+      if (!data.key) throw new Error("Não foi possível concluir o login no celular.");
 
-      sessionStorage.setItem("cefis_user_key", data.key);
+      safeStorage.setSession("cefis_user_key", data.key);
       const profile = {
         nome: data.userName || "",
         experiencia: data.occupation || "",
@@ -209,7 +378,7 @@ export default function TutorApp() {
         objetivo: "",
         estiloAprendizagem: ""
       };
-      localStorage.setItem("tutor_cefis_profile", JSON.stringify(profile));
+      persistProfile(profile);
 
       setUserKey(data.key);
       setFormData(profile);
@@ -225,8 +394,8 @@ export default function TutorApp() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem("cefis_user_key");
-    localStorage.removeItem("tutor_cefis_profile");
+    safeStorage.removeSession("cefis_user_key");
+    safeStorage.removeLocal("tutor_cefis_profile");
     setUserKey(undefined);
     setIsAuthenticated(false);
     setStep(-1);
@@ -241,7 +410,7 @@ export default function TutorApp() {
         ...prev,
         [courseId]: [...courseLessons, lessonId]
       };
-      localStorage.setItem("tutor_cefis_progress", JSON.stringify(newProgress));
+      safeStorage.setLocal("tutor_cefis_progress", JSON.stringify(newProgress));
       toast.success("Aula marcada como concluída!");
       return newProgress;
     });
@@ -253,15 +422,12 @@ export default function TutorApp() {
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("tutor_cefis_profile", JSON.stringify(formData));
+    persistProfile(formData);
     setStep(1);
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-diagnostico', {
-        body: { ...formData, userKey }
-      });
-      if (functionError) throw functionError;
+      const { data } = await invokeTutorFunction<{ lacunas?: any[] }>('tutor-diagnostico', { ...formData, userKey });
       setDiagnosis(data.lacunas || []);
     } catch (err: any) {
       setError(err.message || 'Erro ao gerar diagnóstico.');
@@ -274,14 +440,16 @@ export default function TutorApp() {
     setIsGeneratingPlan(true);
     setError(null);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-plano', {
-        body: { perfil: formData, lacunas: diagnosis, userKey }
+      const { data } = await invokeTutorFunction<{ plano?: any[] }>('tutor-plano', {
+        perfil: formData,
+        lacunas: diagnosis,
+        userKey,
       });
-      if (functionError) throw functionError;
-      setStudyPlan(data.plano || []);
+      const generatedPlan = data.plano || [];
+      setStudyPlan(generatedPlan);
       setStep(2);
-      if (data.plano?.length > 0) {
-        setModoData(prev => ({ ...prev, topico: data.plano[0].titulo }));
+      if (generatedPlan.length > 0) {
+        setModoData(prev => ({ ...prev, topico: generatedPlan[0].titulo }));
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao gerar plano.');
@@ -296,10 +464,12 @@ export default function TutorApp() {
     if (!mins || !top) return;
     setIsGeneratingSession(true);
     try {
-      const { data, error: functionError } = await supabase.functions.invoke('tutor-tempo', {
-        body: { minutos: parseInt(mins), topico: top, perfil: formData, userKey }
+      const { data } = await invokeTutorFunction('tutor-tempo', {
+        minutos: parseInt(mins),
+        topico: top,
+        perfil: formData,
+        userKey,
       });
-      if (functionError) throw functionError;
       setQuickSession(data);
     } finally {
       setIsGeneratingSession(false);
@@ -308,34 +478,7 @@ export default function TutorApp() {
 
   const handleAskDuvida = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!duvida.trim()) return;
-    const q = duvida;
-    setDuvida("");
-    setIsAsking(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('tutor-transcricao', {
-        body: { pergunta: q, perfil: formData, userKey }
-      });
-      
-      if (error || !data || data.error) {
-        const { data: duvData } = await supabase.functions.invoke('tutor-duvidas', {
-          body: { pergunta: q, perfil: formData, userKey }
-        });
-        const finalResponse = duvData.resposta;
-        setChatHistory(prev => [...prev, { pergunta: q, resposta: finalResponse, fonte: duvData.curso_id ? { curso: duvData.curso_titulo, aula: "Geral", curso_id: duvData.curso_id } : undefined }]);
-        if (isVoiceActive) {
-          handleListenResponse(chatHistory.length, finalResponse);
-        }
-      } else {
-        const finalResponse = data.resposta;
-        setChatHistory(prev => [...prev, { pergunta: q, resposta: finalResponse, fonte: data.fonte }]);
-        if (isVoiceActive) {
-          handleListenResponse(chatHistory.length, finalResponse);
-        }
-      }
-    } finally {
-      setIsAsking(false);
-    }
+    await askQuestion(duvida);
   };
 
   const handleToggleVoice = () => {
@@ -352,6 +495,11 @@ export default function TutorApp() {
 
   const handleStartRecording = async () => {
     try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        toast.error("Seu celular não suporta gravação por voz neste navegador.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -369,18 +517,10 @@ export default function TutorApp() {
         formData.append('audio', audioBlob, 'recording.webm');
 
         try {
-          const { data, error } = await supabase.functions.invoke('tutor-whisper', {
-            body: formData,
-          });
-
-          if (error) throw error;
+          const { data } = await invokeTutorFunction<{ text?: string }>('tutor-whisper', formData);
           if (data.text) {
             setDuvida(data.text);
-            // Auto submit
-            setTimeout(() => {
-              const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-              handleAskDuvida(fakeEvent);
-            }, 500);
+            await askQuestion(data.text);
           }
         } catch (err) {
           toast.error("Não consegui entender — tente digitar.");
@@ -411,11 +551,7 @@ export default function TutorApp() {
 
     setIsPreparingAudio(index);
     try {
-      const { data, error } = await supabase.functions.invoke('tutor-elevenlabs', {
-        body: { text },
-      });
-
-      if (error) throw error;
+      const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
 
       const byteCharacters = atob(data.audio);
       const byteNumbers = new Array(byteCharacters.length);
@@ -438,7 +574,7 @@ export default function TutorApp() {
         setCurrentlyPlayingId(null);
       };
 
-      audio.play();
+      await audio.play();
     } catch (err) {
       toast.error("Áudio indisponível no momento");
     } finally {
@@ -451,10 +587,11 @@ export default function TutorApp() {
     setIsLoading(true);
     if (!autoOpen && !courseId) setStep(5);
     try {
-      const { data, error } = await supabase.functions.invoke('cefis-courses', {
-        body: { id: courseId, search: q, userKey }
+      const { data } = await invokeTutorFunction<{ data?: any[] }>('cefis-courses', {
+        id: courseId,
+        search: q,
+        userKey,
       });
-      if (error) throw error;
       const results = data.data || [];
       setCourses(results);
       if (courseId && results.length > 0) {
