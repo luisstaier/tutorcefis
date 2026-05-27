@@ -293,7 +293,11 @@ export default function TutorApp() {
   const isAudioUnlocked = useRef(false);
 
   const unlockAudio = async () => {
-    if (isAudioUnlocked.current || !audioRef.current) return;
+    if (isAudioUnlocked.current) return;
+    
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
     
     try {
       const audio = audioRef.current;
