@@ -703,34 +703,52 @@ export default function TutorApp() {
   };
 
   const handleListenResponse = async (index: number, text: string) => {
+    // Pausar se já tocando
     if (currentlyPlayingId === index) {
       audioRef.current?.pause();
       setCurrentlyPlayingId(null);
       return;
     }
 
+    unlockAudio();
+    const audio = getAudio();
+    audio.pause();
+
+    // Se áudio já está em cache, tocar SINCRONAMENTE dentro do gesto do usuário
+    const cachedUrl = getCachedAudioUrl(text);
+    if (cachedUrl) {
+      audio.src = cachedUrl;
+      audio.onended = () => setCurrentlyPlayingId(null);
+      const playPromise = audio.play();
+      setCurrentlyPlayingId(index);
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.catch(err => {
+          console.error("Erro ao reproduzir áudio:", err);
+          setCurrentlyPlayingId(null);
+          toast.error("Toque novamente no botão para ouvir.");
+        });
+      }
+      return;
+    }
+
+    // Sem cache: buscar áudio e pedir segundo toque (mobile bloqueia play após await)
     setIsPreparingAudio(index);
     try {
       const url = await generateAudio(text);
       if (!url) throw new Error("Falha ao gerar áudio");
 
-      unlockAudio(); // Garante que temos a instância única
-      
-      if (audioRef.current) {
-        const audio = audioRef.current;
-        audio.pause();
+      if (isMobile) {
+        // No mobile, áudio só toca em novo gesto
+        toast.success("Áudio pronto — toque novamente em Ouvir resposta");
+      } else {
         audio.src = url;
-        
+        audio.onended = () => setCurrentlyPlayingId(null);
         const playAudio = () => {
           setCurrentlyPlayingId(index);
-          audio.play().catch(err => {
-            console.error("Erro ao reproduzir áudio manual:", err);
-          });
+          audio.play().catch(err => console.error("Erro ao reproduzir áudio:", err));
           audio.removeEventListener('canplaythrough', playAudio);
         };
-
         audio.addEventListener('canplaythrough', playAudio);
-        audio.onended = () => setCurrentlyPlayingId(null);
       }
     } catch (err: any) {
       console.error("Erro manual ao ouvir resposta:", err);
