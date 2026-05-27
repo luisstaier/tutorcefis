@@ -13,6 +13,104 @@ import { Toaster, toast } from "sonner";
 import { TutorAiLogo } from "./TutorAiLogo";
 import CourseDetails from "./CourseDetails";
 
+const safeStorage = {
+  getLocal(key: string) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setLocal(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  removeLocal(key: string) {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  },
+  getSession(key: string) {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setSession(key: string, value: string) {
+    try {
+      sessionStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  removeSession(key: string) {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {}
+  },
+};
+
+async function invokeTutorFunction<T = any>(name: string, body?: unknown): Promise<{ data: T; error: null }> {
+  try {
+    const result = await supabase.functions.invoke(name, { body });
+    if (result.error) throw result.error;
+    return { data: result.data as T, error: null };
+  } catch (supabaseError) {
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!baseUrl || !publishableKey) {
+      throw supabaseError;
+    }
+
+    const headers: Record<string, string> = {
+      apikey: publishableKey,
+      authorization: `Bearer ${publishableKey}`,
+    };
+
+    const init: RequestInit = {
+      method: "POST",
+      headers,
+    };
+
+    if (body instanceof FormData) {
+      init.body = body;
+      delete headers["content-type"];
+    } else if (body !== undefined) {
+      headers["content-type"] = "application/json";
+      init.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${baseUrl}/functions/v1/${name}`, init);
+    const raw = await response.text();
+    let data: T | null = null;
+
+    if (raw) {
+      try {
+        data = JSON.parse(raw) as T;
+      } catch {
+        throw new Error("Resposta inválida do servidor.");
+      }
+    }
+
+    if (!response.ok) {
+      const message =
+        data && typeof data === "object" && "error" in (data as object)
+          ? String((data as { error?: unknown }).error ?? "Erro ao processar solicitação.")
+          : "Erro ao processar solicitação.";
+      throw new Error(message);
+    }
+
+    return { data: (data ?? ({} as T)) as T, error: null };
+  }
+}
+
 const MarkdownRenderer = ({ 
   content, 
   className = "", 
