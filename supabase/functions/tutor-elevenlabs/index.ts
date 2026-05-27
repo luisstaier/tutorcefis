@@ -13,7 +13,7 @@ serve(async (req) => {
   try {
     const { text } = await req.json();
     const apiKey = Deno.env.get("ELEVENLABS_API_KEY");
-    const voiceId = "IKne3meq5aSn9XLyUdCD"; // Charlie - energético e entusiasta
+    const voiceId = "N2lVS1w4EtoT3dr4eOWO"; // Callum - entusiasmado e didático
 
     if (!apiKey) {
       throw new Error("ELEVENLABS_API_KEY não configurada.");
@@ -180,7 +180,7 @@ serve(async (req) => {
           voice_settings: {
             stability: 0.45,
             similarity_boost: 0.80,
-            style: 0.60,
+            style: 0.55,
             use_speaker_boost: true
           },
         }),
