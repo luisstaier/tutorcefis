@@ -684,7 +684,25 @@ export default function TutorApp() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pass" className="text-secondary">Senha</Label>
-                  <Input id="pass" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" required className="h-12 bg-muted/20 border-border" />
+                  <div className="relative">
+                    <Input 
+                      id="pass" 
+                      type={showPassword ? "text" : "password"} 
+                      value={loginPass} 
+                      onChange={e => setLoginPass(e.target.value)} 
+                      placeholder="••••••••" 
+                      required 
+                      className="h-12 bg-muted/20 border-border pr-10" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary/60 hover:text-accent transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
                 {error && <div className="p-3 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">{error}</div>}
                 <Button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg mt-4 shadow-lg shadow-accent/10">
