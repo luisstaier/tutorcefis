@@ -904,7 +904,7 @@ export default function TutorApp() {
                     return (
                       <div key={i} className="relative pl-8 before:absolute before:left-3 before:top-2 before:bottom-0 before:w-0.5 before:bg-muted last:before:hidden">
                         <div className={cn(
-                          "absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors z-10",
+                          "absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors z-[1]",
                           lessons.length > 0 ? "bg-[#b3e51d] text-[#051124]" : "bg-accent text-white"
                         )}>
                           {lessons.length > 0 ? "✓" : i+1}
