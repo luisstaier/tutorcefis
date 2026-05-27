@@ -546,13 +546,26 @@ export default function TutorApp() {
 
   const handleAskDuvida = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Unlock audio context on user gesture
+    if (isVoiceActive && audioRef.current) {
+      audioRef.current.play().then(() => {
+        audioRef.current?.pause();
+      }).catch(() => {});
+    }
     await askQuestion(duvida);
   };
 
   const handleToggleVoice = () => {
     setIsVoiceActive(prev => {
       const newState = !prev;
-      if (!newState && audioRef.current) {
+      if (newState) {
+        // Unlock audio on toggle
+        const unlockAudio = new Audio();
+        unlockAudio.play().then(() => {
+          unlockAudio.pause();
+        }).catch(() => {});
+        audioRef.current = unlockAudio;
+      } else if (audioRef.current) {
         audioRef.current.pause();
         setCurrentlyPlayingId(null);
       }
@@ -568,8 +581,18 @@ export default function TutorApp() {
         return;
       }
 
+      // Check for supported mime types on mobile
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+        'audio/aac'
+      ];
+      const supportedType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, supportedType ? { mimeType: supportedType } : undefined);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -580,9 +603,9 @@ export default function TutorApp() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: supportedType || 'audio/webm' });
         const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
+        formData.append('audio', audioBlob, `recording.${supportedType.includes('mp4') ? 'm4a' : 'webm'}`);
 
         try {
           const { data } = await invokeTutorFunction<{ text?: string }>('tutor-whisper', formData);
