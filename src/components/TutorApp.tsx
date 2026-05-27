@@ -560,12 +560,7 @@ export default function TutorApp() {
 
   const handleAskDuvida = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Unlock audio context on user gesture
-    if (isVoiceActive && audioRef.current) {
-      audioRef.current.play().then(() => {
-        audioRef.current?.pause();
-      }).catch(() => {});
-    }
+    unlockAudio();
     await askQuestion(duvida);
   };
 
@@ -573,12 +568,7 @@ export default function TutorApp() {
     setIsVoiceActive(prev => {
       const newState = !prev;
       if (newState) {
-        // Unlock audio on toggle
-        const unlockAudio = new Audio();
-        unlockAudio.play().then(() => {
-          unlockAudio.pause();
-        }).catch(() => {});
-        audioRef.current = unlockAudio;
+        unlockAudio();
       } else if (audioRef.current) {
         audioRef.current.pause();
         setCurrentlyPlayingId(null);
