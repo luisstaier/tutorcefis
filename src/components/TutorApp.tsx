@@ -676,7 +676,7 @@ export default function TutorApp() {
       { id: 5, label: "Catálogo", icon: Library },
     ];
     return (
-      <nav className="w-full mb-8 bg-card/50 backdrop-blur-sm p-1.5 rounded-2xl border border-border sticky top-4 z-50 overflow-hidden">
+      <nav className="w-full mb-8 bg-card/50 backdrop-blur-sm p-1.5 rounded-2xl border border-border sticky top-4 z-[100] overflow-hidden">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 sm:justify-center sm:flex-wrap md:gap-4 scroll-smooth">
           {navItems.map((item) => (
             <button
