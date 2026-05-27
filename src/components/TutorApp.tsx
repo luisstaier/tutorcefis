@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square, Sparkles, ArrowLeft } from "lucide-react";
+import { Clock, BookOpen, User, Search, Loader2, Star, PlayCircle, MessageCircle, Send, Home, ClipboardCheck, LayoutDashboard, Zap, Library, CheckCircle2, LogOut, Mic, Volume2, Pause, Play, Square, Sparkles, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
@@ -218,6 +218,7 @@ export default function TutorApp() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPass, setLoginPass] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const [previousStep, setPreviousStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -683,7 +684,25 @@ export default function TutorApp() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pass" className="text-secondary">Senha</Label>
-                  <Input id="pass" type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" required className="h-12 bg-muted/20 border-border" />
+                  <div className="relative">
+                    <Input 
+                      id="pass" 
+                      type={showPassword ? "text" : "password"} 
+                      value={loginPass} 
+                      onChange={e => setLoginPass(e.target.value)} 
+                      placeholder="••••••••" 
+                      required 
+                      className="h-12 bg-muted/20 border-border pr-10" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary/60 hover:text-accent transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
                 {error && <div className="p-3 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">{error}</div>}
                 <Button type="submit" disabled={isLoggingIn} className="w-full h-12 bg-accent hover:bg-accent/90 text-primary-foreground font-bold text-lg mt-4 shadow-lg shadow-accent/10">
