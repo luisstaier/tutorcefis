@@ -288,6 +288,19 @@ export default function TutorApp() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isAudioUnlocked = useRef(false);
+
+  const unlockAudio = () => {
+    if (isAudioUnlocked.current) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    const audio = audioRef.current;
+    audio.play().then(() => {
+      audio.pause();
+      isAudioUnlocked.current = true;
+    }).catch(e => console.log("Audio unlock failed", e));
+  };
 
   const persistProfile = (profile: typeof formData) => {
     safeStorage.setLocal("tutor_cefis_profile", JSON.stringify(profile));
@@ -379,16 +392,17 @@ export default function TutorApp() {
         },
       ]);
 
-      if (audioUrl) {
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
+      if (audioUrl && audioRef.current) {
+        const audio = audioRef.current;
+        audio.src = audioUrl;
         setCurrentlyPlayingId(nextIndex);
         audio.onended = () => setCurrentlyPlayingId(null);
         audio.play().catch(err => {
           console.error("Erro ao reproduzir áudio:", err);
+          // Fallback se o src falhar por algum motivo
+          const newAudio = new Audio(audioUrl);
+          audioRef.current = newAudio;
+          newAudio.play().catch(e => console.error("Fallback audio failed", e));
         });
       }
     } finally {
@@ -546,12 +560,7 @@ export default function TutorApp() {
 
   const handleAskDuvida = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Unlock audio context on user gesture
-    if (isVoiceActive && audioRef.current) {
-      audioRef.current.play().then(() => {
-        audioRef.current?.pause();
-      }).catch(() => {});
-    }
+    unlockAudio();
     await askQuestion(duvida);
   };
 
@@ -559,12 +568,7 @@ export default function TutorApp() {
     setIsVoiceActive(prev => {
       const newState = !prev;
       if (newState) {
-        // Unlock audio on toggle
-        const unlockAudio = new Audio();
-        unlockAudio.play().then(() => {
-          unlockAudio.pause();
-        }).catch(() => {});
-        audioRef.current = unlockAudio;
+        unlockAudio();
       } else if (audioRef.current) {
         audioRef.current.pause();
         setCurrentlyPlayingId(null);
@@ -611,10 +615,19 @@ export default function TutorApp() {
           const { data } = await invokeTutorFunction<{ text?: string }>('tutor-whisper', formData);
           if (data.text) {
             setDuvida(data.text);
+            unlockAudio();
             await askQuestion(data.text);
           }
         } catch (err) {
           toast.error("Não consegui entender — tente digitar.");
+        } finally {
+          // Force track release
+          if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+            mediaRecorderRef.current.stream.getTracks().forEach(track => {
+              track.stop();
+              track.enabled = false;
+            });
+          }
         }
       };
 
@@ -1223,9 +1236,7 @@ export default function TutorApp() {
                       <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_infinite_400ms]" />
                     </div>
                     <span className="text-xs font-medium text-secondary">
-                      {isAsking
-                        ? (isVoiceActive ? "Tutor está preparando voz..." : "Tutor está digitando...")
-                        : "Preparando áudio..."}
+                      {isAsking ? "Tutor está digitando..." : "Preparando áudio..."}
                     </span>
                   </div>
                 </div>
