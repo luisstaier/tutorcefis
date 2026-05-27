@@ -647,9 +647,9 @@ export default function TutorApp() {
       case 2:
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-2xl font-serif">Seu Plano de Estudos</CardTitle>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-xl sm:text-2xl font-serif">Seu Plano de Estudos</CardTitle>
                 <CardDescription>Rota recomendada para atingir seu objetivo.</CardDescription>
               </div>
               {!isGeneratingPlan && studyPlan.length > 0 && (
@@ -660,7 +660,7 @@ export default function TutorApp() {
                       handleSearchCourses(undefined, firstCourse.curso_id, false, { source: 'plano', trail: studyPlan });
                     }
                   }}
-                  className="bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20 animate-pulse"
+                  className="w-full sm:w-auto shrink-0 bg-accent hover:bg-accent/90 text-primary-foreground font-bold shadow-lg shadow-accent/20 animate-pulse"
                 >
                   <PlayCircle className="w-4 h-4 mr-2" /> Iniciar Trilha
                 </Button>
