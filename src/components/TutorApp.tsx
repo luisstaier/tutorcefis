@@ -342,32 +342,32 @@ export default function TutorApp() {
   };
 
   const generateAudio = async (text: string): Promise<string | null> => {
-    // Cache key based on text and voice (voice_id is currently hardcoded in function)
     const cacheKey = btoa(unescape(encodeURIComponent(text.normalize('NFC').slice(0, 100) + text.length)));
-    if (audioCache[cacheKey]) {
-      return audioCache[cacheKey];
-    }
+    if (audioCacheRef.current[cacheKey]) return audioCacheRef.current[cacheKey];
+    if (audioCache[cacheKey]) return audioCache[cacheKey];
 
     try {
       const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
       if (!data || !data.audio) return null;
       const byteCharacters = atob(data.audio);
       const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
+      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: 'audio/mpeg' });
       const url = URL.createObjectURL(blob);
-      
+      audioCacheRef.current[cacheKey] = url;
       setAudioCache(prev => ({ ...prev, [cacheKey]: url }));
       return url;
     } catch (err: any) {
       console.error("Erro ao gerar áudio:", err);
-      // Se o erro for do Supabase ou rede, tentamos logar o detalhe
-      const errorMsg = err?.message || "Erro desconhecido";
-      console.log(`Detalhe do erro de áudio: ${errorMsg}`);
       return null;
+    }
+  };
+
+  const getCachedAudioUrl = (text: string): string | null => {
+    const cacheKey = btoa(unescape(encodeURIComponent(text.normalize('NFC').slice(0, 100) + text.length)));
+    return audioCacheRef.current[cacheKey] || audioCache[cacheKey] || null;
+  };
     }
   };
 
