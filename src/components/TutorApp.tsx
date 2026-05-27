@@ -445,10 +445,11 @@ export default function TutorApp() {
         lacunas: diagnosis,
         userKey,
       });
-      setStudyPlan(data.plano || []);
+      const generatedPlan = data.plano || [];
+      setStudyPlan(generatedPlan);
       setStep(2);
-      if (data.plano?.length > 0) {
-        setModoData(prev => ({ ...prev, topico: data.plano[0].titulo }));
+      if (generatedPlan.length > 0) {
+        setModoData(prev => ({ ...prev, topico: generatedPlan[0].titulo }));
       }
     } catch (err: any) {
       setError(err.message || 'Erro ao gerar plano.');
@@ -494,6 +495,11 @@ export default function TutorApp() {
 
   const handleStartRecording = async () => {
     try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        toast.error("Seu celular não suporta gravação por voz neste navegador.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -511,18 +517,10 @@ export default function TutorApp() {
         formData.append('audio', audioBlob, 'recording.webm');
 
         try {
-          const { data, error } = await supabase.functions.invoke('tutor-whisper', {
-            body: formData,
-          });
-
-          if (error) throw error;
+          const { data } = await invokeTutorFunction<{ text?: string }>('tutor-whisper', formData);
           if (data.text) {
             setDuvida(data.text);
-            // Auto submit
-            setTimeout(() => {
-              const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-              handleAskDuvida(fakeEvent);
-            }, 500);
+            await askQuestion(data.text);
           }
         } catch (err) {
           toast.error("Não consegui entender — tente digitar.");
@@ -553,11 +551,7 @@ export default function TutorApp() {
 
     setIsPreparingAudio(index);
     try {
-      const { data, error } = await supabase.functions.invoke('tutor-elevenlabs', {
-        body: { text },
-      });
-
-      if (error) throw error;
+      const { data } = await invokeTutorFunction<{ audio: string }>('tutor-elevenlabs', { text });
 
       const byteCharacters = atob(data.audio);
       const byteNumbers = new Array(byteCharacters.length);
@@ -580,7 +574,7 @@ export default function TutorApp() {
         setCurrentlyPlayingId(null);
       };
 
-      audio.play();
+      await audio.play();
     } catch (err) {
       toast.error("Áudio indisponível no momento");
     } finally {
@@ -593,10 +587,11 @@ export default function TutorApp() {
     setIsLoading(true);
     if (!autoOpen && !courseId) setStep(5);
     try {
-      const { data, error } = await supabase.functions.invoke('cefis-courses', {
-        body: { id: courseId, search: q, userKey }
+      const { data } = await invokeTutorFunction<{ data?: any[] }>('cefis-courses', {
+        id: courseId,
+        search: q,
+        userKey,
       });
-      if (error) throw error;
       const results = data.data || [];
       setCourses(results);
       if (courseId && results.length > 0) {
