@@ -623,10 +623,10 @@ export default function CourseDetails({
               variant="outline" 
               size="sm" 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="border-accent/20 text-accent hover:bg-accent/5 h-8 gap-2 font-bold"
+              className="border-accent/20 text-accent hover:bg-accent/5 h-8 gap-2 font-bold shrink-0 relative z-10"
             >
               <Menu className="w-4 h-4" />
-              <span className="hidden sm:inline">{isSidebarOpen ? 'Esconder Trilha' : 'Ver Trilha'}</span>
+              <span>{isSidebarOpen ? 'Esconder' : 'Trilha'}</span>
             </Button>
           )}
         </div>
