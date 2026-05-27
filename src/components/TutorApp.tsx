@@ -961,7 +961,22 @@ export default function TutorApp() {
                   </div>
                 </div>
               ))}
-              {isAsking && <div className="flex justify-start"><div className="bg-muted p-4 rounded-2xl animate-pulse"><Loader2 className="animate-spin w-4 h-4" /></div></div>}
+              {(isAsking || isPreparingAudio !== null) && (
+                <div className="flex justify-start">
+                  <div className="bg-muted p-3 rounded-2xl rounded-tl-none flex items-center gap-3 shadow-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-accent/70 animate-[bounce_1.2s_infinite_0ms]" />
+                      <span className="w-2 h-2 rounded-full bg-accent/70 animate-[bounce_1.2s_infinite_150ms]" />
+                      <span className="w-2 h-2 rounded-full bg-accent/70 animate-[bounce_1.2s_infinite_300ms]" />
+                    </div>
+                    <span className="text-xs text-secondary italic">
+                      {isAsking
+                        ? (isVoiceActive ? "Tutor está pensando e preparando áudio..." : "Tutor está digitando...")
+                        : "Preparando áudio..."}
+                    </span>
+                  </div>
+                </div>
+              )}
             </CardContent>
             {isVoiceActive && (
               <div className="px-4 py-2 border-t bg-muted/10 flex items-center justify-end">
