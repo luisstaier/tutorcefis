@@ -728,11 +728,11 @@ export default function TutorApp() {
       case 0:
         return (
           <Card className="max-w-2xl mx-auto border-border shadow-sm overflow-hidden">
-             <div className="bg-accent/10 p-4 border-b border-accent/20 flex items-center justify-between">
-              <Badge className="bg-accent text-primary-foreground border-none gap-1 font-black px-3 py-1">
+             <div className="bg-accent/10 p-4 border-b border-accent/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <Badge className="bg-accent text-primary-foreground border-none gap-1 font-black px-3 py-1 self-start whitespace-nowrap">
                 ✓ PERFIL CEFIS CONECTADO
               </Badge>
-              <span className="text-xs text-secondary font-medium italic">Logado como {formData.nome}</span>
+              <span className="text-xs text-secondary font-medium italic truncate">Logado como {formData.nome}</span>
             </div>
             <CardHeader>
               <CardTitle className="text-xl sm:text-2xl font-serif break-words leading-tight">Bem-vindo ao seu Tutor IA</CardTitle>
