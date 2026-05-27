@@ -689,19 +689,24 @@ export default function TutorApp() {
       const url = await generateAudio(text);
       if (!url) throw new Error("Falha ao gerar áudio");
 
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      setCurrentlyPlayingId(index);
+      unlockAudio(); // Garante que temos a instância única
       
-      audio.onended = () => {
-        setCurrentlyPlayingId(null);
-      };
+      if (audioRef.current) {
+        const audio = audioRef.current;
+        audio.pause();
+        audio.src = url;
+        
+        const playAudio = () => {
+          setCurrentlyPlayingId(index);
+          audio.play().catch(err => {
+            console.error("Erro ao reproduzir áudio manual:", err);
+          });
+          audio.removeEventListener('canplaythrough', playAudio);
+        };
 
-      await audio.play();
+        audio.addEventListener('canplaythrough', playAudio);
+        audio.onended = () => setCurrentlyPlayingId(null);
+      }
     } catch (err: any) {
       console.error("Erro manual ao ouvir resposta:", err);
       toast.error(`Áudio indisponível: ${err?.message || 'Tente novamente'}`);
