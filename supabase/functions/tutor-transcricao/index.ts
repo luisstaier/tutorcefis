@@ -80,11 +80,17 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-sonnet-4-5-20250929",
         max_tokens: 1500,
         system: `Você é o Tutor CEFIS. Responda à pergunta do aluno usando o TRECHO REAL da transcrição da aula da CEFIS fornecido abaixo. 
-        Baseie-se nesse conteúdo, cite o curso e a aula como fonte. 
-        Se a transcrição não cobrir a pergunta, diga e responda com cautela baseado no seu conhecimento geral, mas priorizando o contexto da CEFIS. 
+        Sua resposta deve ser baseada ESTRITAMENTE nesse conteúdo.
+        
+        OBRIGATÓRIO: Ao final da sua resposta, você deve SEMPRE indicar o curso da CEFIS relacionado.
+        Use exatamente este formato no final:
+        
+        Fonte: Curso "${course.title}", aula "${lesson.title}".
+        
+        Se o conteúdo não cobrir a pergunta, mencione isso e indique o curso como material complementar.
         Nunca invente cursos ou fatos que não estejam no texto.
         
         ESTILO DE APRENDIZAGEM: ${perfil?.estiloAprendizagem === "exemplos práticos" 
