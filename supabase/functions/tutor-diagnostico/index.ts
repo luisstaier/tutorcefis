@@ -16,9 +16,9 @@ serve(async (req) => {
 
     const validUserKey = userKey && userKey !== "undefined" && userKey !== "null" ? userKey : null;
     const cefisApiKey = validUserKey || Deno.env.get("CEFIS_API_KEY");
-    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!cefisApiKey || !anthropicApiKey) {
+    if (!cefisApiKey || !lovableApiKey) {
       throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
     }
 
