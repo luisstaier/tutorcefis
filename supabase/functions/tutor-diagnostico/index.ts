@@ -16,9 +16,10 @@ serve(async (req) => {
 
     const validUserKey = userKey && userKey !== "undefined" && userKey !== "null" ? userKey : null;
     const cefisApiKey = validUserKey || Deno.env.get("CEFIS_API_KEY");
+    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!cefisApiKey || !lovableApiKey) {
+    if (!cefisApiKey || !anthropicApiKey) {
       throw new Error("Configuração do servidor incompleta (API Keys ausentes).");
     }
 
@@ -68,16 +69,18 @@ Responda ESTRITAMENTE em JSON válido, sem nenhum texto fora do JSON, neste form
 Em curso_cefis_relacionado, use o título exato de um curso da lista, ou "" se nenhum cobrir o tópico.
 PROIBIDO usar emojis em qualquer campo da resposta.`;
 
-    const claudeResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
+        "x-api-key": anthropicApiKey!,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-3-5-sonnet-20240620",
+        max_tokens: 2000,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           {
             role: "user",
             content: `Perfil do Aluno:
@@ -90,7 +93,6 @@ Cursos Reais CEFIS:
 ${JSON.stringify(coursesList, null, 2)}`
           }
         ],
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -103,7 +105,7 @@ ${JSON.stringify(coursesList, null, 2)}`
     }
 
     const claudeResult = await claudeResponse.json();
-    const rawText = claudeResult.choices?.[0]?.message?.content ?? "";
+    const rawText = claudeResult.content?.[0]?.text ?? "";
     
     // Robust JSON extraction
     let cleanedText = rawText.trim();

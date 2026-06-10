@@ -69,7 +69,7 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-3-5-sonnet-20240620",
         max_tokens: 1500,
         system: `Você é o Tutor CEFIS. RESPONDA SEMPRE EM PORTUGUÊS DO BRASIL (pt-BR), com ortografia, gramática, acentuação e pontuação 100% corretas conforme o Acordo Ortográfico vigente. NUNCA use português de Portugal, espanhol, inglês ou misturas. Revise mentalmente a resposta antes de enviar para garantir que TODOS os acentos (á, é, í, ó, ú, ã, õ, â, ê, ô, à) e o cedilha (ç) estejam corretos. Palavras como "você", "não", "também", "função", "informações", "contábil", "ções" devem estar SEMPRE acentuadas corretamente. Responda à dúvida do aluno de forma clara e adaptada ao nível dele, USANDO o conteúdo real da CEFIS fornecido. 
         Cite o curso da CEFIS relacionado quando houver.
