@@ -85,72 +85,63 @@ serve(async (req) => {
       ? "Use analogias e comparações com situações conhecidas para explicar conceitos novos. Ex: 'Balanço Patrimonial é como uma foto da empresa.'"
       : "Sempre inclua pelo menos um exemplo prático e concreto na resposta.";
 
-    const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    const systemPrompt = `Você é o Tutor CEFIS. Monte um plano de estudos sequencial e realista que leve o aluno do nível atual ao objetivo, resolvendo as lacunas na ordem certa.
+
+ESTILO DE APRENDIZAGEM: ${stylePrompt}
+
+REGRA MANDATÓRIA: Use APENAS cursos reais da CEFIS da lista fornecida.
+- Origem: 'catalogo_cefis'.
+- Fonte: Título exato do curso da lista.
+- Descrição: Um breve resumo de por que este curso é importante para o aluno.
+- Tempo: Use a duração real (duration) convertida para minutos ou estime o tempo de estudo.
+
+SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa. Use o nome do aluno APENAS para cumprimentar ou criar conexão emocional.
+
+NÃO gere conteúdo próprio ('gerado_pelo_tutor') a menos que seja um passo introdutório ou de conclusão muito curto (máximo 1 item do plano). O coração do plano deve ser o catálogo da CEFIS.
+
+Responda ESTRITAMENTE em JSON válido, neste formato:
+{ "plano": [ { "passo": number, "titulo": string, "descricao": string, "origem": "catalogo_cefis"|"gerado_pelo_tutor", "fonte": string, "curso_id": number, "tempo_estimado_min": number } ] }.
+PROIBIDO usar emojis em qualquer campo da resposta.`;
+
+    const claudeResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
+        "Authorization": `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2500,
-        system: `Você é o Tutor CEFIS. Monte um plano de estudos sequencial e realista que leve o aluno do nível atual ao objetivo, resolvendo as lacunas na ordem certa. 
-        
-        ESTILO DE APRENDIZAGEM: ${stylePrompt}
-        
-        REGRA MANDATÓRIA: Use APENAS cursos reais da CEFIS da lista fornecida. 
-        - Origem: 'catalogo_cefis'.
-        - Fonte: Título exato do curso da lista.
-        - Descrição: Um breve resumo de por que este curso é importante para o aluno.
-        - Tempo: Use a duração real (duration) convertida para minutos ou estime o tempo de estudo.
-        
-        SEMPRE fale diretamente com o aluno na segunda pessoa ('você', 'seu', 'sua'). NUNCA se refira ao aluno pelo nome na terceira pessoa (ex: ERRADO: 'Luis deve aprender', CERTO: 'você deve aprender'). Use o nome do aluno APENAS para cumprimentar ('Olá, Luis!') ou criar conexão emocional, nunca como sujeito de uma ação.
-
-        NÃO gere conteúdo próprio ('gerado_pelo_tutor') a menos que seja um passo introdutório ou de conclusão muito curto (máximo 1 item do plano). O coração do plano deve ser o catálogo da CEFIS.
-        
-        Responda ESTRITAMENTE em JSON válido, neste formato: 
-        { 
-          "plano": [ 
-            { 
-              "passo": number, 
-              "titulo": string, 
-              "descricao": string, 
-              "origem": "catalogo_cefis"|"gerado_pelo_tutor", 
-              "fonte": string, 
-              "curso_id": number,
-              "tempo_estimado_min": number 
-            } 
-          ] 
-        }.
-        PROIBIDO usar emojis (emoticons, símbolos gráficos) em qualquer campo da resposta.`,
+        model: "google/gemini-2.5-flash",
         messages: [
+          { role: "system", content: systemPrompt },
           {
             role: "user",
             content: `Perfil do Aluno:
-            Nome: ${perfil.nome}
-            Objetivo: ${perfil.objetivo}
-            Experiência: ${perfil.experiencia}
-            Nível: ${perfil.nivel}
+Nome: ${perfil.nome}
+Objetivo: ${perfil.objetivo}
+Experiência: ${perfil.experiencia}
+Nível: ${perfil.nivel}
 
-            Lacunas Identificadas:
-            ${JSON.stringify(lacunas, null, 2)}
+Lacunas Identificadas:
+${JSON.stringify(lacunas, null, 2)}
 
-            Catálogo Real CEFIS (Use preferencialmente estes cursos):
-            ${JSON.stringify(formattedCourses, null, 2)}`
+Catálogo Real CEFIS (Use preferencialmente estes cursos):
+${JSON.stringify(formattedCourses, null, 2)}`
           }
         ],
+        response_format: { type: "json_object" },
       }),
     });
 
     if (!claudeResponse.ok) {
       const errText = await claudeResponse.text();
-      console.error("Claude API Error:", errText);
+      console.error("AI Gateway Error:", claudeResponse.status, errText);
+      if (claudeResponse.status === 429) throw new Error("Limite de requisições atingido. Tente novamente em instantes.");
+      if (claudeResponse.status === 402) throw new Error("Créditos de IA esgotados. Adicione créditos no workspace.");
       throw new Error("Erro ao gerar plano de estudos com IA.");
     }
 
     const claudeResult = await claudeResponse.json();
-    const rawText = claudeResult.content[0].text;
+    const rawText = claudeResult.choices?.[0]?.message?.content ?? "";
     
     let cleanedText = rawText.trim();
     if (cleanedText.startsWith("```")) {
