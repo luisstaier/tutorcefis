@@ -1288,7 +1288,11 @@ export default function TutorApp() {
                         </div>
                       ) : (
                         <MarkdownRenderer 
-                          content={chat.resposta} 
+                          content={
+                            chat.fonte?.curso_id && chat.fonte?.curso && !chat.resposta.includes(`course://${chat.fonte.curso_id}`)
+                              ? `${chat.resposta}\n\n---\n\n**Curso recomendado:** [${chat.fonte.curso}](course://${chat.fonte.curso_id})`
+                              : chat.resposta
+                          } 
                           courseName={chat.fonte?.curso}
                           courseId={chat.fonte?.curso_id}
                           onCourseClick={(id, title) => handleSearchCourses(undefined, id, false)}
